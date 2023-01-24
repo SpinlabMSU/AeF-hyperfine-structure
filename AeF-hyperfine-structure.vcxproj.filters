@@ -22,6 +22,9 @@
     <Filter Include="Header Files\wigner">
       <UniqueIdentifier>{839e5ccc-475a-41f5-85c2-75493ebdc7e4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Documentation">
+      <UniqueIdentifier>{62692990-6cdc-4d32-88ea-eab9461c94cd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AeF-hyperfine-structure.cpp">
@@ -245,5 +248,10 @@
     <ClInclude Include="include\gcem_incl\quadrature\gauss_legendre_50.hpp">
       <Filter>Header Files\gcem_incl\quadrature</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md">
+      <Filter>Documentation</Filter>
+    </None>
   </ItemGroup>
 </Project>
