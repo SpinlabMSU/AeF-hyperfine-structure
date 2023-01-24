@@ -1,0 +1,249 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\gcem_incl">
+      <UniqueIdentifier>{63a0e737-c772-4efd-8413-6df41dfbbca0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gcem_incl\quadrature">
+      <UniqueIdentifier>{e1205b0a-2663-4637-85a6-ad70a4bd5dc2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wigner">
+      <UniqueIdentifier>{839e5ccc-475a-41f5-85c2-75493ebdc7e4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AeF-hyperfine-structure.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="j_basis_vec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="aef_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="baf_constants.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="j_basis_vec.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aef_types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aef_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\abs.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\acos.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\acosh.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\asin.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\asinh.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\atan.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\atan2.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\atanh.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\beta.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\binomial_coef.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\ceil.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\copysign.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\cos.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\cosh.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\erf.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\erf_inv.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\exp.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\expm1.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\factorial.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\find_exponent.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\find_fraction.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\find_whole.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\floor.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\fmod.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\gcd.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\gcem_options.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\hypot.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\incomplete_beta.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\incomplete_beta_inv.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\incomplete_gamma.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\incomplete_gamma_inv.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\inv_sqrt.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\is_even.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\is_finite.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\is_inf.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\is_nan.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\is_odd.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\lbeta.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\lcm.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\lgamma.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\lmgamma.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\log.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\log_binomial_coef.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\log1p.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\log2.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\log10.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\mantissa.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\max.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\min.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\neg_zero.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\pow.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\pow_integral.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\round.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\sgn.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\signbit.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\sin.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\sinh.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\sqrt.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\tan.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\tanh.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\tgamma.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\trunc.hpp">
+      <Filter>Header Files\gcem_incl</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\quadrature\gauss_legendre_30.hpp">
+      <Filter>Header Files\gcem_incl\quadrature</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gcem_incl\quadrature\gauss_legendre_50.hpp">
+      <Filter>Header Files\gcem_incl\quadrature</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

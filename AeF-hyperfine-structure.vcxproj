@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{fc10a815-9ec5-4eb7-9c79-3183f2095c8e}</ProjectGuid>
+    <RootNamespace>AeFhyperfinestructure</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(ProjectDir)include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(ProjectDir)include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(ProjectDir)include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(ProjectDir)include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="AeF-hyperfine-structure.cpp" />
+    <ClCompile Include="aef_utils.cpp" />
+    <ClCompile Include="j_basis_vec.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="aef.h" />
+    <ClInclude Include="aef_types.h" />
+    <ClInclude Include="aef_utils.h" />
+    <ClInclude Include="baf_constants.hpp" />
+    <ClInclude Include="include\gcem.hpp" />
+    <ClInclude Include="include\gcem_incl\abs.hpp" />
+    <ClInclude Include="include\gcem_incl\acos.hpp" />
+    <ClInclude Include="include\gcem_incl\acosh.hpp" />
+    <ClInclude Include="include\gcem_incl\asin.hpp" />
+    <ClInclude Include="include\gcem_incl\asinh.hpp" />
+    <ClInclude Include="include\gcem_incl\atan.hpp" />
+    <ClInclude Include="include\gcem_incl\atan2.hpp" />
+    <ClInclude Include="include\gcem_incl\atanh.hpp" />
+    <ClInclude Include="include\gcem_incl\beta.hpp" />
+    <ClInclude Include="include\gcem_incl\binomial_coef.hpp" />
+    <ClInclude Include="include\gcem_incl\ceil.hpp" />
+    <ClInclude Include="include\gcem_incl\copysign.hpp" />
+    <ClInclude Include="include\gcem_incl\cos.hpp" />
+    <ClInclude Include="include\gcem_incl\cosh.hpp" />
+    <ClInclude Include="include\gcem_incl\erf.hpp" />
+    <ClInclude Include="include\gcem_incl\erf_inv.hpp" />
+    <ClInclude Include="include\gcem_incl\exp.hpp" />
+    <ClInclude Include="include\gcem_incl\expm1.hpp" />
+    <ClInclude Include="include\gcem_incl\factorial.hpp" />
+    <ClInclude Include="include\gcem_incl\find_exponent.hpp" />
+    <ClInclude Include="include\gcem_incl\find_fraction.hpp" />
+    <ClInclude Include="include\gcem_incl\find_whole.hpp" />
+    <ClInclude Include="include\gcem_incl\floor.hpp" />
+    <ClInclude Include="include\gcem_incl\fmod.hpp" />
+    <ClInclude Include="include\gcem_incl\gcd.hpp" />
+    <ClInclude Include="include\gcem_incl\gcem_options.hpp" />
+    <ClInclude Include="include\gcem_incl\hypot.hpp" />
+    <ClInclude Include="include\gcem_incl\incomplete_beta.hpp" />
+    <ClInclude Include="include\gcem_incl\incomplete_beta_inv.hpp" />
+    <ClInclude Include="include\gcem_incl\incomplete_gamma.hpp" />
+    <ClInclude Include="include\gcem_incl\incomplete_gamma_inv.hpp" />
+    <ClInclude Include="include\gcem_incl\inv_sqrt.hpp" />
+    <ClInclude Include="include\gcem_incl\is_even.hpp" />
+    <ClInclude Include="include\gcem_incl\is_finite.hpp" />
+    <ClInclude Include="include\gcem_incl\is_inf.hpp" />
+    <ClInclude Include="include\gcem_incl\is_nan.hpp" />
+    <ClInclude Include="include\gcem_incl\is_odd.hpp" />
+    <ClInclude Include="include\gcem_incl\lbeta.hpp" />
+    <ClInclude Include="include\gcem_incl\lcm.hpp" />
+    <ClInclude Include="include\gcem_incl\lgamma.hpp" />
+    <ClInclude Include="include\gcem_incl\lmgamma.hpp" />
+    <ClInclude Include="include\gcem_incl\log.hpp" />
+    <ClInclude Include="include\gcem_incl\log10.hpp" />
+    <ClInclude Include="include\gcem_incl\log1p.hpp" />
+    <ClInclude Include="include\gcem_incl\log2.hpp" />
+    <ClInclude Include="include\gcem_incl\log_binomial_coef.hpp" />
+    <ClInclude Include="include\gcem_incl\mantissa.hpp" />
+    <ClInclude Include="include\gcem_incl\max.hpp" />
+    <ClInclude Include="include\gcem_incl\min.hpp" />
+    <ClInclude Include="include\gcem_incl\neg_zero.hpp" />
+    <ClInclude Include="include\gcem_incl\pow.hpp" />
+    <ClInclude Include="include\gcem_incl\pow_integral.hpp" />
+    <ClInclude Include="include\gcem_incl\quadrature\gauss_legendre_30.hpp" />
+    <ClInclude Include="include\gcem_incl\quadrature\gauss_legendre_50.hpp" />
+    <ClInclude Include="include\gcem_incl\round.hpp" />
+    <ClInclude Include="include\gcem_incl\sgn.hpp" />
+    <ClInclude Include="include\gcem_incl\signbit.hpp" />
+    <ClInclude Include="include\gcem_incl\sin.hpp" />
+    <ClInclude Include="include\gcem_incl\sinh.hpp" />
+    <ClInclude Include="include\gcem_incl\sqrt.hpp" />
+    <ClInclude Include="include\gcem_incl\tan.hpp" />
+    <ClInclude Include="include\gcem_incl\tanh.hpp" />
+    <ClInclude Include="include\gcem_incl\tgamma.hpp" />
+    <ClInclude Include="include\gcem_incl\trunc.hpp" />
+    <ClInclude Include="j_basis_vec.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
