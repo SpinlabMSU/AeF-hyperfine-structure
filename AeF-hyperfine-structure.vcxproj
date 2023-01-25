@@ -103,6 +103,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -132,6 +134,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,6 +147,7 @@
   <ItemGroup>
     <ClCompile Include="AeF-hyperfine-structure.cpp" />
     <ClCompile Include="aef_utils.cpp" />
+    <ClCompile Include="HyperfineCalculator.cpp" />
     <ClCompile Include="j_basis_vec.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -150,6 +155,7 @@
     <ClInclude Include="aef_types.h" />
     <ClInclude Include="aef_utils.h" />
     <ClInclude Include="baf_constants.hpp" />
+    <ClInclude Include="HyperfineCalculator.hpp" />
     <ClInclude Include="include\gcem.hpp" />
     <ClInclude Include="include\gcem_incl\abs.hpp" />
     <ClInclude Include="include\gcem_incl\acos.hpp" />

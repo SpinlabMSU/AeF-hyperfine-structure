@@ -42,6 +42,9 @@
     <ClCompile Include="aef_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="HyperfineCalculator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="baf_constants.hpp">
@@ -255,6 +258,9 @@
       <Filter>Header Files\gcem_incl\quadrature</Filter>
     </ClInclude>
     <ClInclude Include="units.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HyperfineCalculator.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

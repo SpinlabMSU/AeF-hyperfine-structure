@@ -3,8 +3,12 @@
 //
 
 #include "aef.h"
+#include "HyperfineCalculator.hpp"
 #include <format>
 #include <iostream>
+#include <chrono>
+
+using namespace std::chrono;
 
 int main() {
     std::cout << "Hello World!\n";
@@ -18,6 +22,31 @@ int main() {
     std::string str = std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(50kV/cm) = {} MHz",
         v, E_rot, H_hfs, H_st);
     std::cout << str << std::endl;
+
+
+    auto ostart = high_resolution_clock::now();
+    auto start = high_resolution_clock::now();
+    HyperfineCalculator calc(8, E_z);
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    std::cout << "Constructing Hyperfine calculator with nmax = " << 8 << " took " << duration << " microseconds" << std::endl;
+
+    start = high_resolution_clock::now();
+    calc.calculate_matrix_elts();
+    stop = high_resolution_clock::now();
+    duration = duration_cast<microseconds>(stop - start);
+    std::cout << "Calculating hamiltonian (" << calc.nBasisElts << " basis elements) took " << duration << " microseconds" << std::endl;
+
+    // diagonalization
+    start = high_resolution_clock::now();
+    calc.diagonalize_H();
+    stop = high_resolution_clock::now();
+    duration = duration_cast<microseconds>(stop - start);
+    std::cout << "Diagonalizing hamiltonian (" << calc.nBasisElts << " basis elements) took " << duration << " microseconds" << std::endl;
+
+    stop = high_resolution_clock::now();
+    duration = duration_cast<microseconds>(stop - ostart);
+    std::cout << "Whole calculation took " << duration << " microseconds" << std::endl;
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
