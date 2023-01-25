@@ -25,6 +25,12 @@
     <Filter Include="Documentation">
       <UniqueIdentifier>{62692990-6cdc-4d32-88ea-eab9461c94cd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Eigen">
+      <UniqueIdentifier>{8d3e1903-c395-44a3-b2f1-152d90ef0443}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Eigen\src">
+      <UniqueIdentifier>{96becbde-f045-42e2-8e0c-e619a8bff71d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AeF-hyperfine-structure.cpp">
@@ -248,10 +254,103 @@
     <ClInclude Include="include\gcem_incl\quadrature\gauss_legendre_50.hpp">
       <Filter>Header Files\gcem_incl\quadrature</Filter>
     </ClInclude>
+    <ClInclude Include="units.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md">
       <Filter>Documentation</Filter>
+    </None>
+    <None Include="include\Eigen\Cholesky">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\CholmodSupport">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\Core">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\Dense">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\Eigen">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\Eigenvalues">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\Geometry">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\Householder">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\IterativeLinearSolvers">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\Jacobi">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\KLUSupport">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\LU">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\MetisSupport">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\OrderingMethods">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\PardisoSupport">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\PaStiXSupport">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\QR">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\QtAlignedMalloc">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\Sparse">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\SparseCholesky">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\SparseCore">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\SparseLU">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\SparseQR">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\SPQRSupport">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\StdDeque">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\StdList">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\StdVector">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\SuperLUSupport">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\SVD">
+      <Filter>Header Files\Eigen</Filter>
+    </None>
+    <None Include="include\Eigen\UmfPackSupport">
+      <Filter>Header Files\Eigen</Filter>
     </None>
   </ItemGroup>
 </Project>

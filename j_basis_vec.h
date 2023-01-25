@@ -1,6 +1,10 @@
+#ifndef _J_BASIS_VEC_H
+#define _J_BASIS_VEC_H
 #pragma once
 
-#include "aef.h"
+#include "aef_types.h"
+#include <format>
+#include <iostream>
 
 class j_basis_vec {
 public:
@@ -26,6 +30,7 @@ public:
   dcomplex H_hfs(j_basis_vec other);
   dcomplex H_st(j_basis_vec other, double E_z = 1.0);
 
+  std::string ket_string();
 
   static j_basis_vec from_index(int idx);
 
@@ -33,3 +38,14 @@ private:
   dcomplex H_hfs_scalar(j_basis_vec other);
   dcomplex H_hfs_tensor(j_basis_vec other);
 };
+
+std::ostream &operator<<(std::ostream &os, j_basis_vec &v);
+
+
+template <> struct std::formatter<j_basis_vec> : std::formatter<std::string> {
+  auto format(j_basis_vec v, format_context &ctx) {
+    return formatter<string>::format(std::format("|n={},j={},f={},m_f={}>", v.n, v.j, v.f, v.m_f), ctx);
+  }
+};
+
+#endif

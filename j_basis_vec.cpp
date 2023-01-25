@@ -1,5 +1,5 @@
-#include "j_basis_vec.h"
-#include "aef_utils.h"
+#include "aef.h"
+#include <format>
 
 int j_basis_vec::index() {
   int offset = (int)(4 * n * n);
@@ -133,6 +133,10 @@ dcomplex j_basis_vec::H_st(j_basis_vec other, double E_z) {
          sixj_factors * phase;
 }
 
+std::string j_basis_vec::ket_string() { 
+    return std::format("|n={}, j={}, f={}, m_f={}>", n, j, f, m_f);
+}
+
 j_basis_vec j_basis_vec::from_index(int idx) {
   int n = (int)sqrt(idx / 4.0);
   idx -= 4 * n * n;
@@ -155,4 +159,8 @@ j_basis_vec j_basis_vec::from_index(int idx) {
 
   spin m_f = idx - f;
   return j_basis_vec(n, j, f, m_f);
+}
+
+std::ostream &operator<<(std::ostream &os, j_basis_vec &v) {
+  return (os << std::format("|n={}, j={}, f={}, m_f={}>", v.n, v.j, v.f, v.m_f));
 }
