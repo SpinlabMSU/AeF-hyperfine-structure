@@ -79,6 +79,8 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
     const spin jp = s2.j;
     const spin fp = s2.f;
     const spin m_fp = s2.m_f;
+    if (m_f != m_fp || f != fp) return 0;
+    if (n != s2.n) return 0;
 
     const spin i = half, s = half;
 
@@ -145,8 +147,7 @@ j_basis_vec j_basis_vec::from_index(int idx) {
     if (idx >= 4 * n) {
         j = n + half;
         idx -= 4 * n;
-    }
-    else {
+    } else {
         j = n - half;
     }
     spin f = 0;
@@ -154,8 +155,7 @@ j_basis_vec j_basis_vec::from_index(int idx) {
     if (idx >= 2 * j) {
         f = j + 0.5;
         idx -= (int)(2 * j);
-    }
-    else {
+    } else {
         f = j - 0.5;
     }
 
@@ -163,7 +163,9 @@ j_basis_vec j_basis_vec::from_index(int idx) {
     return j_basis_vec(n, j, f, m_f);
 }
 
-int j_basis_vec::index_of_n(spin n) { return (int)(4 * n * n); }
+int j_basis_vec::index_of_n(spin n) {
+    return (int)(4 * n * n);
+}
 
 std::ostream& operator<<(std::ostream& os, j_basis_vec& v) {
     return (

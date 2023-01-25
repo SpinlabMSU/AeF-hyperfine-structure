@@ -222,6 +222,7 @@
     <ClInclude Include="include\gcem_incl\tgamma.hpp" />
     <ClInclude Include="include\gcem_incl\trunc.hpp" />
     <ClInclude Include="j_basis_vec.h" />
+    <ClInclude Include="tuple_hash.hpp" />
     <ClInclude Include="units.hpp" />
   </ItemGroup>
   <ItemGroup>
