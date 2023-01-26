@@ -2,7 +2,7 @@
 //
 
 #include "pch.h"
-#include "framework.h"
+#include "aef/framework.h"
 
 // TODO: This is an example of a library function
 void fnSpinlabHyperfineLib()

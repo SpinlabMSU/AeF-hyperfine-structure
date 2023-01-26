@@ -1,4 +1,6 @@
-#include "HyperfineCalculator.hpp"
+#include "pch.h"
+#include "aef/aef.h"
+
 
 HyperfineCalculator::HyperfineCalculator(spin nmax_, double E_z_, bool enableDev_)
     : nmax(nmax_), E_z(E_z_), init(false), enableDev(enableDev_), nBasisElts(j_basis_vec::index_of_n(nmax_ + 1)), diagonalized(false) {
@@ -84,7 +86,7 @@ bool HyperfineCalculator::diagonalize_H() {
     return diagonalized;
 }
 
-#include "matrix_io.hpp"
+#include <aef/matrix_io.hpp>
 #include <zstr.hpp>
 #include <algorithm>
 #include <iterator>

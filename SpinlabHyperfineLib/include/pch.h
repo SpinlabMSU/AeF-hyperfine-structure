@@ -8,6 +8,23 @@
 #define PCH_H
 
 // add headers that you want to pre-compile here
-#include "framework.h"
+#include "aef\framework.h"
+
+
+#include "Eigen\Eigen"
+#include "zlib.h"
+
+
+// extra external headers
+#include <zstr.hpp>
+#include <algorithm>
+#include <iterator>
+#include <gsl/gsl_sf_coupling.h>
+#include <format>
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <tuple>
+#include <functional>
 
 #endif //PCH_H

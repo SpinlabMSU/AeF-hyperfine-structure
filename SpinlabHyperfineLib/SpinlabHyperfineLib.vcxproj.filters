@@ -28,6 +28,9 @@
     <Filter Include="Header Files\zstr">
       <UniqueIdentifier>{0de5f52e-04be-471b-9e4d-6b766afa2b9c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\aef">
+      <UniqueIdentifier>{b284c85e-6ae4-46ab-b4a2-6c2219aa715d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\aef\framework.h">
@@ -234,25 +237,10 @@
     <ClInclude Include="include\zstr.hpp">
       <Filter>Header Files\zstr</Filter>
     </ClInclude>
-    <ClInclude Include="include\aef\aef.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\aef\aef_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\aef\aef_utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\aef\baf_constants.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\gcem.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\aef\HyperfineCalculator.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\aef\j_basis_vec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\aef\matrix_io.hpp">
@@ -264,11 +252,23 @@
     <ClInclude Include="include\aef\units.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\j_basis_vec.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\aef.h">
+      <Filter>Header Files\aef</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\aef_types.h">
+      <Filter>Header Files\aef</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\aef_utils.h">
+      <Filter>Header Files\aef</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\baf_constants.hpp">
+      <Filter>Header Files\aef</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\SpinlabHyperfineLib.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -279,6 +279,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\j_basis_vec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SpinlabHyperfineLib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

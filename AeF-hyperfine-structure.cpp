@@ -2,8 +2,7 @@
 // execution begins and ends there.
 //
 
-#include "aef.h"
-#include "HyperfineCalculator.hpp"
+#include <aef/aef.h>
 #include <format>
 #include <iostream>
 #include <chrono>
@@ -27,7 +26,12 @@ int main() {
     std::cout << str << std::endl;
     out << str << std::endl;
 
+    // todo add code using hyperfine calculator
+    HyperfineCalculator calc;
 
+
+
+    return 0;
     std::vector<std::chrono::microseconds> times;
 
 
