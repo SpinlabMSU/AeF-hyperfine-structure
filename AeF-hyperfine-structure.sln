@@ -4,6 +4,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.4.33110.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AeF-hyperfine-structure", "AeF-hyperfine-structure.vcxproj", "{FC10A815-9EC5-4EB7-9C79-3183F2095C8E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6D7EC651-0F40-4353-821F-E6ECBE0EA7D7} = {6D7EC651-0F40-4353-821F-E6ECBE0EA7D7}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpinlabHyperfineLib", "SpinlabHyperfineLib\SpinlabHyperfineLib.vcxproj", "{6D7EC651-0F40-4353-821F-E6ECBE0EA7D7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +26,14 @@ Global
 		{FC10A815-9EC5-4EB7-9C79-3183F2095C8E}.Release|x64.Build.0 = Release|x64
 		{FC10A815-9EC5-4EB7-9C79-3183F2095C8E}.Release|x86.ActiveCfg = Release|Win32
 		{FC10A815-9EC5-4EB7-9C79-3183F2095C8E}.Release|x86.Build.0 = Release|Win32
+		{6D7EC651-0F40-4353-821F-E6ECBE0EA7D7}.Debug|x64.ActiveCfg = Debug|x64
+		{6D7EC651-0F40-4353-821F-E6ECBE0EA7D7}.Debug|x64.Build.0 = Debug|x64
+		{6D7EC651-0F40-4353-821F-E6ECBE0EA7D7}.Debug|x86.ActiveCfg = Debug|Win32
+		{6D7EC651-0F40-4353-821F-E6ECBE0EA7D7}.Debug|x86.Build.0 = Debug|Win32
+		{6D7EC651-0F40-4353-821F-E6ECBE0EA7D7}.Release|x64.ActiveCfg = Release|x64
+		{6D7EC651-0F40-4353-821F-E6ECBE0EA7D7}.Release|x64.Build.0 = Release|x64
+		{6D7EC651-0F40-4353-821F-E6ECBE0EA7D7}.Release|x86.ActiveCfg = Release|Win32
+		{6D7EC651-0F40-4353-821F-E6ECBE0EA7D7}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
