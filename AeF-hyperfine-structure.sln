@@ -10,6 +10,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AeF-hyperfine-structure", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpinlabHyperfineLib", "SpinlabHyperfineLib\SpinlabHyperfineLib.vcxproj", "{6D7EC651-0F40-4353-821F-E6ECBE0EA7D7}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GenerateHamiltonianFiles", "GenerateHamiltonianFiles\GenerateHamiltonianFiles.vcxproj", "{63553923-16FD-46F4-B013-287E378FFE65}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -34,6 +36,14 @@ Global
 		{6D7EC651-0F40-4353-821F-E6ECBE0EA7D7}.Release|x64.Build.0 = Release|x64
 		{6D7EC651-0F40-4353-821F-E6ECBE0EA7D7}.Release|x86.ActiveCfg = Release|Win32
 		{6D7EC651-0F40-4353-821F-E6ECBE0EA7D7}.Release|x86.Build.0 = Release|Win32
+		{63553923-16FD-46F4-B013-287E378FFE65}.Debug|x64.ActiveCfg = Debug|x64
+		{63553923-16FD-46F4-B013-287E378FFE65}.Debug|x64.Build.0 = Debug|x64
+		{63553923-16FD-46F4-B013-287E378FFE65}.Debug|x86.ActiveCfg = Debug|Win32
+		{63553923-16FD-46F4-B013-287E378FFE65}.Debug|x86.Build.0 = Debug|Win32
+		{63553923-16FD-46F4-B013-287E378FFE65}.Release|x64.ActiveCfg = Release|x64
+		{63553923-16FD-46F4-B013-287E378FFE65}.Release|x64.Build.0 = Release|x64
+		{63553923-16FD-46F4-B013-287E378FFE65}.Release|x86.ActiveCfg = Release|Win32
+		{63553923-16FD-46F4-B013-287E378FFE65}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
