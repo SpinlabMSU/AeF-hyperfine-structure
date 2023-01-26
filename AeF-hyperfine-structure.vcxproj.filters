@@ -31,6 +31,9 @@
     <Filter Include="Header Files\Eigen\src">
       <UniqueIdentifier>{96becbde-f045-42e2-8e0c-e619a8bff71d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\zstr">
+      <UniqueIdentifier>{71767d26-8ed8-4afe-8924-b4364b839304}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AeF-hyperfine-structure.cpp">
@@ -265,6 +268,15 @@
     </ClInclude>
     <ClInclude Include="tuple_hash.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="matrix_io.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\strict_fstream.hpp">
+      <Filter>Header Files\zstr</Filter>
+    </ClInclude>
+    <ClInclude Include="include\zstr.hpp">
+      <Filter>Header Files\zstr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

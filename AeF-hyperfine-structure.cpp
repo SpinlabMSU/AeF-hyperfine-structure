@@ -7,6 +7,7 @@
 #include <format>
 #include <iostream>
 #include <chrono>
+#include <fstream>
 
 using namespace std::chrono;
 
@@ -21,32 +22,69 @@ int main() {
     dcomplex H_st = v.H_st(v, E_z);
     std::string str = std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(50kV/cm) = {} MHz",
         v, E_rot, H_hfs, H_st);
+
+    std::ofstream out("log.txt", std::ios::out);
     std::cout << str << std::endl;
+    out << str << std::endl;
 
 
-    auto ostart = high_resolution_clock::now();
-    auto start = high_resolution_clock::now();
-    HyperfineCalculator calc(8, E_z);
-    auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(stop - start);
-    std::cout << "Constructing Hyperfine calculator with nmax = " << 8 << " took " << duration << " microseconds" << std::endl;
+    std::vector<std::chrono::microseconds> times;
 
-    start = high_resolution_clock::now();
-    calc.calculate_matrix_elts();
-    stop = high_resolution_clock::now();
-    duration = duration_cast<microseconds>(stop - start);
-    std::cout << "Calculating hamiltonian (" << calc.nBasisElts << " basis elements) took " << duration << " microseconds" << std::endl;
 
-    // diagonalization
-    start = high_resolution_clock::now();
-    calc.diagonalize_H();
-    stop = high_resolution_clock::now();
-    duration = duration_cast<microseconds>(stop - start);
-    std::cout << "Diagonalizing hamiltonian (" << calc.nBasisElts << " basis elements) took " << duration << " microseconds" << std::endl;
+    for (int nmax = 0; nmax <= 4; nmax++) {
+        auto ostart = high_resolution_clock::now();
+        auto start = high_resolution_clock::now();
+        HyperfineCalculator calc(nmax, E_z);
+        auto stop = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(stop - start);
+        std::cout << "Constructing Hyperfine calculator with nmax = " << nmax << " took " << duration << " microseconds" << std::endl;
+        out << "Constructing Hyperfine calculator with nmax = " << nmax << " took " << duration << " microseconds" << std::endl;
 
-    stop = high_resolution_clock::now();
-    duration = duration_cast<microseconds>(stop - ostart);
-    std::cout << "Whole calculation took " << duration << " microseconds" << std::endl;
+        start = high_resolution_clock::now();
+        calc.calculate_matrix_elts();
+        stop = high_resolution_clock::now();
+        duration = duration_cast<microseconds>(stop - start);
+        std::cout << "Calculating hamiltonian (" << calc.nBasisElts << " basis elements) took " << duration << " microseconds" << std::endl;
+        out << "Calculating hamiltonian (" << calc.nBasisElts << " basis elements) took " << duration << " microseconds" << std::endl;
+
+        // diagonalization
+        start = high_resolution_clock::now();
+        calc.diagonalize_H();
+        stop = high_resolution_clock::now();
+        duration = duration_cast<microseconds>(stop - start);
+        std::cout << "Diagonalizing hamiltonian (" << calc.nBasisElts << " basis elements) took " << duration << " microseconds" << std::endl;
+        out << "Diagonalizing hamiltonian (" << calc.nBasisElts << " basis elements) took " << duration << " microseconds" << std::endl;
+
+        stop = high_resolution_clock::now();
+        duration = duration_cast<microseconds>(stop - ostart);
+        std::cout << "Whole calculation took " << duration << " microseconds" << std::endl;
+        out << "Whole calculation took " << duration << " microseconds" << std::endl;
+        times.push_back(duration);
+
+
+        std::string outnam = std::format("out/matrix_{}.dat", nmax);
+        std::ofstream fout(outnam, std::ios::out);
+        calc.save_matrix_elts(fout);
+        fout.close();
+    }
+
+    HyperfineCalculator ncalc;
+
+    std::ifstream fin("out/matrix_4.dat");
+    bool succ = ncalc.load_matrix_elts(fin);
+    fin.close();
+
+    if (!succ) {
+        std::cout << "ERROR" << std::endl;
+    } else {
+        std::cout << "SUCCESS" << std::endl;
+    }
+
+    for (int idx = 0; idx < times.size(); idx++) {
+        std::cout << idx << ", " << times[idx] << std::endl;
+        out << idx << ", " << times[idx] << std::endl;
+    }
+    out.close();
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

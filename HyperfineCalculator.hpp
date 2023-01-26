@@ -6,9 +6,9 @@
 
 class HyperfineCalculator {
 public:
-    const spin nmax;
-    const size_t nBasisElts;
-    const bool enableDev;
+    spin nmax;
+    size_t nBasisElts;
+    bool enableDev;
 private:
     double E_z;
     bool init;
@@ -28,13 +28,15 @@ public:
     Eigen::MatrixXcd Vs;
 
 public:
-    HyperfineCalculator(spin nmax_ = 8.0, double E_z = 1.0, bool enableDev = false);
+    HyperfineCalculator(spin nmax_ = 0.0, double E_z = 1.0, bool enableDev = false);
     ~HyperfineCalculator();
 
     bool calculate_matrix_elts();
     bool diagonalize_H();
     bool load_matrix_elts(std::istream& in);
     bool save_matrix_elts(std::ostream& out);
+
+    void set_nmax(spin nmax_);
 
     inline dcomplex eval_H(Eigen::VectorXcd& v, Eigen::VectorXcd& w) {
         return (v.transpose() * H_tot * w)(0, 0);

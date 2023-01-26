@@ -221,7 +221,10 @@
     <ClInclude Include="include\gcem_incl\tanh.hpp" />
     <ClInclude Include="include\gcem_incl\tgamma.hpp" />
     <ClInclude Include="include\gcem_incl\trunc.hpp" />
+    <ClInclude Include="include\strict_fstream.hpp" />
+    <ClInclude Include="include\zstr.hpp" />
     <ClInclude Include="j_basis_vec.h" />
+    <ClInclude Include="matrix_io.hpp" />
     <ClInclude Include="tuple_hash.hpp" />
     <ClInclude Include="units.hpp" />
   </ItemGroup>
