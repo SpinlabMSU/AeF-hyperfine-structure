@@ -2,6 +2,7 @@
 #include "aef.h"
 #include <istream>
 #include <vector>
+#include <filesystem>
 #include "Eigen/Eigen"
 
 class HyperfineCalculator {
@@ -31,8 +32,18 @@ public:
     HyperfineCalculator(spin nmax_ = 0.0, double E_z = 1.0, bool enableDev = false);
     ~HyperfineCalculator();
 
+    bool isDiagonalized() {
+        return diagonalized;
+    }
     bool calculate_matrix_elts();
     bool diagonalize_H();
+
+    bool load_matrix_elts(std::string inpath);
+    bool save_matrix_elts(std::string out);
+
+    bool load_matrix_elts(std::filesystem::path inpath);
+    bool save_matrix_elts(std::filesystem::path out);
+
     bool load_matrix_elts(std::istream& in);
     bool save_matrix_elts(std::ostream& out);
 

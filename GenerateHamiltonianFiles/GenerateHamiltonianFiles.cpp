@@ -35,7 +35,7 @@ int main() {
     std::vector<std::chrono::microseconds> times;
 
 
-    for (int nmax = 0; nmax <= 40; nmax++) {
+    for (int nmax = 4; nmax <= 4; nmax++) {
         auto ostart = high_resolution_clock::now();
         auto start = high_resolution_clock::now();
         HyperfineCalculator calc(nmax, E_z);
@@ -67,17 +67,21 @@ int main() {
 
 
         std::string outnam = std::format("out/matrix_{}.dat", nmax);
-        fs::path opath = fs::path(outnam);
-        std::ofstream fout(opath, std::ios::out);
-        calc.save_matrix_elts(fout);
-        fout.close();
+        calc.save_matrix_elts(outnam);
     }
 
     HyperfineCalculator ncalc;
 
-    std::ifstream fin("out/matrix_4.dat");
-    bool succ = ncalc.load_matrix_elts(fin);
-    fin.close();
+    fs::path inpath(u8"out/matrix_4.dat");
+    bool succ = ncalc.load_matrix_elts(inpath);
+    
+    Eigen::VectorXcd Es = ncalc.Es;
+
+
+    std::cout << "Level, Energy (MHz)" << std::endl;
+    for (int i = 0; i < ncalc.nBasisElts; i++) {
+        std::cout << i << ", " << Es[i] << std::endl;
+    }
 
     if (!succ) {
         std::cout << "ERROR" << std::endl;

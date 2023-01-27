@@ -7,8 +7,11 @@
 #include <iostream>
 #include <chrono>
 #include <fstream>
+#include <filesystem>
 
 using namespace std::chrono;
+namespace fs = std::filesystem;
+
 
 int main() {
     std::cout << "Hello World!\n";
@@ -27,68 +30,24 @@ int main() {
     out << str << std::endl;
 
     // todo add code using hyperfine calculator
+    int nmax = 4;
     HyperfineCalculator calc;
+    std::string spath = std::format("out/matrix_{}.dat", nmax);
 
+    bool result = calc.load_matrix_elts(spath);
 
+    if (!result) {
+        std::cout << "couldn't load " << spath << std::endl;
+    }
+
+    Eigen::VectorXcd Es = calc.Es;
+
+    std::cout << "Level, Energy (MHz)" << std::endl;
+    for (int i = 0; i < calc.nBasisElts; i++) {
+        std::cout << i << ", " << Es[i] << std::endl;
+    }
 
     return 0;
-    std::vector<std::chrono::microseconds> times;
-
-
-    for (int nmax = 0; nmax <= 40; nmax++) {
-        auto ostart = high_resolution_clock::now();
-        auto start = high_resolution_clock::now();
-        HyperfineCalculator calc(nmax, E_z);
-        auto stop = high_resolution_clock::now();
-        auto duration = duration_cast<microseconds>(stop - start);
-        std::cout << "Constructing Hyperfine calculator with nmax = " << nmax << " took " << duration << " microseconds" << std::endl;
-        out << "Constructing Hyperfine calculator with nmax = " << nmax << " took " << duration << " microseconds" << std::endl;
-
-        start = high_resolution_clock::now();
-        calc.calculate_matrix_elts();
-        stop = high_resolution_clock::now();
-        duration = duration_cast<microseconds>(stop - start);
-        std::cout << "Calculating hamiltonian (" << calc.nBasisElts << " basis elements) took " << duration << " microseconds" << std::endl;
-        out << "Calculating hamiltonian (" << calc.nBasisElts << " basis elements) took " << duration << " microseconds" << std::endl;
-
-        // diagonalization
-        start = high_resolution_clock::now();
-        calc.diagonalize_H();
-        stop = high_resolution_clock::now();
-        duration = duration_cast<microseconds>(stop - start);
-        std::cout << "Diagonalizing hamiltonian (" << calc.nBasisElts << " basis elements) took " << duration << " microseconds" << std::endl;
-        out << "Diagonalizing hamiltonian (" << calc.nBasisElts << " basis elements) took " << duration << " microseconds" << std::endl;
-
-        stop = high_resolution_clock::now();
-        duration = duration_cast<microseconds>(stop - ostart);
-        std::cout << "Whole calculation took " << duration << " microseconds" << std::endl;
-        out << "Whole calculation took " << duration << " microseconds" << std::endl;
-        times.push_back(duration);
-
-
-        std::string outnam = std::format("out/matrix_{}.dat", nmax);
-        std::ofstream fout(outnam, std::ios::out);
-        calc.save_matrix_elts(fout);
-        fout.close();
-    }
-
-    HyperfineCalculator ncalc;
-
-    std::ifstream fin("out/matrix_4.dat");
-    bool succ = ncalc.load_matrix_elts(fin);
-    fin.close();
-
-    if (!succ) {
-        std::cout << "ERROR" << std::endl;
-    } else {
-        std::cout << "SUCCESS" << std::endl;
-    }
-
-    for (int idx = 0; idx < times.size(); idx++) {
-        std::cout << idx << ", " << times[idx] << std::endl;
-        out << idx << ", " << times[idx] << std::endl;
-    }
-    out.close();
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

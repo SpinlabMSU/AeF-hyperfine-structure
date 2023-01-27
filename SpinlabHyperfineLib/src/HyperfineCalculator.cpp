@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "aef/aef.h"
+#include <bitset>
 
+namespace fs = std::filesystem;
 
 HyperfineCalculator::HyperfineCalculator(spin nmax_, double E_z_, bool enableDev_)
     : nmax(nmax_), E_z(E_z_), init(false), enableDev(enableDev_), nBasisElts(j_basis_vec::index_of_n(nmax_ + 1)), diagonalized(false) {
@@ -86,27 +88,57 @@ bool HyperfineCalculator::diagonalize_H() {
     return diagonalized;
 }
 
+bool HyperfineCalculator::load_matrix_elts(std::string inpath) {
+    std::ifstream in(inpath, std::ios::binary);
+    return load_matrix_elts(in);
+}
+
+bool HyperfineCalculator::save_matrix_elts(std::string outpath) {
+    std::ofstream out(outpath, std::ios::binary | std::ios::trunc | std::ios::out);
+    return save_matrix_elts(out);
+}
+
+bool HyperfineCalculator::load_matrix_elts(fs::path inpath) {
+    std::ifstream in(inpath, std::ios::binary);
+    return load_matrix_elts(in);
+}
+
+bool HyperfineCalculator::save_matrix_elts(fs::path outpath) {
+    std::ofstream out(outpath, std::ios::binary | std::ios::trunc | std::ios::out);
+    return save_matrix_elts(out);
+}
+
 #include <aef/matrix_io.hpp>
 #include <zstr.hpp>
 #include <algorithm>
 #include <iterator>
 
 static constexpr uint8_t MAGIC[8] = { 'A', 'e', 'F', 0, 'H', 'D', 'a', 't' };
-static constexpr uint16_t VERSION = 0;
+// current file format
+static constexpr uint16_t VERSION = 1;
+// minimum readable file format: needed because version 0 didn't open fiels
+static constexpr uint16_t MIN_VERSION = 1;
 
 enum hyp_flags : uint16_t {
     FLAG_DIAG = 1
 };
 
 
-bool HyperfineCalculator::load_matrix_elts(std::istream& in) {
-    zstr::istream zin(in);
-    //auto& zin = in;
-    uint8_t test[8] = {};
 
+//#define _NO_COMPRESS
+uint64_t stream_pos;
+bool HyperfineCalculator::load_matrix_elts(std::istream& in) {
+#ifndef _NO_COMPRESS
+    zstr::istream zin(in);
+#else
+    auto& zin = in;
+#endif
+    uint8_t test[8] = {};
+    stream_pos = 0;
     std::cout << "READING MAGIC :";
     for (int idx = 0; idx < sizeof(test); idx++) {
         zin >> test[idx];
+        stream_pos++;
         std::cout << test[idx];
     }
     std::cout << std::endl;
@@ -131,10 +163,12 @@ bool HyperfineCalculator::load_matrix_elts(std::istream& in) {
     }
     uint16_t version = 0;
     zin.read((char*)&version, sizeof(version));
+    stream_pos += sizeof(version);
 
-    if (version > VERSION) {
-        std::cout << "BAD VERSION " << version << std::endl;
-        uint16_t flags;
+    if (version > VERSION || version < MIN_VERSION) {
+        const char* reason = (version > VERSION) ? " is too recent." : " is too old.";
+        std::cout << "Unsupported version " << version << reason << std::endl;
+        uint16_t flags = 0;
         zin.read((char*)&flags, sizeof(flags));
         std::cout << "FLAGS WOULD BE " << flags << std::endl;
         return false;
@@ -142,16 +176,17 @@ bool HyperfineCalculator::load_matrix_elts(std::istream& in) {
 
     uint16_t flags;
     zin.read((char*)&flags, sizeof(flags));
-
-    
-    diagonalized = flags & FLAG_DIAG;
+    stream_pos += sizeof(flags);
+    std::cout << std::bitset<16>(flags) << " = " << flags << std::endl;
 
     uint32_t nmax_ = 0;
     zin.read((char*)&nmax_, sizeof(nmax_));
+    stream_pos += sizeof(nmax_);
     std::cout << "NMax is " << nmax_ << std::endl;
     nmax = nmax_;
     set_nmax(nmax_);
     
+    diagonalized = (flags & FLAG_DIAG);
     Eigen::read_binary(zin, H_rot.diagonal());
     Eigen::read_binary(zin, H_hfs);
     Eigen::read_binary(zin, H_stk);
@@ -161,16 +196,22 @@ bool HyperfineCalculator::load_matrix_elts(std::istream& in) {
     init = true;
 
     if (diagonalized) {
+        std::cout << "Hamiltonian has been diagonalized" << std::endl;
         Eigen::read_binary(zin, Es);
         Eigen::read_binary(zin, Vs);
+    } else {
+        std::cout << "Hamiltonian hasn't been diagonalized" << std::endl;
     }
 
     return true;
 }
 
 bool HyperfineCalculator::save_matrix_elts(std::ostream& out) {
+#ifndef _NO_COMPRESS
     zstr::ostream zout(out);
-    //auto& zout = out;
+#else
+    auto& zout = out;
+#endif
     std::copy(MAGIC, MAGIC + 8, std::ostream_iterator<uint8_t>(zout));
     zout.write((char*)&VERSION, sizeof(VERSION));
     uint16_t flags = 0;
