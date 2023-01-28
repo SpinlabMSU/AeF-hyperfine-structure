@@ -35,7 +35,7 @@ int main() {
     std::vector<std::chrono::microseconds> times;
 
 
-    for (int nmax = 4; nmax <= 4; nmax++) {
+    for (int nmax = 21; nmax <= 40; nmax++) {
         auto ostart = high_resolution_clock::now();
         auto start = high_resolution_clock::now();
         HyperfineCalculator calc(nmax, E_z);

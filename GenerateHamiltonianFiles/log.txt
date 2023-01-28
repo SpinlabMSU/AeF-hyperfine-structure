@@ -1,0 +1,101 @@
+|n=1,j=0.5,f=0,m_f=0>: E_rot=13406.9408596 MHz, E_hfs=(15.877249999999998 + i*0) MHz, E_st(50kV/cm) = (0 + i*0) MHz
+Constructing Hyperfine calculator with nmax = 21 took 122us microseconds
+Calculating hamiltonian (1936 basis elements) took 87979255us microseconds
+Diagonalizing hamiltonian (1936 basis elements) took 52443803us microseconds
+Whole calculation took 140428620us microseconds
+Constructing Hyperfine calculator with nmax = 22 took 140us microseconds
+Calculating hamiltonian (2116 basis elements) took 112046741us microseconds
+Diagonalizing hamiltonian (2116 basis elements) took 68923177us microseconds
+Whole calculation took 180974541us microseconds
+Constructing Hyperfine calculator with nmax = 23 took 109us microseconds
+Calculating hamiltonian (2304 basis elements) took 134207353us microseconds
+Diagonalizing hamiltonian (2304 basis elements) took 101189794us microseconds
+Whole calculation took 235888428us microseconds
+Constructing Hyperfine calculator with nmax = 24 took 128us microseconds
+Calculating hamiltonian (2500 basis elements) took 131235565us microseconds
+Diagonalizing hamiltonian (2500 basis elements) took 98963827us microseconds
+Whole calculation took 230201460us microseconds
+Constructing Hyperfine calculator with nmax = 25 took 117us microseconds
+Calculating hamiltonian (2704 basis elements) took 140507747us microseconds
+Diagonalizing hamiltonian (2704 basis elements) took 122982000us microseconds
+Whole calculation took 263492309us microseconds
+Constructing Hyperfine calculator with nmax = 26 took 161us microseconds
+Calculating hamiltonian (2916 basis elements) took 183108647us microseconds
+Diagonalizing hamiltonian (2916 basis elements) took 143780410us microseconds
+Whole calculation took 326891111us microseconds
+Constructing Hyperfine calculator with nmax = 27 took 144us microseconds
+Calculating hamiltonian (3136 basis elements) took 213765395us microseconds
+Diagonalizing hamiltonian (3136 basis elements) took 163442579us microseconds
+Whole calculation took 377209902us microseconds
+Constructing Hyperfine calculator with nmax = 28 took 144us microseconds
+Calculating hamiltonian (3364 basis elements) took 247607436us microseconds
+Diagonalizing hamiltonian (3364 basis elements) took 201075789us microseconds
+Whole calculation took 448687895us microseconds
+Constructing Hyperfine calculator with nmax = 29 took 163us microseconds
+Calculating hamiltonian (3600 basis elements) took 297970397us microseconds
+Diagonalizing hamiltonian (3600 basis elements) took 263200785us microseconds
+Whole calculation took 561173531us microseconds
+Constructing Hyperfine calculator with nmax = 30 took 161us microseconds
+Calculating hamiltonian (3844 basis elements) took 358363233us microseconds
+Diagonalizing hamiltonian (3844 basis elements) took 307796184us microseconds
+Whole calculation took 666161344us microseconds
+Constructing Hyperfine calculator with nmax = 31 took 160us microseconds
+Calculating hamiltonian (4096 basis elements) took 412585138us microseconds
+Diagonalizing hamiltonian (4096 basis elements) took 373190263us microseconds
+Whole calculation took 785781024us microseconds
+Constructing Hyperfine calculator with nmax = 32 took 3983us microseconds
+Calculating hamiltonian (4356 basis elements) took 458740779us microseconds
+Diagonalizing hamiltonian (4356 basis elements) took 380872945us microseconds
+Whole calculation took 839623006us microseconds
+Constructing Hyperfine calculator with nmax = 33 took 155us microseconds
+Calculating hamiltonian (4624 basis elements) took 479983836us microseconds
+Diagonalizing hamiltonian (4624 basis elements) took 436643075us microseconds
+Whole calculation took 916629288us microseconds
+Constructing Hyperfine calculator with nmax = 34 took 148us microseconds
+Calculating hamiltonian (4900 basis elements) took 551998297us microseconds
+Diagonalizing hamiltonian (4900 basis elements) took 518567042us microseconds
+Whole calculation took 1070571460us microseconds
+Constructing Hyperfine calculator with nmax = 35 took 776us microseconds
+Calculating hamiltonian (5184 basis elements) took 635651352us microseconds
+Diagonalizing hamiltonian (5184 basis elements) took 606007135us microseconds
+Whole calculation took 1241666765us microseconds
+Constructing Hyperfine calculator with nmax = 36 took 3953us microseconds
+Calculating hamiltonian (5476 basis elements) took 725663556us microseconds
+Diagonalizing hamiltonian (5476 basis elements) took 723911942us microseconds
+Whole calculation took 1449598130us microseconds
+Constructing Hyperfine calculator with nmax = 37 took 1305us microseconds
+Calculating hamiltonian (5776 basis elements) took 830325556us microseconds
+Diagonalizing hamiltonian (5776 basis elements) took 840750951us microseconds
+Whole calculation took 1671090477us microseconds
+Constructing Hyperfine calculator with nmax = 38 took 8267us microseconds
+Calculating hamiltonian (6084 basis elements) took 946661175us microseconds
+Diagonalizing hamiltonian (6084 basis elements) took 969310625us microseconds
+Whole calculation took 1915990680us microseconds
+Constructing Hyperfine calculator with nmax = 39 took 2412us microseconds
+Calculating hamiltonian (6400 basis elements) took 1074886525us microseconds
+Diagonalizing hamiltonian (6400 basis elements) took 1168484223us microseconds
+Whole calculation took 2243378136us microseconds
+Constructing Hyperfine calculator with nmax = 40 took 13013us microseconds
+Calculating hamiltonian (6724 basis elements) took 1208224836us microseconds
+Diagonalizing hamiltonian (6724 basis elements) took 1318507784us microseconds
+Whole calculation took 2526782394us microseconds
+0, 140428620us
+1, 180974541us
+2, 235888428us
+3, 230201460us
+4, 263492309us
+5, 326891111us
+6, 377209902us
+7, 448687895us
+8, 561173531us
+9, 666161344us
+10, 785781024us
+11, 839623006us
+12, 916629288us
+13, 1070571460us
+14, 1241666765us
+15, 1449598130us
+16, 1671090477us
+17, 1915990680us
+18, 2243378136us
+19, 2526782394us
