@@ -63,10 +63,14 @@ namespace Eigen {
         out.write((char*)&emarker, sizeof(emarker));
     }
 
+
+#ifndef AEF_STREAM_NDEBUG
     void print_stream_position(std::istream& in) {
         std::cout << "Stream position " << in.tellg() << " = 0x" << std::hex << in.tellg() << std::dec << std::endl;
     }
-
+#else
+#define print_stream_position(in) ((void)in)
+#endif
     template<class Matrix>
     void read_binary(std::istream& in, Matrix& matrix) {
         constexpr uint32_t magic = 0xffddeeff;
@@ -79,12 +83,12 @@ namespace Eigen {
         std::cout << std::hex << "Read magic " << rmagic << std::dec << std::endl;
 
         if (magic != rmagic) {
+#ifndef AEF_STREAM_NDEBUG
             for (int i = 1; i <= 32; i++) {
                 in.read((char*)&rmagic, sizeof(rmagic));
                 std::cout << std::hex << "Tried extra magic # " << i << " : " << rmagic << std::dec << std::endl;
             }
-
-
+#endif
             DebugBreak();
             throw std::exception("BAD MAGIC");
         }
@@ -105,12 +109,13 @@ namespace Eigen {
 
         in.read((char*)matrix.data(), size);
         ::stream_pos += rows * cols * sizeof(typename Matrix::Scalar);
+#ifndef AEF_STREAM_NDEBUG
         print_stream_position(in);
         auto post = in.tellg();
 
         auto diff = post - pre;
         std::cout << "Tried to read " << size  << " bytes, actually read " << diff << " bytes." << std::endl;
-
+#endif
 
 
         if (in.eof() || in.fail() || in.bad()) {
