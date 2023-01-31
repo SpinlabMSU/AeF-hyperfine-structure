@@ -18,8 +18,11 @@ int main() {
     j_basis_vec v(1, .5, 0, 0);
     double E_rot = std::real(v.H_rot());
     dcomplex H_hfs = v.H_hfs(v);
-
-    const double E_z = unit_conversion::MHz_D_per_V_cm * 50 * 1000;
+    /// <summary>
+    /// WARNING: the wrong value was originally used in the conversion factor
+    /// This was supposed to be 50 kV/cm but is actually 500 kV/cm.
+    /// </summary>
+    const double E_z = unit_conversion::MHz_D_per_V_cm * 500 * 1000;
 
     dcomplex H_st = v.H_st(v, E_z);
     std::string str = std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(50kV/cm) = {} MHz",

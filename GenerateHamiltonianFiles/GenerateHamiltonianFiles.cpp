@@ -17,7 +17,7 @@ int main() {
     double E_rot = std::real(v.H_rot());
     dcomplex H_hfs = v.H_hfs(v);
 
-    const double E_z = unit_conversion::MHz_D_per_V_cm * 50 * 1000;
+    const double E_z = unit_conversion::BAD_MHz_D_per_V_cm * 50 * 1000;
 
     dcomplex H_st = v.H_st(v, E_z);
     std::string str = std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(50kV/cm) = {} MHz",
