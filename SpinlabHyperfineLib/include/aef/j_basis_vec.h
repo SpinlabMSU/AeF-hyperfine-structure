@@ -35,7 +35,7 @@ public:
     static j_basis_vec from_index(int idx);
     static int index_of_n(spin n);
 
-private:
+public:
     dcomplex H_hfs_scalar(j_basis_vec other);
     dcomplex H_hfs_tensor(j_basis_vec other);
 };

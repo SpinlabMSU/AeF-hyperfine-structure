@@ -80,9 +80,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(ProjectDir)include;$(IncludePath)</IncludePath>
+    <PublicIncludeDirectories>$(ProjectDir)include;$(PublicIncludeDirectories)</PublicIncludeDirectories>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(ProjectDir)include;$(IncludePath)</IncludePath>
+    <PublicIncludeDirectories>$(ProjectDir)include;$(PublicIncludeDirectories)</PublicIncludeDirectories>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -233,7 +235,7 @@
     <ClInclude Include="include\gcem_incl\trunc.hpp" />
     <ClInclude Include="include\strict_fstream.hpp" />
     <ClInclude Include="include\zstr.hpp" />
-    <ClInclude Include="include\j_basis_vec.h" />
+    <ClInclude Include="include\aef\j_basis_vec.h" />
     <ClInclude Include="include\aef\matrix_io.hpp" />
     <ClInclude Include="include\aef\tuple_hash.hpp" />
     <ClInclude Include="include\aef\units.hpp" />

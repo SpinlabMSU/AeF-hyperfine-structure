@@ -246,9 +246,6 @@
     <ClInclude Include="include\aef\units.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\j_basis_vec.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\aef\aef.h">
       <Filter>Header Files\aef</Filter>
     </ClInclude>
@@ -265,6 +262,9 @@
       <Filter>Header Files\aef</Filter>
     </ClInclude>
     <ClInclude Include="include\aef\HyperfineCalculator.hpp">
+      <Filter>Header Files\aef</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\j_basis_vec.h">
       <Filter>Header Files\aef</Filter>
     </ClInclude>
   </ItemGroup>

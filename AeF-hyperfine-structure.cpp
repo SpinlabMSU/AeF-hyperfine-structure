@@ -57,8 +57,9 @@ int main() {
     out << str << std::endl;
 
     // todo add code using hyperfine calculator
-    int nmax = 4;
-    HyperfineCalculator calc;
+    int nmax = 8;
+    HyperfineCalculator calc(nmax, E_z);
+#if 0
     std::string spath = std::format("out/matrix_{}.dat", nmax);
 
     bool result = calc.load_matrix_elts(spath);
@@ -66,7 +67,11 @@ int main() {
     if (!result) {
         std::cout << "couldn't load " << spath << std::endl;
     }
+#else
+    calc.calculate_matrix_elts();
+#endif
 
+#ifdef PRINT_EXTRAS
     Eigen::VectorXcd Es = calc.Es;
 
     std::cout << "Level, Energy (MHz)" << std::endl;
@@ -85,11 +90,23 @@ int main() {
     for (int i = 0; i < calc.nBasisElts; i++) {
         std::cout << i << ", " << Es[i] << std::endl;
     }
-
+#else
+    calc.H_tot -= calc.H_stk;
+    calc.diagonalize_H();
+#endif
     // find
     std::ofstream oStk(fs::path("stark_shift_gnd.csv"), std::ios::trunc | std::ios::out);
     j_basis_vec gnd = j_basis_vec::from_index(0);
-    oStk << "E-field (V/cm), Stark-shifted Energy of " << gnd.ket_string() << " (MHz)" << std::endl;
+    // n = 0, j = 0.5, f = 1 hyperfine triplet
+    j_basis_vec f1t(0, 0.5, 1, -1); int32_t if1t = f1t.index();
+    j_basis_vec f10(0, 0.5, 1,  0); int32_t if10 = f10.index();
+    j_basis_vec f11(0, 0.5, 1,  1); int32_t if11 = f11.index();
+
+    std::cout << "if1t=" << if1t << " if10=" << if10 << " if11=" << if11 << std::endl;
+
+    //oStk << "E-field (V/cm), Stark-shifted Energy of " << gnd.ket_string() << " (MHz)";
+    oStk << "E-field (V/cm), dE_gnd";
+    oStk << ", dE_f1t, dE_f10, dE_f11" << std::endl;
     for (int fdx = 0; fdx < 101; fdx++) {
         // note that E_z is divided by 10 so that the max field is 50 kV/cm, not 500 kV/cm
         double Ez_fdx = (E_z / 10.0) * (fdx / 100.0);
@@ -98,13 +115,18 @@ int main() {
         calc.H_tot += Ez_fdx / E_z * calc.H_stk;
         calc.diagonalize_H();
 
-
+        // f = 0 singlet
         int32_t idx = most_like(calc.Vs, 0);
         double E = energy_of_closest(calc, 0);
         double Ez_V_cm = Ez_fdx / unit_conversion::MHz_D_per_V_cm;
 
+        // energy differences for f = 1 triplet
+        double dE_f1t = energy_of_closest(calc, if1t) - E;
+        double dE_f10 = energy_of_closest(calc, if10) - E;
+        double dE_f11 = energy_of_closest(calc, if11) - E;
+
         std::cout << std::format("Closest Energy-estate to 0-E-field gnd state is {}, with energy {}", idx, E) << std::endl;
-        oStk << Ez_V_cm << "," << E << std::endl;
+        oStk << Ez_V_cm << "," << E << "," << dE_f1t << "," << dE_f10 << "," << dE_f11 << std::endl;
         calc.H_tot -= Ez_fdx / E_z * calc.H_stk;
     }
 
