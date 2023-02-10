@@ -27,18 +27,23 @@ dcomplex j_basis_vec::H_rot() {
 }
 
 
-// See 
+// See header for main 
 dcomplex j_basis_vec::H_hfs_scalar(j_basis_vec other) {
-    // calculates \vec{I}\cdot\vec{S} part of hfs hamiltonian
+    // calculates the scalar part of the hyperfine hamiltonian coupling nuclear
+    // spin to electron spin -- contains 2 contributions 
+
     if (n != other.n or f != other.f or m_f != other.m_f) {
         return 0;
     }
     const spin jp = other.j;
-    const double coeff = 3.0 / 4.0 * hfs_constants::b * xi_prime(j, jp);
+    // the effective coefficient contains a contribution both from the
+    // \vec{I}\cdot\vec{S} term (b) and from the I_z*S_z term (c/3)
+    const double eff_b = hfs_constants::b + hfs_constants::c / 3.0;
+    const double prf = 3.0 / 4.0 * eff_b * xi_prime(j, jp);
     auto hg0 = w6j(half, half, 0, n, f, jp) * w6j(half, half, 0, n, f, j);
     auto hg1 = w6j(half, half, 1, n, f, jp) * w6j(half, half, 1, n, f, j);
 
-    const dcomplex retval = coeff * (hg1 - hg0);
+    const dcomplex retval = prf * (hg1 - hg0);
 
 #if 1
     if (std::abs(retval) > 1e-3) {
@@ -179,7 +184,7 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
 
     const spin i = half, s = half;
 
-    dcomplex prf = hfs_constants::c;// *xi(jp, j)* xi_prime(f, fp);
+    dcomplex prf = hfs_constants::c * 2.0 / 3.0;// *xi(jp, j)* xi_prime(f, fp);
 #ifdef USE_3J
     prf *= xi(jp, j) * xi_prime(f, fp);
 #endif
