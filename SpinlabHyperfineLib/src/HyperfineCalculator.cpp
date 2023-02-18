@@ -25,6 +25,10 @@ void HyperfineCalculator::set_nmax(spin nmax_) {
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         basis.emplace_back(j_basis_vec::from_index(idx));
     }
+
+    for (int idx = 0; idx < nBasisElts; idx++) {
+        assert(basis[idx] == j_basis_vec::from_index(idx));
+    }
     init = false;
     diagonalized = false;
 
@@ -80,6 +84,8 @@ bool HyperfineCalculator::calculate_matrix_elts() {
 }
 
 bool HyperfineCalculator::diagonalize_H() {
+    Vs.setZero();
+    Es.setZero();
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXcd> solver;
     solver.compute(H_tot);
     Es = solver.eigenvalues();

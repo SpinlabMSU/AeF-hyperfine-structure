@@ -27,7 +27,7 @@ inline dcomplex parity(dcomplex z) {
 }
 
 inline dcomplex xi(spin a, spin b) {
-    return parity(a + b) * sqrt((2 * a + 1) * (2 * b + 1));
+    return parity(a + b) * sqrt((2.0 * a + 1.0) * (2.0 * b + 1.0));
 }
 
 #if defined(__GNUC__) && !defined(__llvm__) && !defined(__INTEL_COMPILER)
@@ -132,6 +132,27 @@ static inline double w6j(double j1, double j2, double j3, double j4, double j5,
     return gsl_6j(twoj1, twoj2, twoj3, twoj4, twoj5, twoj6);
 #else
     return gsl_sf_coupling_6j(twoj1, twoj2, twoj3, twoj4, twoj5, twoj6);
+#endif
+}
+
+static inline double w9j(double j1, double j2, double j3, double j4, double j5,
+    double j6, double j7, double j8, double j9) {
+    int twoj1 = (int)(2 * j1);
+    int twoj2 = (int)(2 * j2);
+    int twoj3 = (int)(2 * j3);
+
+    int twoj4 = (int)(2 * j4);
+    int twoj5 = (int)(2 * j5);
+    int twoj6 = (int)(2 * j6);
+
+    int twoj7 = (int)(2 * j7);
+    int twoj8 = (int)(2 * j8);
+    int twoj9 = (int)(2 * j9);
+#ifndef NO_MEMOIZE
+    static auto gsl_9j = memo(gsl_sf_coupling_9j);
+    return gsl_9j(twoj1, twoj2, twoj3, twoj4, twoj5, twoj6, twoj7, twoj8, twoj9);
+#else
+    return gsl_sf_coupling_9j(twoj1, twoj2, twoj3, twoj4, twoj5, twoj6, twoj7, twoj8, twoj9);
 #endif
 }
 

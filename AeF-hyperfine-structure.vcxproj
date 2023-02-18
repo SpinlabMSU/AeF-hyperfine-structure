@@ -155,6 +155,9 @@
       <Project>{6d7ec651-0f40-4353-821f-e6ecbe0ea7d7}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AeF-hyperfine-structure.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -15,6 +15,7 @@ int j_basis_vec::index() {
     return offset;
 }
 
+
 dcomplex j_basis_vec::H_rot() {
     const double nsq = Nmag();
     const double jsq = Jmag();
@@ -23,16 +24,22 @@ dcomplex j_basis_vec::H_rot() {
     const double gamma = hfs_constants::gamma;
     using namespace hfs_constants;
 
-    return B * nsq - D * nsq * nsq + (gamma + delta * nsq) * nds;
+    // explicit symmetry breaking term:
+    // lifts m_f degeneracy, making state-identification easier
+    // note: this should be much smaller than the other terms -- for example,
+    // with the default coefficient value of 0.1 Hz, this is smaller
+    // than the uncertainties on the other terms.
+    dcomplex handE = hfs_constants::e_mf_break * (m_f + f);
+
+    return B * nsq - D * nsq * nsq + (gamma + delta * nsq) * nds + handE;
 }
 
 
-// See header for main 
 dcomplex j_basis_vec::H_hfs_scalar(j_basis_vec other) {
     // calculates the scalar part of the hyperfine hamiltonian coupling nuclear
     // spin to electron spin -- contains 2 contributions 
 
-    if (n != other.n or f != other.f or m_f != other.m_f) {
+    if (n != other.n || f != other.f || m_f != other.m_f) {
         return 0;
     }
     const spin jp = other.j;
@@ -86,10 +93,14 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
     const spin m_fp = s2.m_f;
     const spin np = s2.n;
     if (m_f != m_fp || f != fp) return 0;
-    if (n != s2.n) return 0;
 
     const spin i = half, s = half;
 
+#if defined(USE_CARTESIAN_CALCULATION)
+    // formula based on direct hand-calculation using "naive" methods
+    // this is wrong, since it doesn't mix states of different n and the hand-calculations I used
+    // were incorrect since I improperly mixed spherical and cartesian tensor operators.
+    if (n != s2.n) return 0;
     dcomplex prf = hfs_constants::c * 2.0 / 3.0 * xi(jp, j)* xi_prime(f, fp);
 
     dcomplex htensor = 0;
@@ -100,7 +111,36 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
     htensor += hfs_tensor_angular(j, jp, f, m_f, fp, m_fp, n, np, +half, -half);
     htensor += hfs_tensor_angular(j, jp, f, m_f, fp, m_fp, n, np, +half, +half);
     dcomplex retval = prf * htensor;
+#elif 0
+    // Formulas here taken from J. Chem Phys 71, 389 (1982) [https://doi.org/10.1016/0301-0104(82)85045-3]
+    // For some reason, using this causes states of the same f (and n/j**) with different m_f to remain
+    // degenerate when an external electric field is applied.  This is probably the result of an implementation
+    // error that I have not found.  In the mean time, don't use this.
 
+    // ** technically, neither n nor j is a good quantum number, but they're approximately good
+    // in the zero applied E-field limit.
+    dcomplex retval = 0;
+
+    constexpr dcomplex coeff = 3.0 / 2.0 * hfs_constants::c * constexpr_sqrt(10.0 / 3.0);
+    dcomplex prf = coeff * xi_prime(n, np) * xi_prime(j, jp) * parity(1 + n + jp + f);
+    dcomplex fact3j6j = w3j(np, 2, n, 0, 0, 0) * w6j(f, jp, half, 1, half, j);
+    dcomplex fact9j = w9j(n, np, 2, half, half, 1, j, jp, 1);
+
+    retval = prf * fact3j6j * fact9j;
+#else
+    // Formulas taken from J. Chem Phys 105, 7412 (1996)
+    // this branch seems to approximately match the plots from PRA 98, 032513 (2018)
+    dcomplex retval = 0.0;
+    using hfs_constants::c;
+    if (f == n + 1 && fp == np - 1 && np == n + 2) {
+        retval = c / 2 * sqrt((n + 1.0) * (n + 2.0)) / (2.0 * n + 3.0);
+    }
+
+    if (f == n - 1 && fp == np + 1 && np == n - 2) {
+        retval = c / 2 * sqrt((n - 1.0) * (n)) / (2.0 * n - 1.0);
+    }
+
+#endif
 #if 1
     if (std::abs(retval) > 1e-3) {
         std::cout << "Nonzero H_hfs_tensor for " << this->ket_string() << " and " << 
@@ -126,7 +166,7 @@ dcomplex j_basis_vec::H_st(j_basis_vec other, double E_z) {
     const spin fp = other.f;
     const spin m_fp = other.m_f;
 
-    dcomplex xi_factors = xi(f, other.f) * xi(j, jp) * xi(n, np) * xi(m_f, m_fp);
+    dcomplex xi_factors = xi(f, fp) * xi(j, jp) * xi(n, np);// *xi(m_f, m_fp);
 
     dcomplex threej_factors =
         w3j(f, 1, fp, -m_f, 0, m_f) * w3j(n, 1, np, 0, 0, 0);
@@ -136,12 +176,24 @@ dcomplex j_basis_vec::H_st(j_basis_vec other, double E_z) {
 
     dcomplex phase = parity(1 - m_f);
 
-    return hfs_constants::mu_e * E_z * xi_factors * threej_factors *
-        sixj_factors * phase;
+    //dcomplex handE = hfs_constants::e_mf_break * (m_f + f);
+
+    dcomplex retval = hfs_constants::mu_e * E_z * xi_factors * threej_factors *
+        sixj_factors * phase;// +handE;
+
+    if (std::abs(retval) > 1) {
+        std::cout << std::format("{} H_st {} nonzero {} MHz", *this, other, retval) << std::endl;
+    }
+
+    return retval;
 }
 
 std::string j_basis_vec::ket_string() {
     return std::format("|n={}, j={}, f={}, m_f={}>", n, j, f, m_f);
+}
+
+std::string j_basis_vec::ket_csv_str() {
+    return std::format("|n={} j={} f={} m_f={}>", n, j, f, m_f);
 }
 
 j_basis_vec j_basis_vec::from_index(int idx) {
@@ -173,6 +225,13 @@ int j_basis_vec::index_of_n(spin n) {
 }
 
 std::ostream& operator<<(std::ostream& os, j_basis_vec& v) {
-    return (
-        os << std::format("|n={}, j={}, f={}, m_f={}>", v.n, v.j, v.f, v.m_f));
+    return (os << std::format("|n={}, j={}, f={}, m_f={}>", v.n, v.j, v.f, v.m_f));
+}
+
+bool operator==(const j_basis_vec& v1, const j_basis_vec& v2) {
+    if (v1.n != v2.n) return false;
+    if (v1.j != v2.j) return false;
+    if (v1.f != v2.f) return false;
+    if (v1.m_f != v2.m_f) return false;
+    return true;
 }

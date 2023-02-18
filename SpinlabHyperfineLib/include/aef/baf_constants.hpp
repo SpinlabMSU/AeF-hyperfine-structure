@@ -16,5 +16,9 @@ constexpr double c = 8.224;  // MHz
 
 // constants for stark shift
 constexpr double mu_e = 3.170; // D
+
+
+// explicit rotational symmetry breaking term to break m_f degeneracy
+constexpr double e_mf_break = 1.0E-7; // MHz
 };
 #endif
