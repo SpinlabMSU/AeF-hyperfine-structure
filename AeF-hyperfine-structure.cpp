@@ -150,8 +150,6 @@ int32_t closest_state(HyperfineCalculator& calc, int32_t ket_idx, int32_t exclud
 #define CALCULATE_HAMILTONIAN
 
 int main() {
-    std::cout << "Hello World!\n";
-
     // output file --> automatically make output based on current datetime
     auto dpath = fs::path("oana");
     std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
@@ -185,9 +183,13 @@ int main() {
     /// WARNING: the wrong value was originally used in the conversion factor
     /// This was supposed to be 50 kV/cm but is actually 500 kV/cm.
     /// </summary>
-    const double E_z = unit_conversion::MHz_D_per_V_cm * 500 * 1000;
+    const double E_z_orig = unit_conversion::MHz_D_per_V_cm * 500 * 1000;
+    /// <summary>
+    /// Correct value of E_z is usually 50 kV/cm
+    /// </summary>
+    const double E_z = E_z_orig / 10.0;// *20;
 
-    dcomplex H_st = v.H_st(v, E_z);
+    dcomplex H_st = v.H_st(v, E_z_orig);
     std::string str = std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(500kV/cm) = {} MHz",
         v, E_rot, H_hfs, H_st);
 
@@ -196,22 +198,27 @@ int main() {
     // maximum value of the n quantum number.  There will be 4*(nmax**2) states
     int nmax = 10;
     HyperfineCalculator calc(nmax, E_z);
+
+    std::cout << std::format("nmax is {}, E_z is {} MHz/D", nmax, E_z) << std::endl;
+
 #ifndef CALCULATE_HAMILTONIAN
     std::string spath = std::format("out/matrix_{}.dat", nmax);
 
     bool result = calc.load_matrix_elts(spath);
 
+    std::cout << std::format("Loading hamiltonian from {}", spath) << std::endl;
     if (!result) {
         std::cout << "couldn't load " << spath << std::endl;
     }
 #else
+    std::cout << "Calculating matrix elements" << std::endl;
     calc.calculate_matrix_elts();
     calc.diagonalize_H();
 #endif
 #define PRINT_EXTRAS
 #ifdef PRINT_EXTRAS
     Eigen::VectorXcd Es = calc.Es;
-    /**/
+    std::cout << "----------- Stark-Shifted -----------" << std::endl;
     std::cout << "Level, Energy (MHz)" << std::endl;
     double EPrev = 0;
     for (int i = 0; i < calc.nBasisElts; i++) {
@@ -220,7 +227,7 @@ int main() {
         EPrev = std::real(Es[i]);
     }
     std::cout << std::endl << std::endl;
-    std::cout << "---------- NO STARK -----" << std::endl;
+    std::cout << "----------- NO STARK -----------" << std::endl;
     //*/
     calc.H_tot -= calc.H_stk;
 
@@ -252,6 +259,7 @@ int main() {
     j_basis_vec f11(0, 0.5, 1,  1); int32_t if11 = f11.index();
 
     std::cout << "if1t=" << if1t << " if10=" << if10 << " if11=" << if11 << std::endl;
+    std::cout << std::format("f00={}; f1t={}, f10={}, f11={}", f00, f1t, f10, f11) << std::endl;
 
     //oStk << "E-field (V/cm), Stark-shifted Energy of " << gnd.ket_string() << " (MHz)";
     oStk << "E-field (V/cm), dE_gnd";
@@ -268,7 +276,6 @@ int main() {
     dcomplex E1s[101];
     dcomplex E2s[101];
     dcomplex E3s[101];
-
 #endif
 
     for (int idx = 0; idx < calc.nBasisElts; idx++) {
@@ -296,8 +303,7 @@ int main() {
     int idx_max_mf_f11 = -1;
 
     for (int fdx = 0; fdx < 101; fdx++) {
-        // note that E_z is divided by 10 so that the max field is 50 kV/cm, not 500 kV/cm
-        double Ez_fdx = (E_z / 10.0) * (fdx / 100.0);
+        double Ez_fdx = (E_z) * (fdx / 100.0);
 #ifdef MATRIX_ELT_DEBUG
         // degenerate states will probably break this
         if (fdx == 0) continue;
@@ -321,7 +327,7 @@ int main() {
         int32_t _if11 = closest_state(calc, if11);//3;// most_like(calc.Vs, if1t);
         double dE_f11 = std::real(calc.Es[_if11]) - E;//energy_of_closest(calc, if11) - E;
 
-
+        // measure deviation of m_f for each n=0,f=0 and n=0,f=1 state
 #define MDEV(idx) do {\
         double dev_mf_##idx = std::abs(expectation_values(calc, _i##idx).m_f - ##idx.m_f);\
         if (std::abs(dev_mf_##idx) > max_dev_mf_##idx) {\
@@ -334,13 +340,14 @@ int main() {
         MDEV(f1t);
         MDEV(f11);
 #undef MDEV
+
+        double stark_scale = Ez_V_cm * hfs_constants::mu_e * unit_conversion::MHz_D_per_V_cm;
         
+        std::cout << std::format("Electric field strength is {} V/cm, stark scale is {} MHz", Ez_V_cm, stark_scale) << std::endl;
         std::cout << std::format("Gnd state expectation values: {}", expectation_values(calc, gnd_idx)) << std::endl;
         std::cout << std::format("f1t state expectation values: {}", expectation_values(calc, _if1t)) << std::endl;
         std::cout << std::format("f10 state expectation values: {}", expectation_values(calc, _if10)) << std::endl;
         std::cout << std::format("f11 state expectation values: {}", expectation_values(calc, _if11)) << std::endl;
-
-        double stark_scale = Ez_V_cm * hfs_constants::mu_e * unit_conversion::MHz_D_per_V_cm;
 
         std::cout << std::format("Closest Energy-estate to 0-E-field gnd state is {}, with energy {}", gnd_idx, E) << std::endl;
         oStk << Ez_V_cm << "," << E << "," << dE_f1t << "," << dE_f10 << "," << dE_f11 << std::endl;
@@ -366,6 +373,7 @@ int main() {
     }
 #endif
 
+    std::cout << "--------- stark loop completed ---------" << std::endl;
 
     std::cout << std::format("Explicit m_f degeneracy breaking coeff is {:.4} Hz", hfs_constants::e_mf_break * 1E6) << std::endl;
     std::cout << std::format("Maximum m_f deviation for {} is {} at index {}", f00, max_dev_mf_f00, idx_max_mf_f00) << std::endl;
