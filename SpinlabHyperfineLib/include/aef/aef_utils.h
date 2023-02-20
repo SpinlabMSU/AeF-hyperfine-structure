@@ -156,6 +156,9 @@ static inline double w9j(double j1, double j2, double j3, double j4, double j5,
 #endif
 }
 
+/// <summary>
+/// Allows the use of std::complex<double> in std::format.
+/// </summary>
 template <> struct std::formatter<dcomplex> : std::formatter<std::string> {
     auto format(dcomplex v, format_context& ctx) {
         return formatter<string>::format(

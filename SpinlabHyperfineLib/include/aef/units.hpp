@@ -17,6 +17,9 @@ namespace unit_conversion {
     /// that mistake.
     /// </summary>
     constexpr double BAD_MHz_D_per_V_cm = 1000 * MHz_D_per_V_m;
+    /// <summary>
+    /// Energy conversion from Rydberg to (planck's constant x) MHz 
+    /// </summary>
     constexpr double MHz_per_Ry = 3.2898419603E15 / 1E6;
 
 

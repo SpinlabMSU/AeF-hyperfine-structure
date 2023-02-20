@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <zlib.h>
+#include <format>
 //#include <boost/iostreams/stream.hpp>
 extern uint64_t stream_pos;
 
@@ -54,7 +55,7 @@ namespace Eigen {
         out.write((char*)&magic, sizeof(magic));
 
         typename Matrix::Index rows = matrix.rows(), cols = matrix.cols();
-        std::cout << "Writing rows = " << rows << ", cols = " << cols << std::endl;
+        std::cout << std::format("Writing rows = {}, cols = {}", rows, cols) << std::endl;
         out.write((char*)(&rows), sizeof(typename Matrix::Index));
         out.write((char*)(&cols), sizeof(typename Matrix::Index));
         out.write((char*)matrix.data(), rows * cols * sizeof(typename Matrix::Scalar));
@@ -66,7 +67,9 @@ namespace Eigen {
 
 #ifndef AEF_STREAM_NDEBUG
     void print_stream_position(std::istream& in) {
-        std::cout << "Stream position " << in.tellg() << " = 0x" << std::hex << in.tellg() << std::dec << std::endl;
+        auto tellg = in.tellg();
+        std::streamoff pos = tellg;
+        std::cout << std::format("Stream position {} = 0x{:x}", pos, pos) << std::endl;
     }
 #else
 #define print_stream_position(in) ((void)in)
@@ -80,13 +83,13 @@ namespace Eigen {
         ::stream_pos += 4;
         print_stream_position(in);
 
-        std::cout << std::hex << "Read magic " << rmagic << std::dec << std::endl;
+        std::cout << std::format("Read magic {:x}", rmagic) << std::endl;
 
         if (magic != rmagic) {
 #ifndef AEF_STREAM_NDEBUG
             for (int i = 1; i <= 32; i++) {
                 in.read((char*)&rmagic, sizeof(rmagic));
-                std::cout << std::hex << "Tried extra magic # " << i << " : " << rmagic << std::dec << std::endl;
+                std::cout << std::format("Tried extra magic #{:x} : {:x}", i, rmagic) << std::endl;
             }
 #endif
             DebugBreak();
@@ -114,7 +117,7 @@ namespace Eigen {
         auto post = in.tellg();
 
         auto diff = post - pre;
-        std::cout << "Tried to read " << size  << " bytes, actually read " << diff << " bytes." << std::endl;
+        std::cout << std::format("Tried to read {} bytes, actually read {} bytes", size, diff) << std::endl;
 #endif
 
 
@@ -129,7 +132,7 @@ namespace Eigen {
         in.read((char*)&rmarker, sizeof(rmarker));
         ::stream_pos += sizeof(rmarker);
         print_stream_position(in);
-        std::cout << std::hex << "Read end-marker " << rmarker << std::dec << std::endl;
+        std::cout << std::format("Read end-marker {:x}", rmarker) << std::endl;
 
         if (rmarker != emarker) {
             throw std::exception("BAD END MARKER");
