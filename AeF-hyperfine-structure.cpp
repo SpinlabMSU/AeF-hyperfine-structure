@@ -9,6 +9,7 @@
 #include <fstream>
 #include <filesystem>
 #include <numeric>
+#include <aef/teestream.hpp>
 
 using namespace std::chrono;
 namespace fs = std::filesystem;
@@ -146,8 +147,37 @@ int32_t closest_state(HyperfineCalculator& calc, int32_t ket_idx, int32_t exclud
 #define closest_state(calc, idx) (idx)
 #endif
 
+#define CALCULATE_HAMILTONIAN
+
 int main() {
     std::cout << "Hello World!\n";
+
+    // output file --> automatically make output based on current datetime
+    auto dpath = fs::path("oana");
+    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    std::string stime = std::format("{0:%F}-{0:%H%M}{0:%S}", now);
+    dpath /= stime;
+    fs::create_directories(dpath);
+
+    // create info log
+    std::ofstream oLog;
+    tee::teebuf* pBuf, *pErrb;
+    std::streambuf *orig_coutb = std::cout.rdbuf();
+    std::streambuf* orig_cerrb = std::cerr.rdbuf();
+
+    {
+        auto fpath = dpath / "out.log";
+        oLog = std::ofstream(fpath, std::ios::trunc | std::ios::out);
+
+        pBuf = new tee::teebuf(oLog.rdbuf(), orig_coutb);
+        std::cout.set_rdbuf(pBuf);
+        
+        pErrb = new tee::teebuf(oLog.rdbuf(), orig_cerrb);
+        std::cout.set_rdbuf(pErrb);
+    }
+    std::cout << "AeF Hyperfine Structure version compiled on " << __DATE__ << " " << __TIME__ << std::endl;
+
+
     j_basis_vec v(1, .5, 0, 0);
     double E_rot = std::real(v.H_rot());
     dcomplex H_hfs = v.H_hfs(v);
@@ -158,17 +188,15 @@ int main() {
     const double E_z = unit_conversion::MHz_D_per_V_cm * 500 * 1000;
 
     dcomplex H_st = v.H_st(v, E_z);
-    std::string str = std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(50kV/cm) = {} MHz",
+    std::string str = std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(500kV/cm) = {} MHz",
         v, E_rot, H_hfs, H_st);
 
-    std::ofstream out("log.txt", std::ios::out);
     std::cout << str << std::endl;
-    out << str << std::endl;
 
-    // todo add code using hyperfine calculator
+    // maximum value of the n quantum number.  There will be 4*(nmax**2) states
     int nmax = 10;
     HyperfineCalculator calc(nmax, E_z);
-#if 0
+#ifndef CALCULATE_HAMILTONIAN
     std::string spath = std::format("out/matrix_{}.dat", nmax);
 
     bool result = calc.load_matrix_elts(spath);
@@ -207,13 +235,15 @@ int main() {
         EPrev = std::real(Es[i]);
         //std::cout << i << ", " << calc.basis[i] << ", " << Es[i] << std::endl;
     }
-    //exit(0);
 #else
     calc.H_tot -= calc.H_stk;
     calc.diagonalize_H();
 #endif
-    // find
-    std::ofstream oStk(fs::path("stark_shift_gnd.csv"), std::ios::trunc | std::ios::out);
+    
+    // create output file
+    auto fpath = dpath / "stark_shift_gnd.csv";
+
+    std::ofstream oStk(fpath, std::ios::trunc | std::ios::out);
     j_basis_vec gnd = j_basis_vec::from_index(0);
     j_basis_vec f00 = gnd; int32_t if00 = f00.index();
     // n = 0, j = 0.5, f = 1 hyperfine triplet
