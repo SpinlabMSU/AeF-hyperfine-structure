@@ -111,7 +111,7 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
     htensor += hfs_tensor_angular(j, jp, f, m_f, fp, m_fp, n, np, +half, -half);
     htensor += hfs_tensor_angular(j, jp, f, m_f, fp, m_fp, n, np, +half, +half);
     dcomplex retval = prf * htensor;
-#elif 0
+#elif 1
     // Formulas here taken from J. Chem Phys 71, 389 (1982) [https://doi.org/10.1016/0301-0104(82)85045-3]
     // For some reason, using this causes states of the same f (and n/j**) with different m_f to remain
     // degenerate when an external electric field is applied.  This is probably the result of an implementation
@@ -122,7 +122,7 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
     dcomplex retval = 0;
 
     constexpr dcomplex coeff = 3.0 / 2.0 * hfs_constants::c * constexpr_sqrt(10.0 / 3.0);
-    dcomplex prf = coeff * xi_prime(n, np) * xi_prime(j, jp) * parity(1 + n + jp + f);
+    dcomplex prf = coeff * xi_prime(n, np) * xi_prime(j, jp) * parity(1 + n + i + jp + f);
     dcomplex fact3j6j = w3j(np, 2, n, 0, 0, 0) * w6j(f, jp, half, 1, half, j);
     dcomplex fact9j = w9j(n, np, 2, half, half, 1, j, jp, 1);
 
