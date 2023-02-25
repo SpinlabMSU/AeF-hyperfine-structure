@@ -79,24 +79,36 @@ public:
     /// Computes the rotational energy of this basis ket (since H_rot is diagonal in the 
     /// |njfm_f> basis).
     /// 
-    /// This also contains the explicit symmetry breaking operations
+    /// This also contains the explicit symmetry breaking operation that splits m_f even at
+    /// zero field (makes sure that E-estates have definite m_f).
     /// </summary>
     /// <returns>The rotaional energy of this state in MHz</returns>
     dcomplex H_rot();
     /// <summary>
-    /// Computes the hyperfine Hamiltonian matrix element between two |njfm_f> basis kets (since
-    /// H_hfs is not diagonal in the
+    /// Computes the hyperfine Hamiltonian matrix element between two |njfm_f> basis kets.
+    /// The hyperfine Hamiltonian conserves f and m_f, and only breaks n by a small amount.
     /// </summary>
     /// <param name="other">The other state to compute the matrix element with</param>
     /// <returns>The hyperfine matrix element &lt;other|H_hfs|this&gt; in MHz</returns>
     dcomplex H_hfs(j_basis_vec other);
     /// <summary>
-    /// 
+    /// Computes the Stark shift matrix element between two |njfm_f> basis kets.
+    /// This conserves m_f, mixing n, j, and f by an amount depending on the electric field.
     /// </summary>
-    /// <param name="other"></param>
+    /// <param name="other">The other state</param>
     /// <param name="E_z">Electric field strength in MHz/Debye</param>
     /// <returns>The stark shift matrix element &lt;other|H_st|this&gt; in MHz</returns>
     dcomplex H_st(j_basis_vec other, double E_z = 1.0);
+
+    /// <summary>
+    /// Evaluates the devonshire potential matrix element between this state and other.
+    /// This potential doesn't conserve any of the basis quantum numbers other than I and S
+    /// (which 
+    /// </summary>
+    /// <param name="other">The other state</param>
+    /// <param name="K">The devonshire coupling constant in MHz</param>
+    /// <returns>The devonshire matrix element &lt;other|H_dev|this&gt; in MHz</returns>
+    dcomplex H_dev(j_basis_vec other, double K);
 
     /// <summary>
     /// Descibes this state as a ket

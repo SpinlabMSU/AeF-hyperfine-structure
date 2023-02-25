@@ -4,7 +4,7 @@
 
 namespace fs = std::filesystem;
 
-HyperfineCalculator::HyperfineCalculator(spin nmax_, double E_z_, bool enableDev_)
+HyperfineCalculator::HyperfineCalculator(spin nmax_, double E_z_, double K_)
     : nmax(nmax_), E_z(E_z_), init(false), enableDev(enableDev_), nBasisElts(j_basis_vec::index_of_n(nmax_ + 1)), diagonalized(false) {
 
     set_nmax(nmax_);
@@ -67,7 +67,7 @@ bool HyperfineCalculator::calculate_matrix_elts() {
     if (enableDev) {
         for (int idx = 0; idx < nBasisElts; idx++) {
             for (int jdx = 0; jdx < nBasisElts; jdx++) {
-                H_dev(idx, jdx) = basis[idx].H_hfs(basis[jdx]);
+                H_dev(idx, jdx) = basis[idx].H_dev(basis[jdx], K);
             }
         }
     } else {

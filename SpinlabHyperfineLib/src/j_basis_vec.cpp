@@ -106,7 +106,7 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
 #endif
 #if defined(MATRIX_ELEMENT_DEBUG)
     if (std::abs(retval) > 1e-3) {
-        std::cout << "Nonzero H_hfs_tensor for " << this->ket_string() << " and " << 
+        std::cout << "Nonzero H_hfs_tensor for " << this->ket_string() << " and " <<
             s2.ket_string() << " H_hfs_tensor = " << retval << std::endl;
         if (0) DebugBreak();
     }
@@ -142,6 +142,23 @@ dcomplex j_basis_vec::H_st(j_basis_vec other, double E_z) {
     }
 
     return retval;
+}
+
+dcomplex j_basis_vec::H_dev(j_basis_vec other, double K) {
+    const spin np = other.n;
+    const spin jp = other.j;
+    const spin fp = other.f;
+    const spin m_fp = other.m_f;
+
+    dcomplex prf = K * xi(f, fp) * xi(j, jp) * xi(n, np) * parity(-m_f);
+    constexpr double sqrt_5_14 = constexpr_sqrt(5.0 / 14.0);
+    // 3j factors involving f and m_f
+    dcomplex f3f = sqrt_5_14 * w3j(f, 4, fp, -m_f, 4, m_fp) + sqrt_5_14 * w3j(f, 4, fp, -m_f, -4, m_fp) + w3j(f, 4, fp, -m_f, 0, m_fp);
+    // 3j factor involving n --> this is a constraint on n and n'
+    dcomplex f3n = w3j(n, 4, np, 0, 0, 0);
+    // 
+    dcomplex f6j = w6j(f, 4, fp, jp, half, j) * w6j(j, 4, jp, np, half, n);
+    return prf * f3f * f3n * f6j;
 }
 
 std::string j_basis_vec::ket_string() {

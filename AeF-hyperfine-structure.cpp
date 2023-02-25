@@ -183,12 +183,26 @@ int main() {
     /// WARNING: the wrong value was originally used in the conversion factor
     /// This was supposed to be 50 kV/cm but is actually 500 kV/cm.
     /// </summary>
-    const double E_z_orig = unit_conversion::MHz_D_per_V_cm * 500 * 1000;
+    constexpr double E_z_orig = unit_conversion::MHz_D_per_V_cm * 500 * 1000;
     /// <summary>
-    /// Correct value of E_z is usually 50 kV/cm
+    /// Correct value of E_z is usually 50 kV/cm = 25170 MHz/D.
     /// </summary>
     const double E_z = E_z_orig / 10.0;// *20;
+//#define USE_DEVONSHIRE
 
+#ifdef USE_DEVONSHIRE
+    /// <summary>
+    /// Devonshire coupling constant: 100 Kelvin --> 2.083 THz
+    /// </summary>
+    constexpr double K = 100.0 * unit_conversion::MHz_per_Kelvin;
+    constexpr const char* devstatus = "enabled";
+#else
+    /// <summary>
+    /// Disable Devonshire potential: 0 MHz --> disabled
+    /// </summary>
+    constexpr double K = 0;
+    constexpr const char* devstatus = "disabled";
+#endif
     dcomplex H_st = v.H_st(v, E_z_orig);
     std::string str = std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(500kV/cm) = {} MHz",
         v, E_rot, H_hfs, H_st);
@@ -197,9 +211,9 @@ int main() {
 
     // maximum value of the n quantum number.  There will be 4*(nmax**2) states
     int nmax = 10;
-    HyperfineCalculator calc(nmax, E_z);
+    HyperfineCalculator calc(nmax, E_z, K);
 
-    std::cout << std::format("nmax is {}, E_z is {} MHz/D", nmax, E_z) << std::endl;
+    std::cout << std::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({})", nmax, E_z, K, devstatus) << std::endl;
 
 #ifndef CALCULATE_HAMILTONIAN
     std::string spath = std::format("out/matrix_{}.dat", nmax);
@@ -278,6 +292,8 @@ int main() {
     dcomplex E3s[101];
 #endif
 
+#ifndef USE_DEVONSHIRE
+    // note: devonshire potential doesn't conserve m_f
     for (int idx = 0; idx < calc.nBasisElts; idx++) {
         j_basis_vec v1 = calc.basis[idx];
         for (int jdx = 0; jdx < calc.nBasisElts; jdx++) {
@@ -292,7 +308,7 @@ int main() {
             }
         }
     }
-
+#endif
     double max_dev_mf_f00 = -std::numeric_limits<double>::infinity();
     int idx_max_mf_f00 = -1;
     double max_dev_mf_f10 = -std::numeric_limits<double>::infinity();
@@ -320,11 +336,11 @@ int main() {
         double Ez_V_cm = Ez_fdx / unit_conversion::MHz_D_per_V_cm;
 
         // energy differences for f = 1 triplet
-        int32_t _if1t = closest_state(calc, if1t);//1;// most_like(calc.Vs, if1t);
+        int32_t _if1t = closest_state(calc, if1t, _if00);//1;// most_like(calc.Vs, if1t);
         double dE_f1t = std::real(calc.Es[_if1t]) - E;// energy_of_closest(calc, if1t) - E;
         int32_t _if10 = closest_state(calc, if10, _if00);//2;// most_like(calc.Vs, if1t);
         double dE_f10 = std::real(calc.Es[_if10]) - E;// energy_of_closest(calc, if10) - E;
-        int32_t _if11 = closest_state(calc, if11);//3;// most_like(calc.Vs, if1t);
+        int32_t _if11 = closest_state(calc, if11, _if00);//3;// most_like(calc.Vs, if1t);
         double dE_f11 = std::real(calc.Es[_if11]) - E;//energy_of_closest(calc, if11) - E;
 
         // measure deviation of m_f for each n=0,f=0 and n=0,f=1 state

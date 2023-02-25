@@ -12,6 +12,7 @@ public:
     bool enableDev;
 private:
     double E_z;
+    double K;
     bool init;
     bool diagonalized;
 
@@ -29,7 +30,13 @@ public:
     Eigen::MatrixXcd Vs;
 
 public:
-    HyperfineCalculator(spin nmax_ = 0.0, double E_z = 1.0, bool enableDev = false);
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="nmax_">Maximum value of the n quantum number.  There will be 4*nmax*nmax states in the basis</param>
+    /// <param name="E_z">External electric field strength to use for Stark calculations (MHz/D).</param>
+    /// <param name="K">Devonshire coupling constant (MHz)</param>
+    HyperfineCalculator(spin nmax_ = 0.0, double E_z = 1.0, double K=0.0);
     ~HyperfineCalculator();
 
     bool isDiagonalized() {
