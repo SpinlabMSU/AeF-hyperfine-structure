@@ -234,6 +234,9 @@
     <ClInclude Include="include\gcem_incl\tanh.hpp" />
     <ClInclude Include="include\gcem_incl\tgamma.hpp" />
     <ClInclude Include="include\gcem_incl\trunc.hpp" />
+    <ClInclude Include="include\pcg\pcg_extras.hpp" />
+    <ClInclude Include="include\pcg\pcg_random.hpp" />
+    <ClInclude Include="include\pcg\pcg_uint128.hpp" />
     <ClInclude Include="include\strict_fstream.hpp" />
     <ClInclude Include="include\zstr.hpp" />
     <ClInclude Include="include\aef\j_basis_vec.h" />

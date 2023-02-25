@@ -8,6 +8,10 @@
 #include <format>
 #include <complex>
 #include <numbers>
+#include <random>
+#include <Eigen/Eigen>
+#include "pcg/pcg_random.hpp"
+
 
 #define NO_MEMOIZE
 #ifndef NO_MEMOIZE
@@ -16,6 +20,17 @@
 #include <unordered_map>
 #include "tuple_hash.hpp"
 #endif
+
+
+extern pcg64 *pcg;
+void init_rng();
+
+template <typename T> T genrandom(T lower, T upper) {
+    std::uniform_real_distribution<T> dist(lower, upper);
+    return dist(*pcg);
+}
+
+
 
 inline dcomplex parity(double z) {
     using namespace std::complex_literals;
@@ -165,4 +180,61 @@ template <> struct std::formatter<dcomplex> : std::formatter<std::string> {
             std::format("({} + i*{})", std::real(v), std::imag(v)), ctx);
     }
 };
+
+/// <summary>
+/// Simultaneously diagonalizes matricies A and B under the following two assumptions:
+///     1) A and B are diagonalizable.
+///     2) [A, B] = 0 (A and B must commute
+/// 
+/// Uses the algorithm provided by https://math.stackexchange.com/a/4388322: with probability 1,
+/// choosing random $t\in\mathbb{R}$ and diagonalizing A+tB will provide an eigenbasis of both
+/// 
+/// 
+/// </summary>
+/// <typeparam name="Matrix"></typeparam>
+/// <param name="A"></param>
+/// <param name="B"></param>
+/// <param name="U"></param>
+/// <param name="Ut"></param>
+template <class Matrix> void simultaneously_diagonalize(const Matrix& A, const Matrix& B,
+    Matrix& U, Matrix& Ut) {
+    //
+#ifdef MATRIX_DEBUG
+    // ensure 
+#endif
+    typedef typename Matrix::Scalar Scalar;
+    Scalar t = 0.0;
+    Eigen::SelfAdjointEigenSolver<Matrix> solver;
+    constexpr double prec = 1e-4;
+    while (true) {
+        // randomly choose t --> 0 not in range, also, 
+        t = genrandom(0.5, 100.0);
+        Matrix AtB = A + t * B;
+        solver.compute(AtB);
+
+        U = solver.eigenvectors();
+        Ut = U.adjoint();
+
+        // check if A diagonalized
+        Matrix check = Ut * A * U;
+        check.diagonal().setZero();
+        bool agood = check.isZero(prec);
+        
+        // check if B diagonalized
+        check = Ut * B * U;
+        check.diagonal().setZero();
+        bool bgood = check.isZero(prec);
+
+        // if both are diagonalized then return
+        if (agood && bgood) return;
+        std::cout << std::format("{} FAIL FAIL FAIL", t) << std::endl;
+        DebugBreak();
+    }
+}
+#ifdef __INTELLISENSE__
+static void foo() {
+    Eigen::MatrixXcd d;
+    simultaneously_diagonalize(d, d, d, d);
+}
+#endif
 #endif

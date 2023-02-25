@@ -19,6 +19,7 @@ constexpr double mu_e = 3.170; // D
 
 
 // explicit rotational symmetry breaking term to break m_f degeneracy
-constexpr double e_mf_break = 1.0E-7; // MHz
+// no longer needed
+constexpr double e_mf_break = 0;// 1.0E-6; // MHz
 };
 #endif

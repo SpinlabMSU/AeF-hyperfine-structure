@@ -23,11 +23,13 @@ public:
     Eigen::MatrixXcd H_hfs;
     Eigen::MatrixXcd H_stk;
     Eigen::MatrixXcd H_dev;
+    Eigen::MatrixXcd F_z;
 
     Eigen::MatrixXcd H_tot;
 
     Eigen::VectorXcd Es;
     Eigen::MatrixXcd Vs;
+    Eigen::MatrixXcd Vst;
 
 public:
     /// <summary>

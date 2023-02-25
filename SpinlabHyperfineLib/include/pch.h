@@ -13,7 +13,8 @@
 
 #include "Eigen\Eigen"
 #include "zlib.h"
-
+#include "pcg/pcg_random.hpp"
+#include "pcg/pcg_extras.hpp"
 
 // extra external headers
 #include <zstr.hpp>

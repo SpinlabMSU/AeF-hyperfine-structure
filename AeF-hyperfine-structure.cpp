@@ -174,7 +174,7 @@ int main() {
         std::cout.set_rdbuf(pErrb);
     }
     std::cout << "AeF Hyperfine Structure version compiled on " << __DATE__ << " " << __TIME__ << std::endl;
-
+    init_rng();
 
     j_basis_vec v(1, .5, 0, 0);
     double E_rot = std::real(v.H_rot());
@@ -187,7 +187,7 @@ int main() {
     /// <summary>
     /// Correct value of E_z is usually 50 kV/cm = 25170 MHz/D.
     /// </summary>
-    const double E_z = E_z_orig / 10.0;// *20;
+    constexpr double E_z = E_z_orig / 10.0 * 500;
 //#define USE_DEVONSHIRE
 
 #ifdef USE_DEVONSHIRE

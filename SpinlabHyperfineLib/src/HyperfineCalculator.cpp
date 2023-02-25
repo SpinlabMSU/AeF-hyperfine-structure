@@ -5,16 +5,10 @@
 namespace fs = std::filesystem;
 
 HyperfineCalculator::HyperfineCalculator(spin nmax_, double E_z_, double K_)
-    : nmax(nmax_), E_z(E_z_), init(false), enableDev(enableDev_), nBasisElts(j_basis_vec::index_of_n(nmax_ + 1)), diagonalized(false) {
+    : nmax(nmax_), E_z(E_z_), init(false), enableDev(K_ != 0), nBasisElts(j_basis_vec::index_of_n(nmax_ + 1)),
+    diagonalized(false), K(K_) {
 
     set_nmax(nmax_);
-
-    //this->H_rot = Eigen::MatrixXcd(nBasisElts, nBasisElts);
-    H_rot.resize(nBasisElts);
-    this->H_hfs = Eigen::MatrixXcd(nBasisElts, nBasisElts);
-    this->H_stk = Eigen::MatrixXcd(nBasisElts, nBasisElts);
-    this->H_dev = Eigen::MatrixXcd(nBasisElts, nBasisElts);
-    this->H_tot = Eigen::MatrixXcd(nBasisElts, nBasisElts);
 }
 
 void HyperfineCalculator::set_nmax(spin nmax_) {
@@ -37,6 +31,9 @@ void HyperfineCalculator::set_nmax(spin nmax_) {
     this->H_stk = Eigen::MatrixXcd(nBasisElts, nBasisElts);
     this->H_dev = Eigen::MatrixXcd(nBasisElts, nBasisElts);
     this->H_tot = Eigen::MatrixXcd(nBasisElts, nBasisElts);
+    this->F_z = Eigen::MatrixXcd(nBasisElts, nBasisElts);
+    Vs.resize(nBasisElts, nBasisElts);
+    Vst.resize(nBasisElts, nBasisElts);
 }
 
 HyperfineCalculator::~HyperfineCalculator() {
@@ -44,9 +41,10 @@ HyperfineCalculator::~HyperfineCalculator() {
 
 bool HyperfineCalculator::calculate_matrix_elts() {
 
-    // rotational hamiltonian
+    // rotational hamiltonian and F_z
     for (int idx = 0; idx < nBasisElts; idx++) {
         H_rot.diagonal()[idx] = basis[idx].H_rot();
+        F_z(idx, idx) = basis[idx].m_f;
     }
 
     // stark shift
@@ -87,10 +85,38 @@ bool HyperfineCalculator::diagonalize_H() {
     Vs.setZero();
     Es.setZero();
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXcd> solver;
-    solver.compute(H_tot);
-    Es = solver.eigenvalues();
-    Vs = solver.eigenvectors();
-    diagonalized = true;
+    if (enableDev) {
+        // devonshire potential: m_f not a good quantum number --> directly diagonalize H_tot
+        solver.compute(H_tot);
+        Es = solver.eigenvalues();
+        Vs = solver.eigenvectors();
+        diagonalized = true;
+    } else {
+        // Free-space: m_f is a good quantum number, want to simultaneously diagonalize H_tot and F_z
+        // This is done using the method given in https://math.stackexchange.com/a/4388322 and proven in
+        // https://math.stackexchange.com/a/3951339.  However, I'm omitting the randomization portion
+        // because it shouldn't be necessary (if there's some small mixing of the m_f it doesn't really matter,
+        // and in practice they don't mix.
+        constexpr dcomplex t = 100.0;// +15i;
+        Eigen::MatrixXcd temp = H_tot + t * F_z;
+        solver.compute(temp);
+        Vs = solver.eigenvectors();
+        Vst = Vs.adjoint();
+#if 0
+#define TEST_DIAG
+#ifdef TEST_DIAG
+        temp = Vst * H_tot * Vs;
+        temp.diagonal().setZero();
+        assert(temp.isZero(1E-6));
+
+        temp = Vst * H_tot * Vs;
+        temp.diagonal().setZero();
+        assert(temp.isZero(1E-6));
+#endif
+#endif
+        Es = (Vst * H_tot * Vs).diagonal();
+        diagonalized = true;
+    }
     return diagonalized;
 }
 
