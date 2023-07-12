@@ -282,6 +282,15 @@
     <ClInclude Include="include\pcg\pcg_uint128.hpp">
       <Filter>Header Files\pcg</Filter>
     </ClInclude>
+    <ClInclude Include="include\aef\debug_stream.h">
+      <Filter>Header Files\aef</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\MolecularSystem.h">
+      <Filter>Header Files\aef</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\xiffstream.h">
+      <Filter>Header Files\aef</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp">
@@ -300,6 +309,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\teestream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MolecularSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\xiffstream.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

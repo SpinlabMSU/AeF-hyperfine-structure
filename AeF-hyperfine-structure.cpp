@@ -9,8 +9,10 @@
 #include <fstream>
 #include <filesystem>
 #include <numeric>
+#include <numbers>
 #include <aef/teestream.hpp>
 #include <aef/debug_stream.h>
+#include <aef/matrix_utils.h>
 #include <cstring>
 
 using namespace std::chrono;
@@ -53,7 +55,11 @@ j_basis_vec expectation_values(HyperfineCalculator &calc, int32_t E_idx) {
     //
     Eigen::VectorXcd state_vec = calc.Vs.col(E_idx);
     j_basis_vec out;
+#ifdef _WIN32
     SecureZeroMemory((void*)&out, sizeof(j_basis_vec));
+#else
+    explicit_bzero((void*)&out, sizeof(j_basis_vec));
+#endif
     double prob_tot = 0;
 #ifdef MATRIX_ELT_DEBUG
     double expect_mf = -0.1;
@@ -161,10 +167,40 @@ void log_time_at_point(const char* desc, std::chrono::time_point<std::chrono::sy
     std::string lstr = std::format("{}: have taken {} seconds (current time is {})", desc, sec_count, stime);
     std::cout << lstr << std::endl;
 }
+
+/// <summary>
+/// Outputs the molecular dipole in each energy eigenstate
+/// </summary>
+/// <param name="output"></param>
+/// <param name="calc"></param>
+void calc_mol_dipole(std::ostream &output, HyperfineCalculator &calc) {
+    output << "Index n, Energy (MHz), <n|dx|n>, <n|dy|n>, <n|dz|n>" << std::endl;
+
+    for (size_t n = 0; n < calc.nBasisElts; n++) {
+        auto e_n = calc.Vs.col(n);
+        // molecular dipole vector in spherical tensor form
+        dcomplex d10 = expectation_value(e_n, calc.d10);
+        dcomplex d11 = expectation_value(e_n, calc.d11);
+        dcomplex d1t = expectation_value(e_n, calc.d1t);
+
+        constexpr double inv_sqrt2 = std::numbers::sqrt2 / 2.0;
+
+        // convert to cartesian
+        using namespace std::complex_literals;
+        dcomplex dx = (d1t - d11) * inv_sqrt2;
+        dcomplex dy = (d1t + d11) * 1i * inv_sqrt2;
+        dcomplex dz = d10;
+
+        auto ifo = std::format("{}, {}, {}, {}, {}", n, calc.Es[n], dx, dy, dz);
+        output << ifo << std::endl;
+    }
+    output.flush();
+}
+
 int main() {
     // output file --> automatically make output based on current datetime
-    auto dpath = fs::path("oana");
-    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    // 2023-07-12: change output dir to output instead of oana
+    auto dpath = fs::path("output");
     std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
     std::string stime = std::format("{0:%F}-{0:%H%M}{0:%S}", start_time);
     dpath /= stime;
@@ -201,7 +237,7 @@ int main() {
         }
         pOutb = new tee::teebuf(pLogBuf, orig_coutb);
         std::cout.set_rdbuf(pOutb);
-
+        
         pErrb = new tee::teebuf(pLogBuf, orig_cerrb);
         std::cerr.set_rdbuf(pErrb);
     }
@@ -222,7 +258,7 @@ int main() {
     /// Correct value of E_z is usually 50 kV/cm = 25170 MHz/D.
     /// </summary>
     constexpr double E_z = E_z_orig / 10.0 * 500;
-//#define USE_DEVONSHIRE
+#define USE_DEVONSHIRE
 
 #ifdef USE_DEVONSHIRE
     /// <summary>
@@ -284,6 +320,10 @@ int main() {
     //exit(0);
     //*/
     calc.H_tot -= calc.H_stk;
+
+    std::cout << "does H_tot commute with d10? " << commutes(calc.H_tot, calc.d10) << std::endl;
+    std::cout << "does H_tot commute with d11? " << commutes(calc.H_tot, calc.d11) << std::endl;
+    std::cout << "does H_tot commute with d1t? " << commutes(calc.H_tot, calc.d1t) << std::endl;
 
     calc.diagonalize_H();
 
@@ -350,8 +390,24 @@ int main() {
             }
         }
     }
-#endif
+#else
+    // directory to put devonshire info
+    auto devpath = dpath / "devonshire_info";
+    fs::create_directories(devpath);
+#endif // !USE_DEVONSHIRE
+    std::cout << "does H_tot commute with d10? "
+              << commutes(calc.H_tot, calc.d10) << std::endl;
+    std::cout << "does H_tot commute with d11? "
+              << commutes(calc.H_tot, calc.d11) << std::endl;
+    std::cout << "does H_tot commute with d1t? "
+              << commutes(calc.H_tot, calc.d1t) << std::endl;
+    std::cout << std::endl;
     log_time_at_point("About to start stark loop", start_time);
+
+    std::cout << "Is d10 all zero " << calc.d10.isZero(1E-6) << std::endl;
+    std::cout << "Is d11 all zero " << calc.d11.isZero(1E-6) << std::endl;
+    std::cout << "Is d1t all zero " << calc.d1t.isZero(1E-6) << std::endl;
+
     double max_dev_mf_f00 = -std::numeric_limits<double>::infinity();
     int idx_max_mf_f00 = -1;
     double max_dev_mf_f10 = -std::numeric_limits<double>::infinity();
@@ -424,6 +480,12 @@ int main() {
         E2s[fdx] = calc.Es[2];
         E3s[fdx] = calc.Es[3];
 #endif
+
+        #ifdef USE_DEVONSHIRE
+        auto dev_out_fname = std::format("info_Ez_{}.csv", std::lround(Ez_V_cm)); 
+        std::ofstream dout(devpath / dev_out_fname);
+        calc_mol_dipole(dout, calc);
+        #endif
     }
 
 #if 1
@@ -440,6 +502,8 @@ int main() {
     std::cout << std::format("Maximum m_f deviation for {} is {} at index {}", f10, max_dev_mf_f10, idx_max_mf_f10) << std::endl;
     std::cout << std::format("Maximum m_f deviation for {} is {} at index {}", f1t, max_dev_mf_f1t, idx_max_mf_f1t) << std::endl;
     std::cout << std::format("Maximum m_f deviation for {} is {} at index {}", f11, max_dev_mf_f11, idx_max_mf_f11) << std::endl;
+
+    // diagonalize 
 
     return 0;
 }

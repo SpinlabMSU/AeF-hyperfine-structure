@@ -11,6 +11,7 @@
 #include <random>
 #include <Eigen/Eigen>
 #include "pcg/pcg_random.hpp"
+#include <type_traits>
 
 
 #define NO_MEMOIZE
@@ -30,6 +31,15 @@ template <typename T> T genrandom(T lower, T upper) {
     return dist(*pcg);
 }
 
+
+inline uint32_t make_4cc(char name[4]) {
+    union {
+      char     in[4];
+      uint32_t out;
+    } conv;
+    memcpy(conv.in, name, sizeof(conv.in));
+    return conv.out;
+}
 
 
 inline dcomplex parity(double z) {
@@ -231,10 +241,32 @@ template <class Matrix> void simultaneously_diagonalize(const Matrix& A, const M
         DebugBreak();
     }
 }
+
+template <class Matrix, class Vector>
+typename Matrix::Scalar expectation_value(const Vector &v1, const Matrix &op) {
+    // for simplicity just require that scalar types are identical
+    static_assert(
+        std::is_same<typename Matrix::Scalar, typename Vector::Scalar>::value);
+    return v1.adjoint() * op * v1;
+}
+
+template <class Matrix, class Vector>
+typename Matrix::Scalar expectation_value(const Vector& v1, const Matrix& op,
+    const Vector& v2) {
+    // for simplicity just require that scalar types are identical
+    static_assert(
+        std::is_same<typename Matrix::Scalar, typename Vector::Scalar>::value);
+    return v1.adjoint() * op * v2;
+}
+
 #ifdef __INTELLISENSE__
 static void foo() {
     Eigen::MatrixXcd d;
     simultaneously_diagonalize(d, d, d, d);
+    Eigen::VectorXcd v;
+    
+    expectation_value(v, d);
+    expectation_value(v, d, v);
 }
 #endif
 #endif

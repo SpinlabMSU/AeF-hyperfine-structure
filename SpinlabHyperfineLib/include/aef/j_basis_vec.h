@@ -10,6 +10,7 @@
 /// Represents an element of the |(ns)jifm_f> basis of ^{138}BaF's ground electronic and vibrational
 /// band.  Note that in this band, s = i = 1/2, so these are somtimes omitted from the kets, which are
 /// then written as |njfm_f>.
+/// 
 /// </summary>
 class j_basis_vec {
 public:
@@ -99,6 +100,33 @@ public:
     /// <param name="E_z">Electric field strength in MHz/Debye</param>
     /// <returns>The stark shift matrix element &lt;other|H_st|this&gt; in MHz</returns>
     dcomplex H_st(j_basis_vec other, double E_z = 1.0);
+
+    /// <summary>
+    /// Computes the T^1_0 matrix element of the orientation-vector operator.
+    /// The orientation vector is
+    /// To calculate the spherical-tensor operator components, use the
+    /// Wigner-Eckart theorem
+    /// </summary>
+    /// <param name="other">The other state</param>
+    /// <returns>The reduced matrix element &lt;other||d^1||this&gt; </returns>
+    dcomplex d10(j_basis_vec other);
+
+    /// <summary>
+    /// Computes the T^1_1 matrix element of the orientation-vector operator.
+    /// </summary>
+    /// <param name="other">The other state</param>
+    /// <returns>The T11 matrix element &lt;other||d^1||this&gt; </returns>
+    dcomplex d11(j_basis_vec other);
+
+    /// <summary>
+    /// Computes the T^1_{-1} matrix element of the orientation-vector operator.
+    /// The orientation vector is
+    /// To calculate the spherical-tensor operator components, use the
+    /// Wigner-Eckart theorem
+    /// </summary>
+    /// <param name="other">The other state</param>
+    /// <returns>The reduced matrix element &lt;other||d^1||this&gt; </returns>
+    dcomplex d1t(j_basis_vec other);
 
     /// <summary>
     /// Evaluates the devonshire potential matrix element between this state and other.

@@ -167,8 +167,11 @@
     <ClInclude Include="include\aef\aef_types.h" />
     <ClInclude Include="include\aef\aef_utils.h" />
     <ClInclude Include="include\aef\baf_constants.hpp" />
+    <ClInclude Include="include\aef\debug_stream.h" />
     <ClInclude Include="include\aef\HyperfineCalculator.hpp" />
+    <ClInclude Include="include\aef\MolecularSystem.h" />
     <ClInclude Include="include\aef\teestream.hpp" />
+    <ClInclude Include="include\aef\xiffstream.h" />
     <ClInclude Include="include\gcem.hpp" />
     <ClInclude Include="include\gcem_incl\abs.hpp" />
     <ClInclude Include="include\gcem_incl\acos.hpp" />
@@ -247,6 +250,7 @@
     <ClInclude Include="include\pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="MolecularSystem.cpp" />
     <ClCompile Include="src\aef_utils.cpp" />
     <ClCompile Include="src\HyperfineCalculator.cpp" />
     <ClCompile Include="src\j_basis_vec.cpp" />
@@ -258,6 +262,7 @@
     </ClCompile>
     <ClCompile Include="SpinlabHyperfineLib.cpp" />
     <ClCompile Include="src\teestream.cpp" />
+    <ClCompile Include="src\xiffstream.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="include\Eigen\Cholesky" />

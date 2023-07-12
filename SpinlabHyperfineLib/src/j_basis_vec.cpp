@@ -144,6 +144,111 @@ dcomplex j_basis_vec::H_st(j_basis_vec other, double E_z) {
     return retval;
 }
 
+dcomplex j_basis_vec::d10(j_basis_vec other) {
+    #if 0
+    if (m_f != other.m_f) {
+        return 0;
+    }
+    #endif
+
+    // todo think about this
+    const spin np = other.n;
+    const spin jp = other.j;
+    const spin fp = other.f;
+    const spin m_fp = other.m_f;
+
+    dcomplex xi_factors = xi(f, fp) * xi(j, jp) * xi(n, np);
+    dcomplex threej_factors =
+        w3j(f, 1, fp, -m_f, 0, m_f) * w3j(n, 1, np, 0, 0, 0);
+    dcomplex sixj_factors =
+        w6j(f, 1, fp, jp, half, j) * w6j(j, 1, jp, np, half, n);
+    dcomplex phase = parity(1 - m_f);
+    dcomplex retval = xi_factors * threej_factors * sixj_factors * phase;
+
+    if (std::abs(retval) > 1) {
+        std::cout << std::format("{} d10 {} nonzero {} (dimensionless)", *this,
+                                 other, retval)
+                  << std::endl;
+    }
+
+    return retval;
+}
+
+dcomplex j_basis_vec::d11(j_basis_vec other) {
+
+    // XXX FIXME this is not correctly implemented yet
+    // need to correctly use W-E thm
+    // 
+    // XXX update: think this is correct
+    // based on Rotational Spectroscopy of Diatomic molecules section 5.5.5 and eqn 5.146
+    //if (true)
+    //    return -11111;
+    #if 0
+    if (m_f - 1 != other.m_f) {
+        return 0;
+    }
+    #endif
+    // todo think about this
+    const spin np = other.n;
+    const spin jp = other.j;
+    const spin fp = other.f;
+    const spin m_fp = other.m_f;
+
+    dcomplex xi_factors = xi(f, fp) * xi(j, jp) * xi(n, np);
+    dcomplex threej_factors =
+        w3j(f, 1, fp, -m_fp, 1, m_f) * w3j(n, 1, np, 0, 0, 0);
+    dcomplex sixj_factors =
+        w6j(f, 1, fp, jp, half, j) * w6j(j, 1, jp, np, half, n);
+    dcomplex phase = parity(1 - m_f);
+    dcomplex retval = xi_factors * threej_factors * sixj_factors * phase;
+
+    if (std::abs(retval) > 1) {
+        std::cout << std::format("{} d11 {} nonzero {} (dimensionless)", *this,
+                                 other, retval)
+                  << std::endl;
+    }
+
+    return retval;
+}
+
+dcomplex j_basis_vec::d1t(j_basis_vec other) {
+
+    // XXX FIXME this is not correctly implemented yet
+    // need to correctly use W-E thm
+    // 
+    // XXX update: think this is correct
+    // based on Rotational Spectroscopy of Diatomic molecules section 5.5.5 and
+    // eqn 5.146
+    //if (true)
+    //    return -1111111;
+    #if 0
+    if (m_f + 1 != other.m_f) {
+        return 0;
+    }
+    #endif
+    // todo think about this
+    const spin np = other.n;
+    const spin jp = other.j;
+    const spin fp = other.f;
+    const spin m_fp = other.m_f;
+
+    dcomplex xi_factors = xi(f, fp) * xi(j, jp) * xi(n, np);
+    dcomplex threej_factors =
+        w3j(f, 1, fp, -m_fp, -1, m_f) * w3j(n, 1, np, 0, 0, 0);
+    dcomplex sixj_factors =
+        w6j(f, 1, fp, jp, half, j) * w6j(j, 1, jp, np, half, n);
+    dcomplex phase = parity(1 - m_f);
+    dcomplex retval = xi_factors * threej_factors * sixj_factors * phase;
+
+    if (std::abs(retval) > 1) {
+        std::cout << std::format("{} d1t {} nonzero {} (dimensionless)", *this,
+                                 other, retval)
+                  << std::endl;
+    }
+
+    return retval;
+}
+
 dcomplex j_basis_vec::H_dev(j_basis_vec other, double K) {
     const spin np = other.n;
     const spin jp = other.j;

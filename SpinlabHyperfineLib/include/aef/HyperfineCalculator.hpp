@@ -15,6 +15,7 @@ private:
     double K;
     bool init;
     bool diagonalized;
+    bool dkq_init;
 
 public:
     std::vector<j_basis_vec> basis;
@@ -31,6 +32,11 @@ public:
     Eigen::MatrixXcd Vs;
     Eigen::MatrixXcd Vst;
 
+    // dipole-moment matrix operators -- dz = Hstark / muE
+    Eigen::MatrixXcd d10;
+    Eigen::MatrixXcd d11;
+    Eigen::MatrixXcd d1t;
+
 public:
     /// <summary>
     /// Constructor
@@ -46,6 +52,18 @@ public:
     }
     bool calculate_matrix_elts();
     bool diagonalize_H();
+
+    /// <summary>
+    /// Are the orientation spherical tensor operatorsinitialized
+    /// </summary>
+    /// <returns></returns>
+    bool isDkqInit() { return dkq_init;}
+
+    /// <summary>
+    /// Calculate the dipole-m
+    /// </summary>
+    /// <returns></returns>
+    bool calc_dkq();
 
     bool load_matrix_elts(std::string inpath);
     bool save_matrix_elts(std::string out);
