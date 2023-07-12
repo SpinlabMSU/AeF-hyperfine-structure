@@ -10,6 +10,8 @@
 #include <filesystem>
 #include <numeric>
 #include <aef/teestream.hpp>
+#include <aef/debug_stream.h>
+#include <cstring>
 
 using namespace std::chrono;
 namespace fs = std::filesystem;
@@ -149,31 +151,63 @@ int32_t closest_state(HyperfineCalculator& calc, int32_t ket_idx, int32_t exclud
 
 #define CALCULATE_HAMILTONIAN
 
+void log_time_at_point(const char* desc, std::chrono::time_point<std::chrono::system_clock>& start) {
+    using namespace std::chrono;
+    time_point<system_clock> curr_time = system_clock::now();
+    std::string stime = std::format("{0:%F}-{0:%H%M}{0:%S}", curr_time);
+    auto diff = curr_time - start;
+    using d_seconds = std::chrono::duration<double>;
+    double sec_count = d_seconds(diff).count();
+    std::string lstr = std::format("{}: have taken {} seconds (current time is {})", desc, sec_count, stime);
+    std::cout << lstr << std::endl;
+}
 int main() {
     // output file --> automatically make output based on current datetime
     auto dpath = fs::path("oana");
     std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-    std::string stime = std::format("{0:%F}-{0:%H%M}{0:%S}", now);
+    std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
+    std::string stime = std::format("{0:%F}-{0:%H%M}{0:%S}", start_time);
     dpath /= stime;
     fs::create_directories(dpath);
 
+    int param_nmax = 4;
+    bool enable_debug_log = false;
+
+    // todo parse args
+    // args should include: E_max, nmax, enable_debug_log
+
     // create info log
     std::ofstream oLog;
-    tee::teebuf* pBuf, *pErrb;
+    
+    debug_stream::debug_ostream *pDebug = new debug_stream::debug_ostream;
+    tee::teebuf *pBuf, *pOutb, *pErrb;
+
+    std::streambuf *pLogBuf;
     std::streambuf *orig_coutb = std::cout.rdbuf();
-    std::streambuf* orig_cerrb = std::cerr.rdbuf();
+    std::streambuf *orig_cerrb = std::cerr.rdbuf();
 
     {
         auto fpath = dpath / "out.log";
         oLog = std::ofstream(fpath, std::ios::trunc | std::ios::out);
+        // test if logging to debug window enabled
+        if (enable_debug_log) {
+            // if enabled, tee to both the log file and the debug window
+            pBuf = new tee::teebuf(oLog.rdbuf(), pDebug->rdbuf());
+            pLogBuf = pBuf;
+        } else {
+            // otherwise just output to the log file
+            pBuf = nullptr;
+            pLogBuf = oLog.rdbuf();
+        }
+        pOutb = new tee::teebuf(pLogBuf, orig_coutb);
+        std::cout.set_rdbuf(pOutb);
 
-        pBuf = new tee::teebuf(oLog.rdbuf(), orig_coutb);
-        std::cout.set_rdbuf(pBuf);
-        
-        pErrb = new tee::teebuf(oLog.rdbuf(), orig_cerrb);
-        std::cout.set_rdbuf(pErrb);
+        pErrb = new tee::teebuf(pLogBuf, orig_cerrb);
+        std::cerr.set_rdbuf(pErrb);
     }
     std::cout << "AeF Hyperfine Structure version compiled on " << __DATE__ << " " << __TIME__ << std::endl;
+    std::cout << "Start time is " << start_time << std::endl;
+
     init_rng();
 
     j_basis_vec v(1, .5, 0, 0);
@@ -210,7 +244,7 @@ int main() {
     std::cout << str << std::endl;
 
     // maximum value of the n quantum number.  There will be 4*(nmax**2) states
-    int nmax = 10;
+    int nmax = param_nmax;
     HyperfineCalculator calc(nmax, E_z, K);
 
     std::cout << std::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({})", nmax, E_z, K, devstatus) << std::endl;
@@ -225,9 +259,13 @@ int main() {
         std::cout << "couldn't load " << spath << std::endl;
     }
 #else
-    std::cout << "Calculating matrix elements" << std::endl;
+    log_time_at_point("Calculating matrix elements", start_time);
     calc.calculate_matrix_elts();
     calc.diagonalize_H();
+    if (nmax >= 20)
+        calc.save_matrix_elts(dpath / "matrix.dat");
+
+    log_time_at_point("Finished matrix elt calcs", start_time);
 #endif
 #define PRINT_EXTRAS
 #ifdef PRINT_EXTRAS
@@ -242,6 +280,8 @@ int main() {
     }
     std::cout << std::endl << std::endl;
     std::cout << "----------- NO STARK -----------" << std::endl;
+    
+    //exit(0);
     //*/
     calc.H_tot -= calc.H_stk;
 
@@ -279,17 +319,19 @@ int main() {
     oStk << "E-field (V/cm), dE_gnd";
     oStk << ", dE_f1t, dE_f10, dE_f11" << std::endl;
     assert(calc.H_tot.rows() == calc.H_stk.rows());
+
+    constexpr size_t nStarkIterations = 101;
 #define USE_REAL_Es
 #ifdef USE_REAL_Es
-    double E0s[101];
-    double E1s[101];
-    double E2s[101];
-    double E3s[101];
+    double E0s[nStarkIterations];
+    double E1s[nStarkIterations];
+    double E2s[nStarkIterations];
+    double E3s[nStarkIterations];
 #else
-    dcomplex E0s[101];
-    dcomplex E1s[101];
-    dcomplex E2s[101];
-    dcomplex E3s[101];
+    dcomplex E0s[nStarkIterations];
+    dcomplex E1s[nStarkIterations];
+    dcomplex E2s[nStarkIterations];
+    dcomplex E3s[nStarkIterations];
 #endif
 
 #ifndef USE_DEVONSHIRE
@@ -309,6 +351,7 @@ int main() {
         }
     }
 #endif
+    log_time_at_point("About to start stark loop", start_time);
     double max_dev_mf_f00 = -std::numeric_limits<double>::infinity();
     int idx_max_mf_f00 = -1;
     double max_dev_mf_f10 = -std::numeric_limits<double>::infinity();
@@ -318,8 +361,9 @@ int main() {
     double max_dev_mf_f11 = -std::numeric_limits<double>::infinity();
     int idx_max_mf_f11 = -1;
 
-    for (int fdx = 0; fdx < 101; fdx++) {
-        double Ez_fdx = (E_z) * (fdx / 100.0);
+    for (int fdx = 0; fdx < nStarkIterations; fdx++) {
+        constexpr double field_divisor = nStarkIterations - 1.0;
+        double Ez_fdx = (E_z) * (fdx / field_divisor);
 #ifdef MATRIX_ELT_DEBUG
         // degenerate states will probably break this
         if (fdx == 0) continue;
@@ -390,7 +434,7 @@ int main() {
 #endif
 
     std::cout << "--------- stark loop completed ---------" << std::endl;
-
+    log_time_at_point("Completed stark loop", start_time);
     std::cout << std::format("Explicit m_f degeneracy breaking coeff is {:.4} Hz", hfs_constants::e_mf_break * 1E6) << std::endl;
     std::cout << std::format("Maximum m_f deviation for {} is {} at index {}", f00, max_dev_mf_f00, idx_max_mf_f00) << std::endl;
     std::cout << std::format("Maximum m_f deviation for {} is {} at index {}", f10, max_dev_mf_f10, idx_max_mf_f10) << std::endl;

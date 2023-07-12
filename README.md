@@ -1,8 +1,8 @@
 # AeF-hyperfine-structure: Alkaline-Earth Monofluoride molecular hyperfine structure calculator
-$$\newcommand{\ket}[1]{\left|{#1}\right\rangle}$$
-$$\newcommand{\bra}[1]{\left\langle{#1}\right|}$$
-$$\newcommand{\abs}[1]{\left\vert{#1}\right\vert}$$
-$$\newcommand{\braket}[2]{\left\langle{#1}\middle|{#2}\right\rangle}$$
+$\newcommand{\ket}[1]{\left|{#1}\right\rangle}$
+$\newcommand{\bra}[1]{\left\langle{#1}\right|}$
+$\newcommand{\abs}[1]{\left\vert{#1}\right\vert}$
+$\newcommand{\braket}[2]{\left\langle{#1}\middle|{#2}\right\rangle}$
 
 This code here is a testbed for computing the hyperfine structure of $^{138}BaF$ molecules in their $^2\Sigma$ electronic and vibrational ground states.  This is based on PRA 98, 032513 (2018) using 
 
