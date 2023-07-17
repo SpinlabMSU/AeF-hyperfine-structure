@@ -1,7 +1,7 @@
 // AeF-hyperfine-structure.cpp : This file contains the 'main' function. Program
 // execution begins and ends there.
 //
-
+#include <pch.h>
 #include <aef/aef.h>
 #include <aef/debug_stream.h>
 #include <aef/matrix_utils.h>
@@ -126,13 +126,6 @@ int32_t closest_state(HyperfineCalculator& calc, int32_t ket_idx,
     return closest_idx;
 }
 
-#ifdef USE_MOST_LIKE
-#define closest_state(calc, idx) most_like(calc.Vs, idx)
-#elif defined(USE_CONST)
-#define closest_state(calc, idx) (idx)
-#endif
-
-#define CALCULATE_HAMILTONIAN
 
 void log_time_at_point(
     const char* desc,
@@ -279,8 +272,8 @@ int main(int argc, char **argv) {
     /// <summary>
     /// Correct value of E_z is usually 50 kV/cm = 25170 MHz/D.
     /// </summary>
-    constexpr double E_z = E_z_orig / 10.0 * 500;
-#define USE_DEVONSHIRE
+    constexpr double E_z = E_z_orig / 10.0;// *500;
+//#define USE_DEVONSHIRE
 
 #ifdef USE_DEVONSHIRE
     /// <summary>
@@ -420,10 +413,10 @@ int main(int argc, char **argv) {
         }
     }
 #else
+#endif // !USE_DEVONSHIRE
     // directory to put devonshire info
     auto devpath = dpath / "devonshire_info";
     fs::create_directories(devpath);
-#endif // !USE_DEVONSHIRE
     std::cout << "does H_tot commute with d10? " << commutes(calc.H_tot, calc.d10)
         << std::endl;
     std::cout << "does H_tot commute with d11? " << commutes(calc.H_tot, calc.d11)
@@ -525,11 +518,11 @@ int main(int argc, char **argv) {
         E2s[fdx] = EVAL(calc.Es[2]);
         E3s[fdx] = EVAL(calc.Es[3]);
 
-#ifdef USE_DEVONSHIRE
+//#ifdef USE_DEVONSHIRE
         auto dev_out_fname = std::format("info_Ez_{}.csv", std::lround(Ez_V_cm));
         std::ofstream dout(devpath / dev_out_fname);
         calc_mol_dipole(dout, calc);
-#endif
+//#endif
     }
 
 #if 1
