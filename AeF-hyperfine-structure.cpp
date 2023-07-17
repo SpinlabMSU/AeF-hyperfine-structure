@@ -3,25 +3,25 @@
 //
 
 #include <aef/aef.h>
-#include <format>
-#include <iostream>
-#include <chrono>
-#include <fstream>
-#include <filesystem>
-#include <numeric>
-#include <numbers>
-#include <aef/teestream.hpp>
 #include <aef/debug_stream.h>
 #include <aef/matrix_utils.h>
+#include <aef/teestream.hpp>
+#include <chrono>
 #include <cstring>
+#include <filesystem>
+#include <format>
+#include <fstream>
+#include <iostream>
+#include <numbers>
+#include <numeric>
+#include <cxxopts.hpp>
 
 using namespace std::chrono;
 namespace fs = std::filesystem;
 
-//int32_t closest_approx(Eigen)
+// int32_t closest_approx(Eigen)
 
-
-int32_t most_like(Eigen::MatrixXcd &d, int32_t ket_idx) {
+int32_t most_like(Eigen::MatrixXcd& d, int32_t ket_idx) {
     int32_t cdx = -1;
     double max_comp = -1;
 
@@ -48,10 +48,10 @@ double energy_of_closest(HyperfineCalculator& calc, int32_t ket_idx) {
 /// <summary>
 /// Calculates the expectation values
 /// </summary>
-/// <param name="calc">HyperfineCalculator: contains operator matrix elements and states</param>
-/// <param name="E_idx">the index of Energy level to calculate with</param>
-/// <returns></returns>
-j_basis_vec expectation_values(HyperfineCalculator &calc, int32_t E_idx) {
+/// <param name="calc">HyperfineCalculator: contains operator matrix elements
+/// and states</param> <param name="E_idx">the index of Energy level to
+/// calculate with</param> <returns></returns>
+j_basis_vec expectation_values(HyperfineCalculator& calc, int32_t E_idx) {
     //
     Eigen::VectorXcd state_vec = calc.Vs.col(E_idx);
     j_basis_vec out;
@@ -72,7 +72,6 @@ j_basis_vec expectation_values(HyperfineCalculator &calc, int32_t E_idx) {
             continue;
         }
 
-
         prob_tot += prob;
         j_basis_vec bs_ket = calc.basis[kidx];
 
@@ -83,7 +82,7 @@ j_basis_vec expectation_values(HyperfineCalculator &calc, int32_t E_idx) {
 
         if (set_mf && expect_mf != calc.basis[kidx].m_f && prob > 0) {
             DebugBreak();
-            throw (false);
+            throw(false);
         }
 
         if (prob > 0 && !set_mf) {
@@ -91,9 +90,9 @@ j_basis_vec expectation_values(HyperfineCalculator &calc, int32_t E_idx) {
             set_mf = true;
         }
 #endif
-        out.n   += prob * bs_ket.n;
-        out.j   += prob * bs_ket.j;
-        out.f   += prob * bs_ket.f;
+        out.n += prob * bs_ket.n;
+        out.j += prob * bs_ket.j;
+        out.f += prob * bs_ket.f;
         out.m_f += prob * bs_ket.m_f;
     }
 
@@ -101,21 +100,20 @@ j_basis_vec expectation_values(HyperfineCalculator &calc, int32_t E_idx) {
         DebugBreak();
     }
 
-    out.n   /= prob_tot;
-    out.j   /= prob_tot;
-    out.f   /= prob_tot;
+    out.n /= prob_tot;
+    out.j /= prob_tot;
+    out.f /= prob_tot;
     out.m_f /= prob_tot;
 
     return out;
 }
 
-
 static inline double diff_states(j_basis_vec v1, j_basis_vec v2) {
     constexpr double cn = 1.5;
-    constexpr double cj = 0.5;// 1.0;
+    constexpr double cj = 0.5; // 1.0;
     constexpr double cf = 3.0;
-    constexpr double cm = 4.0;//100.0;
-    
+    constexpr double cm = 4.0; // 100.0;
+
     double dn = (v1.n - v2.n);
     double dj = (v1.j - v2.j);
     double df = (v1.f - v2.f);
@@ -124,14 +122,15 @@ static inline double diff_states(j_basis_vec v1, j_basis_vec v2) {
 }
 
 /// <summary>
-/// Finds the diagonlized eignestate "closest" to the basis state with index "ket_idx"
+/// Finds the diagonlized eignestate "closest" to the basis state with index
+/// "ket_idx"
 /// </summary>
 /// <param name="calc">System basis and operator elements</param>
 /// <param name="ket_idx">basis state</param>
-/// <param name="exclude_Eidx">(optional) an energy eigenstate to "exclude" from being the closest
-/// state.  Intended to fix the </param>
-/// <returns></returns>
-int32_t closest_state(HyperfineCalculator& calc, int32_t ket_idx, int32_t exclude_Eidx=-1) {
+/// <param name="exclude_Eidx">(optional) an energy eigenstate to "exclude" from
+/// being the closest state.  Intended to fix the </param> <returns></returns>
+int32_t closest_state(HyperfineCalculator& calc, int32_t ket_idx,
+    int32_t exclude_Eidx = -1) {
     double chisq = (double)std::numeric_limits<double>::infinity();
     j_basis_vec ket = calc.basis[ket_idx];
     int32_t closest_idx = -1;
@@ -157,14 +156,17 @@ int32_t closest_state(HyperfineCalculator& calc, int32_t ket_idx, int32_t exclud
 
 #define CALCULATE_HAMILTONIAN
 
-void log_time_at_point(const char* desc, std::chrono::time_point<std::chrono::system_clock>& start) {
+void log_time_at_point(
+    const char* desc,
+    std::chrono::time_point<std::chrono::system_clock>& start) {
     using namespace std::chrono;
     time_point<system_clock> curr_time = system_clock::now();
     std::string stime = std::format("{0:%F}-{0:%H%M}{0:%S}", curr_time);
     auto diff = curr_time - start;
     using d_seconds = std::chrono::duration<double>;
     double sec_count = d_seconds(diff).count();
-    std::string lstr = std::format("{}: have taken {} seconds (current time is {})", desc, sec_count, stime);
+    std::string lstr = std::format(
+        "{}: have taken {} seconds (current time is {})", desc, sec_count, stime);
     std::cout << lstr << std::endl;
 }
 
@@ -173,8 +175,10 @@ void log_time_at_point(const char* desc, std::chrono::time_point<std::chrono::sy
 /// </summary>
 /// <param name="output"></param>
 /// <param name="calc"></param>
-void calc_mol_dipole(std::ostream &output, HyperfineCalculator &calc) {
-    output << "Index n, Energy (MHz), <n|dx|n>, <n|dy|n>, <n|dz|n>" << std::endl;
+void calc_mol_dipole(std::ostream& output, HyperfineCalculator& calc) {
+    output << "Index n, Energy (MHz), Re(<n|dx|n>), Re(<n|dy|n>), Re(<n|dz|n>), "
+        "Im(<n|dx|n>), Im(<n|dy|n>), Im(<n|dz|n>)"
+        << std::endl;
 
     for (size_t n = 0; n < calc.nBasisElts; n++) {
         auto e_n = calc.Vs.col(n);
@@ -191,36 +195,75 @@ void calc_mol_dipole(std::ostream &output, HyperfineCalculator &calc) {
         dcomplex dy = (d1t + d11) * 1i * inv_sqrt2;
         dcomplex dz = d10;
 
-        auto ifo = std::format("{}, {}, {}, {}, {}", n, calc.Es[n], dx, dy, dz);
+        auto ifo =
+            std::format("{}, {}, {}, {}, {}, {}, {}, {}", n, std::real(calc.Es[n]),
+                std::real(dx), std::real(dy), std::real(dz), std::real(dx),
+                std::imag(dy), std::imag(dz));
         output << ifo << std::endl;
     }
     output.flush();
 }
 
-int main() {
+int main(int argc, char **argv) {
     // output file --> automatically make output based on current datetime
     // 2023-07-12: change output dir to output instead of oana
     auto dpath = fs::path("output");
-    std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
+    std::chrono::time_point<std::chrono::system_clock> start_time =
+        std::chrono::system_clock::now();
     std::string stime = std::format("{0:%F}-{0:%H%M}{0:%S}", start_time);
     dpath /= stime;
     fs::create_directories(dpath);
 
     int param_nmax = 4;
     bool enable_debug_log = false;
+    bool load_from_file = false;
+    std::string loadname = "";
+    bool print_extras = true;
 
     // todo parse args
     // args should include: E_max, nmax, enable_debug_log
+    cxxopts::Options options("aef-hyperfine-structure", "Program to simulate the hyperfine structure of"
+        "diatomic Alkaline - monoflouride molecules");
+    options.add_options()
+        ("h,help", "Print usage")
+        ("e,E_max", "Maximum electric field", cxxopts::value<double>())
+        ("n,n_max", "Maximum n level to include", cxxopts::value<int>())
+        ("d,enable_debug", "Enable debug mode", cxxopts::value<bool>()->default_value("false"))
+        ("print_extras", "Print extra information", cxxopts::value<bool>()->default_value("true"))
+        ("l,load", "Load molecular system operators from file", cxxopts::value<std::string>());
+
+    auto result = options.parse(argc, argv);
+    
+    if (result.count("help")) {
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }
+
+    if (result.count("enable_debug")) {
+        enable_debug_log = result["enable_debug"].as<bool>();
+    }
+
+    if (result.count("n_max")) {
+        param_nmax = result["n_max"].as<int>();
+    }
+    if (result.count("load")) {
+        load_from_file = true;
+        loadname = result["load"].as<std::string>();
+    }
+
+    if (result.count("print_extras")) {
+        print_extras = result["print_extras"].as<bool>();
+    }
 
     // create info log
     std::ofstream oLog;
-    
-    debug_stream::debug_ostream *pDebug = new debug_stream::debug_ostream;
-    tee::teebuf *pBuf, *pOutb, *pErrb;
 
-    std::streambuf *pLogBuf;
-    std::streambuf *orig_coutb = std::cout.rdbuf();
-    std::streambuf *orig_cerrb = std::cerr.rdbuf();
+    debug_stream::debug_ostream* pDebug = new debug_stream::debug_ostream;
+    tee::teebuf* pBuf, * pOutb, * pErrb;
+
+    std::streambuf* pLogBuf;
+    std::streambuf* orig_coutb = std::cout.rdbuf();
+    std::streambuf* orig_cerrb = std::cerr.rdbuf();
 
     {
         auto fpath = dpath / "out.log";
@@ -237,11 +280,12 @@ int main() {
         }
         pOutb = new tee::teebuf(pLogBuf, orig_coutb);
         std::cout.set_rdbuf(pOutb);
-        
+
         pErrb = new tee::teebuf(pLogBuf, orig_cerrb);
         std::cerr.set_rdbuf(pErrb);
     }
-    std::cout << "AeF Hyperfine Structure version compiled on " << __DATE__ << " " << __TIME__ << std::endl;
+    std::cout << "AeF Hyperfine Structure version compiled on " << __DATE__ << " "
+        << __TIME__ << std::endl;
     std::cout << "Start time is " << start_time << std::endl;
 
     init_rng();
@@ -274,8 +318,9 @@ int main() {
     constexpr const char* devstatus = "disabled";
 #endif
     dcomplex H_st = v.H_st(v, E_z_orig);
-    std::string str = std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(500kV/cm) = {} MHz",
-        v, E_rot, H_hfs, H_st);
+    std::string str =
+        std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(500kV/cm) = {} MHz", v,
+            E_rot, H_hfs, H_st);
 
     std::cout << str << std::endl;
 
@@ -283,97 +328,102 @@ int main() {
     int nmax = param_nmax;
     HyperfineCalculator calc(nmax, E_z, K);
 
-    std::cout << std::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({})", nmax, E_z, K, devstatus) << std::endl;
+    std::cout << std::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({})",
+        nmax, E_z, K, devstatus)
+        << std::endl;
+    if (load_from_file) {
+        std::string logstr = std::format("Loading matrix elements from {}", loadname);
+        log_time_at_point(logstr.c_str(), start_time);
+        bool result = calc.load_matrix_elts(loadname);
 
-#ifndef CALCULATE_HAMILTONIAN
-    std::string spath = std::format("out/matrix_{}.dat", nmax);
+        if (!result) {
+            std::cout << "couldn't load " << loadname << std::endl;
+            exit(-1);
+        }
+        logstr = std::format("Finished loading matrix elements from {}", loadname);
+        log_time_at_point(logstr.c_str(), start_time);
+    } else {
+        log_time_at_point("Calculating matrix elements", start_time);
+        calc.calculate_matrix_elts();
+        calc.diagonalize_H();
+        if (nmax >= 20)
+            calc.save_matrix_elts(dpath / "matrix.dat");
 
-    bool result = calc.load_matrix_elts(spath);
-
-    std::cout << std::format("Loading hamiltonian from {}", spath) << std::endl;
-    if (!result) {
-        std::cout << "couldn't load " << spath << std::endl;
+        log_time_at_point("Finished matrix elt calcs", start_time);
     }
-#else
-    log_time_at_point("Calculating matrix elements", start_time);
-    calc.calculate_matrix_elts();
-    calc.diagonalize_H();
-    if (nmax >= 20)
-        calc.save_matrix_elts(dpath / "matrix.dat");
 
-    log_time_at_point("Finished matrix elt calcs", start_time);
-#endif
-#define PRINT_EXTRAS
-#ifdef PRINT_EXTRAS
-    Eigen::VectorXcd Es = calc.Es;
-    std::cout << "----------- Stark-Shifted -----------" << std::endl;
-    std::cout << "Level, Energy (MHz)" << std::endl;
-    double EPrev = 0;
-    for (int i = 0; i < calc.nBasisElts; i++) {
-        double dE = std::real(Es[i]) - EPrev;
-        std::cout << i << ", " << std::real(Es[i]) << "MHz, DeltaE = " << dE << " MHz, " << expectation_values(calc, i).ket_string() << std::endl;
-        EPrev = std::real(Es[i]);
+    if (print_extras) {
+        Eigen::VectorXcd Es = calc.Es;
+        std::cout << "----------- Stark-Shifted -----------" << std::endl;
+        std::cout << "Level, Energy (MHz)" << std::endl;
+        double EPrev = 0;
+        for (int i = 0; i < calc.nBasisElts; i++) {
+            double dE = std::real(Es[i]) - EPrev;
+            std::cout << i << ", " << std::real(Es[i]) << "MHz, DeltaE = " << dE
+                << " MHz, " << expectation_values(calc, i).ket_string()
+                << std::endl;
+            EPrev = std::real(Es[i]);
+        }
+        std::cout << std::endl << std::endl;
+
+        std::cout << "----------- NO STARK -----------" << std::endl;
+        calc.H_tot -= calc.H_stk;
+        calc.diagonalize_H();
+
+        Es = calc.Es;
+        EPrev = 0;
+        std::cout << "Level, ket, Energy (MHz)" << std::endl;
+        for (int i = 0; i < calc.nBasisElts; i++) {
+            double dE = std::real(Es[i]) - EPrev;
+            std::cout << i << ", " << std::real(Es[i]) << "MHz, DeltaE = " << dE
+                << " MHz, " << expectation_values(calc, i).ket_string()
+                << std::endl;
+            EPrev = std::real(Es[i]);
+            // std::cout << i << ", " << calc.basis[i] << ", " << Es[i] << std::endl;
+        }
+    } else {
+        calc.H_tot -= calc.H_stk;
+        calc.diagonalize_H();
     }
-    std::cout << std::endl << std::endl;
-    std::cout << "----------- NO STARK -----------" << std::endl;
-    
-    //exit(0);
-    //*/
-    calc.H_tot -= calc.H_stk;
 
-    std::cout << "does H_tot commute with d10? " << commutes(calc.H_tot, calc.d10) << std::endl;
-    std::cout << "does H_tot commute with d11? " << commutes(calc.H_tot, calc.d11) << std::endl;
-    std::cout << "does H_tot commute with d1t? " << commutes(calc.H_tot, calc.d1t) << std::endl;
-
-    calc.diagonalize_H();
-
-    Es = calc.Es;
-    EPrev = 0;
-    std::cout << "Level, ket, Energy (MHz)" << std::endl;
-    for (int i = 0; i < calc.nBasisElts; i++) {
-        double dE = std::real(Es[i]) - EPrev;
-        std::cout << i << ", " << std::real(Es[i]) << "MHz, DeltaE = " << dE << " MHz, " << expectation_values(calc, i).ket_string() << std::endl;
-        EPrev = std::real(Es[i]);
-        //std::cout << i << ", " << calc.basis[i] << ", " << Es[i] << std::endl;
-    }
-#else
-    calc.H_tot -= calc.H_stk;
-    calc.diagonalize_H();
-#endif
-    
     // create output file
     auto fpath = dpath / "stark_shift_gnd.csv";
 
     std::ofstream oStk(fpath, std::ios::trunc | std::ios::out);
     j_basis_vec gnd = j_basis_vec::from_index(0);
-    j_basis_vec f00 = gnd; int32_t if00 = f00.index();
+    j_basis_vec f00 = gnd;
+    int32_t if00 = f00.index();
     // n = 0, j = 0.5, f = 1 hyperfine triplet
-    j_basis_vec f1t(0, 0.5, 1, -1); int32_t if1t = f1t.index();
-    j_basis_vec f10(0, 0.5, 1,  0); int32_t if10 = f10.index();
-    j_basis_vec f11(0, 0.5, 1,  1); int32_t if11 = f11.index();
+    j_basis_vec f1t(0, 0.5, 1, -1);
+    int32_t if1t = f1t.index();
+    j_basis_vec f10(0, 0.5, 1, 0);
+    int32_t if10 = f10.index();
+    j_basis_vec f11(0, 0.5, 1, 1);
+    int32_t if11 = f11.index();
 
-    std::cout << "if1t=" << if1t << " if10=" << if10 << " if11=" << if11 << std::endl;
-    std::cout << std::format("f00={}; f1t={}, f10={}, f11={}", f00, f1t, f10, f11) << std::endl;
+    std::cout << "if1t=" << if1t << " if10=" << if10 << " if11=" << if11
+        << std::endl;
+    std::cout << std::format("f00={}; f1t={}, f10={}, f11={}", f00, f1t, f10, f11)
+        << std::endl;
 
-    //oStk << "E-field (V/cm), Stark-shifted Energy of " << gnd.ket_string() << " (MHz)";
-    oStk << "E-field (V/cm), dE_gnd";
-    oStk << ", dE_f1t, dE_f10, dE_f11" << std::endl;
+    // oStk << "E-field (V/cm), Stark-shifted Energy of " << gnd.ket_string() << "
+    // (MHz)";
+    oStk << "E-field (V/cm), dE_gnd" << ", dE_f1t, dE_f10, dE_f11" << std::endl;
     assert(calc.H_tot.rows() == calc.H_stk.rows());
 
     constexpr size_t nStarkIterations = 101;
 #define USE_REAL_Es
 #ifdef USE_REAL_Es
-    double E0s[nStarkIterations];
-    double E1s[nStarkIterations];
-    double E2s[nStarkIterations];
-    double E3s[nStarkIterations];
+    typedef double etype;
+#define EVAL(val) std::real(val) 
 #else
-    dcomplex E0s[nStarkIterations];
-    dcomplex E1s[nStarkIterations];
-    dcomplex E2s[nStarkIterations];
-    dcomplex E3s[nStarkIterations];
+    typedef dcomplex etype;
+#define EVAL(val) val
 #endif
-
+    etype E0s[nStarkIterations];
+    etype E1s[nStarkIterations];
+    etype E2s[nStarkIterations];
+    etype E3s[nStarkIterations];
 #ifndef USE_DEVONSHIRE
     // note: devonshire potential doesn't conserve m_f
     for (int idx = 0; idx < calc.nBasisElts; idx++) {
@@ -383,7 +433,8 @@ int main() {
             double prob = std::norm(calc.H_tot(idx, jdx));
             if (v1.m_f != v2.m_f && prob > 0) {
                 DebugBreak();
-                std::string ostr = std::format("ERROR v1 = {}, v2 = {}, prob = {}", v1, v2, prob);
+                std::string ostr =
+                    std::format("ERROR v1 = {}, v2 = {}, prob = {}", v1, v2, prob);
                 std::cout << ostr << std::endl;
                 std::cerr << ostr << std::endl;
                 assert(!(v1.m_f != v2.m_f && prob > 0));
@@ -395,19 +446,21 @@ int main() {
     auto devpath = dpath / "devonshire_info";
     fs::create_directories(devpath);
 #endif // !USE_DEVONSHIRE
-    std::cout << "does H_tot commute with d10? "
-              << commutes(calc.H_tot, calc.d10) << std::endl;
-    std::cout << "does H_tot commute with d11? "
-              << commutes(calc.H_tot, calc.d11) << std::endl;
-    std::cout << "does H_tot commute with d1t? "
-              << commutes(calc.H_tot, calc.d1t) << std::endl;
+    std::cout << "does H_tot commute with d10? " << commutes(calc.H_tot, calc.d10)
+        << std::endl;
+    std::cout << "does H_tot commute with d11? " << commutes(calc.H_tot, calc.d11)
+        << std::endl;
+    std::cout << "does H_tot commute with d1t? " << commutes(calc.H_tot, calc.d1t)
+        << std::endl;
     std::cout << std::endl;
-    log_time_at_point("About to start stark loop", start_time);
 
     std::cout << "Is d10 all zero " << calc.d10.isZero(1E-6) << std::endl;
     std::cout << "Is d11 all zero " << calc.d11.isZero(1E-6) << std::endl;
     std::cout << "Is d1t all zero " << calc.d1t.isZero(1E-6) << std::endl;
 
+
+    // Stark loop
+    log_time_at_point("About to start stark loop", start_time);
     double max_dev_mf_f00 = -std::numeric_limits<double>::infinity();
     int idx_max_mf_f00 = -1;
     double max_dev_mf_f10 = -std::numeric_limits<double>::infinity();
@@ -422,34 +475,38 @@ int main() {
         double Ez_fdx = (E_z) * (fdx / field_divisor);
 #ifdef MATRIX_ELT_DEBUG
         // degenerate states will probably break this
-        if (fdx == 0) continue;
+        if (fdx == 0)
+            continue;
 #endif
         // recalaculate H_tot -- from scratch to avoid accumulation of error
-        //calc.H_tot.setZero();
-        calc.H_tot = calc.H_rot.toDenseMatrix() + /**/calc.H_hfs +/**/ dcomplex(Ez_fdx / E_z) * calc.H_stk;
+        // calc.H_tot.setZero();
+        calc.H_tot = calc.H_rot.toDenseMatrix() + /**/ calc.H_hfs + /**/ dcomplex(Ez_fdx / E_z) * calc.H_stk;
         calc.diagonalize_H();
 
         // f = 0 singlet
-        int32_t gnd_idx = closest_state(calc, 0); //most_like(calc.Vs, 0);
+        int32_t gnd_idx = closest_state(calc, 0);
         int32_t _if00 = gnd_idx;
-        double E = std::real(calc.Es[gnd_idx]);//energy_of_closest(calc, gnd_idx);
+        double E = std::real(calc.Es[gnd_idx]);
         double Ez_V_cm = Ez_fdx / unit_conversion::MHz_D_per_V_cm;
 
         // energy differences for f = 1 triplet
-        int32_t _if1t = closest_state(calc, if1t, _if00);//1;// most_like(calc.Vs, if1t);
-        double dE_f1t = std::real(calc.Es[_if1t]) - E;// energy_of_closest(calc, if1t) - E;
-        int32_t _if10 = closest_state(calc, if10, _if00);//2;// most_like(calc.Vs, if1t);
-        double dE_f10 = std::real(calc.Es[_if10]) - E;// energy_of_closest(calc, if10) - E;
-        int32_t _if11 = closest_state(calc, if11, _if00);//3;// most_like(calc.Vs, if1t);
-        double dE_f11 = std::real(calc.Es[_if11]) - E;//energy_of_closest(calc, if11) - E;
+        int32_t _if1t = closest_state(calc, if1t, _if00);
+        double dE_f1t = std::real(calc.Es[_if1t]) - E;
+        int32_t _if10 = closest_state(calc, if10, _if00);
+        double dE_f10 = std::real(calc.Es[_if10]) - E;
+        int32_t _if11 = closest_state(calc, if11, _if00);
+        double dE_f11 = std::real(calc.Es[_if11]) - E;
 
         // measure deviation of m_f for each n=0,f=0 and n=0,f=1 state
-#define MDEV(idx) do {\
-        double dev_mf_##idx = std::abs(expectation_values(calc, _i##idx).m_f - ##idx.m_f);\
-        if (std::abs(dev_mf_##idx) > max_dev_mf_##idx) {\
-            max_dev_mf_##idx = dev_mf_##idx;\
-            idx_max_mf_##idx = fdx;\
-        } }while (0) 
+#define MDEV(idx)                                                              \
+  do {                                                                         \
+    double dev_mf_##idx =                                                      \
+        std::abs(expectation_values(calc, _i##idx).m_f - ##idx.m_f);           \
+    if (std::abs(dev_mf_##idx) > max_dev_mf_##idx) {                           \
+      max_dev_mf_##idx = dev_mf_##idx;                                         \
+      idx_max_mf_##idx = fdx;                                                  \
+    }                                                                          \
+  } while (0)
 
         MDEV(f00);
         MDEV(f10);
@@ -457,53 +514,73 @@ int main() {
         MDEV(f11);
 #undef MDEV
 
-        double stark_scale = Ez_V_cm * hfs_constants::mu_e * unit_conversion::MHz_D_per_V_cm;
-        
-        std::cout << std::format("Electric field strength is {} V/cm, stark scale is {} MHz", Ez_V_cm, stark_scale) << std::endl;
-        std::cout << std::format("Gnd state expectation values: {}", expectation_values(calc, gnd_idx)) << std::endl;
-        std::cout << std::format("f1t state expectation values: {}", expectation_values(calc, _if1t)) << std::endl;
-        std::cout << std::format("f10 state expectation values: {}", expectation_values(calc, _if10)) << std::endl;
-        std::cout << std::format("f11 state expectation values: {}", expectation_values(calc, _if11)) << std::endl;
+        double stark_scale =
+            Ez_V_cm * hfs_constants::mu_e * unit_conversion::MHz_D_per_V_cm;
 
-        std::cout << std::format("Closest Energy-estate to 0-E-field gnd state is {}, with energy {}", gnd_idx, E) << std::endl;
-        oStk << Ez_V_cm << "," << E << "," << dE_f1t << "," << dE_f10 << "," << dE_f11 << std::endl;
-        std::cout << stark_scale << "," << E << "," << dE_f1t << "," << dE_f10 << "," << dE_f11 << std::endl;
+        std::cout << std::format(
+                "Electric field strength is {} V/cm, stark scale is {} MHz",
+                Ez_V_cm, stark_scale)
+            << std::endl;
+        std::cout << std::format("Gnd state expectation values: {}",
+            expectation_values(calc, gnd_idx))
+            << std::endl;
+        std::cout << std::format("f1t state expectation values: {}",
+            expectation_values(calc, _if1t))
+            << std::endl;
+        std::cout << std::format("f10 state expectation values: {}",
+            expectation_values(calc, _if10))
+            << std::endl;
+        std::cout << std::format("f11 state expectation values: {}",
+            expectation_values(calc, _if11))
+            << std::endl;
 
-#ifdef USE_REAL_Es
-        E0s[fdx] = std::real(calc.Es[0]);
-        E1s[fdx] = std::real(calc.Es[1]);
-        E2s[fdx] = std::real(calc.Es[2]);
-        E3s[fdx] = std::real(calc.Es[3]);
-#else
-        E0s[fdx] = calc.Es[0];
-        E1s[fdx] = calc.Es[1];
-        E2s[fdx] = calc.Es[2];
-        E3s[fdx] = calc.Es[3];
-#endif
+        std::cout << std::format("Closest Energy-estate to 0-E-field gnd state is "
+            "{}, with energy {}", gnd_idx, E) << std::endl;
+        oStk << Ez_V_cm << "," << E << "," << dE_f1t << "," << dE_f10 << ","
+            << dE_f11 << std::endl;
+        std::cout << stark_scale << "," << E << "," << dE_f1t << "," << dE_f10
+            << "," << dE_f11 << std::endl;
 
-        #ifdef USE_DEVONSHIRE
-        auto dev_out_fname = std::format("info_Ez_{}.csv", std::lround(Ez_V_cm)); 
+        // collect energy of lowest three states
+        E0s[fdx] = EVAL(calc.Es[0]);
+        E1s[fdx] = EVAL(calc.Es[1]);
+        E2s[fdx] = EVAL(calc.Es[2]);
+        E3s[fdx] = EVAL(calc.Es[3]);
+
+#ifdef USE_DEVONSHIRE
+        auto dev_out_fname = std::format("info_Ez_{}.csv", std::lround(Ez_V_cm));
         std::ofstream dout(devpath / dev_out_fname);
         calc_mol_dipole(dout, calc);
-        #endif
+#endif
     }
 
 #if 1
     std::cout << "E0, E1, E2, E3" << std::endl;
     for (int fdx = 0; fdx < 101; fdx++) {
-        std::cout << E0s[fdx] << ", " << E1s[fdx] << ", " << E2s[fdx] << ", " << E3s[fdx] << std::endl;
+        std::cout << E0s[fdx] << ", " << E1s[fdx] << ", " << E2s[fdx] << ", "
+            << E3s[fdx] << std::endl;
     }
 #endif
 
     std::cout << "--------- stark loop completed ---------" << std::endl;
     log_time_at_point("Completed stark loop", start_time);
-    std::cout << std::format("Explicit m_f degeneracy breaking coeff is {:.4} Hz", hfs_constants::e_mf_break * 1E6) << std::endl;
-    std::cout << std::format("Maximum m_f deviation for {} is {} at index {}", f00, max_dev_mf_f00, idx_max_mf_f00) << std::endl;
-    std::cout << std::format("Maximum m_f deviation for {} is {} at index {}", f10, max_dev_mf_f10, idx_max_mf_f10) << std::endl;
-    std::cout << std::format("Maximum m_f deviation for {} is {} at index {}", f1t, max_dev_mf_f1t, idx_max_mf_f1t) << std::endl;
-    std::cout << std::format("Maximum m_f deviation for {} is {} at index {}", f11, max_dev_mf_f11, idx_max_mf_f11) << std::endl;
+    std::cout << std::format("Explicit m_f degeneracy breaking coeff is {:.4} Hz",
+        hfs_constants::e_mf_break * 1E6)
+        << std::endl;
+    std::cout << std::format("Maximum m_f deviation for {} is {} at index {}",
+        f00, max_dev_mf_f00, idx_max_mf_f00)
+        << std::endl;
+    std::cout << std::format("Maximum m_f deviation for {} is {} at index {}",
+        f10, max_dev_mf_f10, idx_max_mf_f10)
+        << std::endl;
+    std::cout << std::format("Maximum m_f deviation for {} is {} at index {}",
+        f1t, max_dev_mf_f1t, idx_max_mf_f1t)
+        << std::endl;
+    std::cout << std::format("Maximum m_f deviation for {} is {} at index {}",
+        f11, max_dev_mf_f11, idx_max_mf_f11)
+        << std::endl;
 
-    // diagonalize 
+    // diagonalize
 
     return 0;
 }
