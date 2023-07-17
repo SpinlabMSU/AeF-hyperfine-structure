@@ -21,28 +21,6 @@ namespace fs = std::filesystem;
 
 // int32_t closest_approx(Eigen)
 
-int32_t most_like(Eigen::MatrixXcd& d, int32_t ket_idx) {
-    int32_t cdx = -1;
-    double max_comp = -1;
-
-    for (int idx = 0; idx < d.cols(); idx++) {
-        dcomplex ampl = d.col(idx)(ket_idx);
-        double comp = abs(ampl);
-
-        if (comp >= max_comp) {
-            cdx = idx;
-            max_comp = comp;
-        }
-    }
-
-    return cdx;
-}
-
-double energy_of_closest(HyperfineCalculator& calc, int32_t ket_idx) {
-    int32_t bidx = most_like(calc.Vs, ket_idx);
-    return std::real(calc.Es[bidx]);
-}
-
 #undef MATRIX_ELT_DEBUG
 
 /// <summary>
