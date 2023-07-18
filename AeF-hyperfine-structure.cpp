@@ -273,7 +273,7 @@ int main(int argc, char **argv) {
     /// Correct value of E_z is usually 50 kV/cm = 25170 MHz/D.
     /// </summary>
     constexpr double E_z = E_z_orig / 10.0;// *500;
-//#define USE_DEVONSHIRE
+#define USE_DEVONSHIRE
 
 #ifdef USE_DEVONSHIRE
     /// <summary>
@@ -289,8 +289,7 @@ int main(int argc, char **argv) {
     constexpr const char* devstatus = "disabled";
 #endif
     dcomplex H_st = v.H_st(v, E_z_orig);
-    std::string str =
-        std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(500kV/cm) = {} MHz", v,
+    std::string str = std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(500kV/cm) = {} MHz", v,
             E_rot, H_hfs, H_st);
 
     std::cout << str << std::endl;
@@ -359,6 +358,15 @@ int main(int argc, char **argv) {
 
     // create output file
     auto fpath = dpath / "stark_shift_gnd.csv";
+    std::ofstream oStk(fpath, std::ios::trunc | std::ios::out);
+
+    auto epath = dpath / "stark_spectrum.csv";
+    std::ofstream oEs (epath, std::ios::trunc | std::ios::out);
+    oEs << "idx,E-field (V/cm)";
+    for (size_t idx = 0; idx < calc.nBasisElts; idx++) {
+        oEs << std::format(",E{}", idx);
+    }
+    oEs << std::endl;
 
     std::ofstream oStk(fpath, std::ios::trunc | std::ios::out);
     j_basis_vec gnd = j_basis_vec::from_index(0);
@@ -425,9 +433,11 @@ int main(int argc, char **argv) {
         << std::endl;
     std::cout << std::endl;
 
-    std::cout << "Is d10 all zero " << calc.d10.isZero(1E-6) << std::endl;
-    std::cout << "Is d11 all zero " << calc.d11.isZero(1E-6) << std::endl;
-    std::cout << "Is d1t all zero " << calc.d1t.isZero(1E-6) << std::endl;
+    std::cout << "Is d10  all zero " << calc.d10.isZero(1E-6) << std::endl;
+    std::cout << "Is d11  all zero " << calc.d11.isZero(1E-6) << std::endl;
+    std::cout << "Is d1t  all zero " << calc.d1t.isZero(1E-6) << std::endl;
+    std::cout << "Is Hdev all zero " << calc.H_dev.isZero(1E-6) << std::endl;
+
 
 
     // Stark loop
@@ -453,6 +463,14 @@ int main(int argc, char **argv) {
         // calc.H_tot.setZero();
         calc.H_tot = calc.H_rot.toDenseMatrix() + /**/ calc.H_hfs + /**/ dcomplex(Ez_fdx / E_z) * calc.H_stk;
         calc.diagonalize_H();
+
+        double Ez_V_cm = Ez_fdx / unit_conversion::MHz_D_per_V_cm;
+        // energy output
+        oEs << std::format("{},{}", fdx, Ez_V_cm);
+        for (size_t idx = 0; idx < calc.nBasisElts; idx++) {
+            oEs << std::format(",{}", std::real(calc.Es[idx]));
+        }
+        oEs << std::endl;
 
         // f = 0 singlet
         int32_t gnd_idx = closest_state(calc, 0);
