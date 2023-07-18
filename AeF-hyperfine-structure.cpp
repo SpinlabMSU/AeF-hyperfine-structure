@@ -190,6 +190,7 @@ int main(int argc, char **argv) {
     bool load_from_file = false;
     std::string loadname = "";
     bool print_extras = true;
+    bool output_Es = true;
 
     // todo parse args
     // args should include: E_max, nmax, enable_debug_log

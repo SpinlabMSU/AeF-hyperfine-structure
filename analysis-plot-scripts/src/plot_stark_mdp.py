@@ -27,7 +27,9 @@ if len(sys.argv) < 2:
     #exit(1)
     #dirname = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-12-162547.3188494\devonshire_info'
     #dirname = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-17-201453.3155610'
-    dirname = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-17-232644.7464130'
+    #dirname = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-17-232644.7464130'
+    #### ALL 
+    dirname = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-18-190613.6465128'
 else:
     dirname = sys.argv[1]
     print(dirname)
