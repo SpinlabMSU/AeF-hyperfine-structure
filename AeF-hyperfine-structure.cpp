@@ -369,7 +369,6 @@ int main(int argc, char **argv) {
     }
     oEs << std::endl;
 
-    std::ofstream oStk(fpath, std::ios::trunc | std::ios::out);
     j_basis_vec gnd = j_basis_vec::from_index(0);
     j_basis_vec f00 = gnd;
     int32_t if00 = f00.index();
@@ -463,6 +462,10 @@ int main(int argc, char **argv) {
         // recalaculate H_tot -- from scratch to avoid accumulation of error
         // calc.H_tot.setZero();
         calc.H_tot = calc.H_rot.toDenseMatrix() + /**/ calc.H_hfs + /**/ dcomplex(Ez_fdx / E_z) * calc.H_stk;
+
+#ifdef USE_DEVONSHIRE
+        calc.H_tot += K * calc.H_dev;
+#endif
         calc.diagonalize_H();
 
         double Ez_V_cm = Ez_fdx / unit_conversion::MHz_D_per_V_cm;
@@ -477,7 +480,6 @@ int main(int argc, char **argv) {
         int32_t gnd_idx = closest_state(calc, 0);
         int32_t _if00 = gnd_idx;
         double E = std::real(calc.Es[gnd_idx]);
-        double Ez_V_cm = Ez_fdx / unit_conversion::MHz_D_per_V_cm;
 
         // energy differences for f = 1 triplet
         int32_t _if1t = closest_state(calc, if1t, _if00);
