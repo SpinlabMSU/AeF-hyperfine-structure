@@ -464,7 +464,7 @@ int main(int argc, char **argv) {
         calc.H_tot = calc.H_rot.toDenseMatrix() + /**/ calc.H_hfs + /**/ dcomplex(Ez_fdx / E_z) * calc.H_stk;
 
 #ifdef USE_DEVONSHIRE
-        calc.H_tot += K * calc.H_dev;
+        calc.H_tot += calc.H_dev;
 #endif
         calc.diagonalize_H();
 
