@@ -13,7 +13,7 @@ import pandas as pd
 import numba
 
 
-rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-18-190613.6465128'
+rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-19-181153.8494779'
 run = os.path.split(rundir)[1]
 if len(sys.argv) > 1:
     rundir = sys.argv[1]

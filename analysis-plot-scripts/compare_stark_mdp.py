@@ -25,8 +25,8 @@ if len(sys.argv) < 3:
     #exit(1)
     #dirname = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-12-162547.3188494\devonshire_info'
     # run with devonshire potential applied
-    #rundir_deven = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-17-201453.3155610'
-    rundir_deven = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-18-190613.6465128'
+    #rundir_deven = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-19-181153.8494779'
+    rundir_deven = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-19-183750.9272076'
     # run without devonshire potential
     #rundir_nodev = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-17-232644.7464130'
     rundir_nodev = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-18-185338.4873197'

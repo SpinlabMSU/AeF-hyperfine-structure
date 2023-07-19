@@ -14,7 +14,8 @@ import numba
 
 
 #rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-18-185338.4873197' #nodev
-rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-18-190613.6465128' #deven
+rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-19-181153.8494779' #deven
+
 run = os.path.split(rundir)[1]
 if len(sys.argv) > 1:
     rundir = sys.argv[1]

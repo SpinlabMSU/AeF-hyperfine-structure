@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
     dpath /= stime;
     fs::create_directories(dpath);
 
-    int param_nmax = 4;
+    int param_nmax = 20;
     bool enable_debug_log = false;
     bool load_from_file = false;
     std::string loadname = "";

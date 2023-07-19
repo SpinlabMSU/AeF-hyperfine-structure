@@ -21,8 +21,10 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="aef_run.py" />
     <Compile Include="analysis_plot_scripts.py" />
     <Compile Include="compare_stark_mdp.py" />
+    <Compile Include="runscripts.py" />
     <Compile Include="plot_spectrum.py" />
     <Compile Include="plot_stark_shift.py" />
     <Compile Include="src\plot_stark_mdp.py" />
