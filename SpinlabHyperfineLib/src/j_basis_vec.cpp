@@ -27,11 +27,14 @@ dcomplex j_basis_vec::H_rot() {
     const double gamma = hfs_constants::gamma;
     using namespace hfs_constants;
 
-    // explicit symmetry breaking term:
+    // (Obsolete): explicit symmetry breaking term:
     // lifts m_f degeneracy, making state-identification easier
     // note: this should be much smaller than the other terms -- for example,
     // with the default coefficient value of 0.1 Hz, this is smaller
     // than the uncertainties on the other terms.
+    // Note that this has been obsoleted by simultaneous diagnonalization, so 
+    // e_mf_break has been set to zero, disabling the explicit symmetry breaking.
+
     dcomplex handE = hfs_constants::e_mf_break * (m_f + f);
 
     return B * nsq - D * nsq * nsq + (gamma + delta * nsq) * nds + handE;
@@ -76,12 +79,12 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
 
 #ifndef USE_ANALYTICAL_FORMULAS
     // Formulas here taken from J. Chem Phys 71, 389 (1982) [https://doi.org/10.1016/0301-0104(82)85045-3]
-    // For some reason, using this causes states of the same f (and n/j**) with different m_f to remain
-    // degenerate when an external electric field is applied.  This is probably the result of an implementation
-    // error that I have not found.  In the mean time, don't use this.
+    // This is the only working branch of code here.  Previous comments suggesting otherwise have been inaccurate
+    // since commit 6e59999.  The other branch will be removed completely at some point.
 
     // ** technically, neither n nor j is a good quantum number, but they're approximately good
     // in the zero applied E-field limit.
+    // 2023-08-04 --> I have no idea why the above statement was made here, need to check relevance.
     dcomplex retval = 0;
 
     constexpr dcomplex coeff = 3.0 / 2.0 * hfs_constants::c * constexpr_sqrt(10.0 / 3.0);
@@ -93,6 +96,8 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
 #else
     // Formulas taken from J. Chem Phys 105, 7412 (1996)
     // this branch seems to approximately match the plots from PRA 98, 032513 (2018)
+    // however, this doesn't actually work for unknown reasons
+    // DO NOT USE
     dcomplex retval = 0.0;
     using hfs_constants::c;
     if (f == n + 1 && fp == np - 1 && np == n + 2) {
@@ -102,7 +107,7 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
     if (f == n - 1 && fp == np + 1 && np == n - 2) {
         retval = c / 2 * sqrt((n - 1.0) * (n)) / (2.0 * n - 1.0);
     }
-
+#error This code
 #endif
 #if defined(MATRIX_ELEMENT_DEBUG)
     if (std::abs(retval) > 1e-3) {
@@ -151,99 +156,77 @@ dcomplex j_basis_vec::d10(j_basis_vec other) {
     }
     #endif
 
-    // todo think about this
+    // This operator is essentially the same as the stark shift divided by mu_E and E_Z
+    // 
     const spin np = other.n;
     const spin jp = other.j;
     const spin fp = other.f;
     const spin m_fp = other.m_f;
 
     dcomplex xi_factors = xi(f, fp) * xi(j, jp) * xi(n, np);
-    dcomplex threej_factors =
-        w3j(f, 1, fp, -m_f, 0, m_f) * w3j(n, 1, np, 0, 0, 0);
-    dcomplex sixj_factors =
-        w6j(f, 1, fp, jp, half, j) * w6j(j, 1, jp, np, half, n);
+    dcomplex threej_factors = w3j(f, 1, fp, -m_f, 0, m_f) * w3j(n, 1, np, 0, 0, 0);
+    dcomplex sixj_factors = w6j(f, 1, fp, jp, half, j) * w6j(j, 1, jp, np, half, n);
     dcomplex phase = parity(1 - m_f);
     dcomplex retval = xi_factors * threej_factors * sixj_factors * phase;
 
     if (std::abs(retval) > 1) {
-        std::cout << std::format("{} d10 {} nonzero {} (dimensionless)", *this,
-                                 other, retval)
-                  << std::endl;
+        std::cout << std::format("{} d10 {} nonzero {} (dimensionless)", *this, other, retval) << std::endl;
     }
 
     return retval;
 }
 
 dcomplex j_basis_vec::d11(j_basis_vec other) {
-
-    // XXX FIXME this is not correctly implemented yet
-    // need to correctly use W-E thm
-    // 
-    // XXX update: think this is correct
-    // based on Rotational Spectroscopy of Diatomic molecules section 5.5.5 and eqn 5.146
-    //if (true)
-    //    return -11111;
+    // The implementation of this operator is based on Rotational Spectroscopy of Diatomic molecules
+    // section 5.5.5 and eqn 5.146
     #if 0
+    // this isn't neccesary since the 3j symbols constrain m_f properly anyways, and the minor performance gain
+    // isn't worth the amount of time spent worrying whether this check is bugged every time I look at it fresh.
     if (m_f - 1 != other.m_f) {
         return 0;
     }
     #endif
-    // todo think about this
     const spin np = other.n;
     const spin jp = other.j;
     const spin fp = other.f;
     const spin m_fp = other.m_f;
 
     dcomplex xi_factors = xi(f, fp) * xi(j, jp) * xi(n, np);
-    dcomplex threej_factors =
-        w3j(f, 1, fp, -m_fp, 1, m_f) * w3j(n, 1, np, 0, 0, 0);
-    dcomplex sixj_factors =
-        w6j(f, 1, fp, jp, half, j) * w6j(j, 1, jp, np, half, n);
+    dcomplex threej_factors = w3j(f, 1, fp, -m_fp, 1, m_f) * w3j(n, 1, np, 0, 0, 0);
+    dcomplex sixj_factors = w6j(f, 1, fp, jp, half, j) * w6j(j, 1, jp, np, half, n);
     dcomplex phase = parity(1 - m_f);
     dcomplex retval = xi_factors * threej_factors * sixj_factors * phase;
 
     if (std::abs(retval) > 1) {
-        std::cout << std::format("{} d11 {} nonzero {} (dimensionless)", *this,
-                                 other, retval)
-                  << std::endl;
+        std::cout << std::format("{} d11 {} nonzero {} (dimensionless)", *this, other, retval) << std::endl;
     }
 
     return retval;
 }
 
 dcomplex j_basis_vec::d1t(j_basis_vec other) {
-
-    // XXX FIXME this is not correctly implemented yet
-    // need to correctly use W-E thm
-    // 
-    // XXX update: think this is correct
-    // based on Rotational Spectroscopy of Diatomic molecules section 5.5.5 and
-    // eqn 5.146
-    //if (true)
-    //    return -1111111;
+    // The implementation of this operator is based on Rotational Spectroscopy of Diatomic molecules
+    // section 5.5.5 and eqn 5.146
     #if 0
-    if (m_f + 1 != other.m_f) {
+    // this isn't neccesary since the 3j symbols constrain m_f properly anyways, and the minor performance gain
+    // isn't worth the amount of time spent worrying whether this check is bugged every time I look at it fresh.
+    if (m_f - 1 != other.m_f) {
         return 0;
     }
     #endif
-    // todo think about this
     const spin np = other.n;
     const spin jp = other.j;
     const spin fp = other.f;
     const spin m_fp = other.m_f;
 
     dcomplex xi_factors = xi(f, fp) * xi(j, jp) * xi(n, np);
-    dcomplex threej_factors =
-        w3j(f, 1, fp, -m_fp, -1, m_f) * w3j(n, 1, np, 0, 0, 0);
-    dcomplex sixj_factors =
-        w6j(f, 1, fp, jp, half, j) * w6j(j, 1, jp, np, half, n);
+    dcomplex threej_factors = w3j(f, 1, fp, -m_fp, -1, m_f) * w3j(n, 1, np, 0, 0, 0);
+    dcomplex sixj_factors = w6j(f, 1, fp, jp, half, j) * w6j(j, 1, jp, np, half, n);
     dcomplex phase = parity(1 - m_f);
     dcomplex retval = xi_factors * threej_factors * sixj_factors * phase;
 
     if (std::abs(retval) > 1) {
-        std::cout << std::format("{} d1t {} nonzero {} (dimensionless)", *this,
-                                 other, retval)
-                  << std::endl;
+        std::cout << std::format("{} d1t {} nonzero {} (dimensionless)", *this, other, retval) << std::endl;
     }
 
     return retval;
