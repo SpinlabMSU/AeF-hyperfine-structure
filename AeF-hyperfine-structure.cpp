@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
     dpath /= stime;
     fs::create_directories(dpath);
 
-    int param_nmax = 20;
+    int param_nmax = 10;
     bool enable_debug_log = false;
     bool load_from_file = false;
     std::string loadname = "";
@@ -259,6 +259,15 @@ int main(int argc, char **argv) {
     std::cout << "AeF Hyperfine Structure version compiled on " << __DATE__ << " "
         << __TIME__ << std::endl;
     std::cout << "Start time is " << start_time << std::endl;
+    std::cout << std::format("Eigen will use {} threads", Eigen::nbThreads()) << std::endl;
+#ifdef _OPENMP
+    std::cout << "Reconfiguring openmp to use the correct number of threads (the number of physical cores)." << std::endl;
+    int num_physical_cores = get_num_cores();
+    omp_set_num_threads(num_physical_cores);
+    Eigen::setNbThreads(num_physical_cores);
+    std::cout << std::format("OpenMP/Eigen will use {} threads", num_physical_cores) << std::endl;
+#endif
+
 
     init_rng();
 

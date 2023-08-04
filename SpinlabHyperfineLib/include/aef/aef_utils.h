@@ -26,6 +26,12 @@
 extern pcg64 *pcg;
 void init_rng();
 
+/// <summary>
+/// 
+/// </summary>
+/// <returns>The number of physical cores in the system</returns>
+int get_num_cores();
+
 template <typename T> T genrandom(T lower, T upper) {
     std::uniform_real_distribution<T> dist(lower, upper);
     return dist(*pcg);
