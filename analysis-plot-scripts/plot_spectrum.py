@@ -26,8 +26,14 @@ df = pd.read_csv(starkpath)
 Ez = df.keys()[1]
 states = df.keys()[2:]
 
+# Including a legend isn't particularly useful past a certain number of states
+# since it runs off the edge of the plot and the colors repeat anyways
+use_legend = True
+if len(df[Ez]) > 15:
+    use_legend = False
+
 fig = plt.figure(figsize=(13.66, 9.00))
 plt.title(f"Energy Spectrum for run {run}")
-df.plot(Ez, states, ylabel = 'Energy (MHz)', ax=plt.gca())
+df.plot(Ez, states, ylabel = 'Energy (MHz)', ax=plt.gca(), legend = use_legend)
 plt.savefig(os.path.join(rundir, 'spectrum_plot.png'))
 plt.show()
