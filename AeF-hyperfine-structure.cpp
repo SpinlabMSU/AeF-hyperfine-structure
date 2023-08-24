@@ -185,12 +185,13 @@ int main(int argc, char **argv) {
     dpath /= stime;
     fs::create_directories(dpath);
 
-    int param_nmax = 10;
+    int param_nmax = 20;
     bool enable_debug_log = false;
     bool load_from_file = false;
     std::string loadname = "";
     bool print_extras = true;
     bool output_Es = true;
+    size_t nStarkIterations = 101;
 
     // todo parse args
     // args should include: E_max, nmax, enable_debug_log
@@ -202,7 +203,8 @@ int main(int argc, char **argv) {
         ("n,n_max", "Maximum n level to include", cxxopts::value<int>())
         ("d,enable_debug", "Enable debug mode", cxxopts::value<bool>()->default_value("false"))
         ("print_extras", "Print extra information", cxxopts::value<bool>()->default_value("true"))
-        ("l,load", "Load molecular system operators from file", cxxopts::value<std::string>());
+        ("l,load", "Load molecular system operators from file", cxxopts::value<std::string>())
+        ("t,stark_iterations", "Number of iterations to perform the stark loop for", cxxopts::value<size_t>());
 
     auto result = options.parse(argc, argv);
     
@@ -225,6 +227,10 @@ int main(int argc, char **argv) {
 
     if (result.count("print_extras")) {
         print_extras = result["print_extras"].as<bool>();
+    }
+
+    if (result.count("stark_iterations")) {
+        nStarkIterations = result["stark_iterations"].as<size_t>();
     }
 
     // create info log
@@ -283,7 +289,7 @@ int main(int argc, char **argv) {
     /// Correct value of E_z is usually 50 kV/cm = 25170 MHz/D.
     /// </summary>
     constexpr double E_z = E_z_orig / 10.0;// *500;
-#define USE_DEVONSHIRE
+//#define USE_DEVONSHIRE
 
 #ifdef USE_DEVONSHIRE
     /// <summary>
@@ -399,7 +405,6 @@ int main(int argc, char **argv) {
     oStk << "E-field (V/cm), dE_gnd" << ", dE_f1t, dE_f10, dE_f11" << std::endl;
     assert(calc.H_tot.rows() == calc.H_stk.rows());
 
-    constexpr size_t nStarkIterations = 101;
 #define USE_REAL_Es
 #ifdef USE_REAL_Es
     typedef double etype;
@@ -408,10 +413,10 @@ int main(int argc, char **argv) {
     typedef dcomplex etype;
 #define EVAL(val) val
 #endif
-    etype E0s[nStarkIterations];
-    etype E1s[nStarkIterations];
-    etype E2s[nStarkIterations];
-    etype E3s[nStarkIterations];
+    std::vector<etype> E0s(nStarkIterations);
+    std::vector<etype> E1s(nStarkIterations);
+    std::vector<etype> E2s(nStarkIterations);
+    std::vector<etype> E3s(nStarkIterations);
 #ifndef USE_DEVONSHIRE
     // note: devonshire potential doesn't conserve m_f
     for (int idx = 0; idx < calc.nBasisElts; idx++) {
@@ -461,7 +466,7 @@ int main(int argc, char **argv) {
     int idx_max_mf_f11 = -1;
 
     for (int fdx = 0; fdx < nStarkIterations; fdx++) {
-        constexpr double field_divisor = nStarkIterations - 1.0;
+        double field_divisor = nStarkIterations - 1.0;
         double Ez_fdx = (E_z) * (fdx / field_divisor);
 #ifdef MATRIX_ELT_DEBUG
         // degenerate states will probably break this
