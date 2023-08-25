@@ -127,18 +127,26 @@ int32_t closest_state(HyperfineCalculator& calc, int32_t ket_idx,
 }
 
 
-void log_time_at_point(
+time_point<system_clock> log_time_at_point(
     const char* desc,
-    std::chrono::time_point<std::chrono::system_clock>& start) {
+    std::chrono::time_point<std::chrono::system_clock>& start,
+    std::chrono::time_point<std::chrono::system_clock>& prev) {
     using namespace std::chrono;
     time_point<system_clock> curr_time = system_clock::now();
     std::string stime = std::format("{0:%F}-{0:%H%M}{0:%S}", curr_time);
-    auto diff = curr_time - start;
     using d_seconds = std::chrono::duration<double>;
-    double sec_count = d_seconds(diff).count();
+    // get seconds elapsed since start_time
+    auto st_diff = curr_time - start;
+    double st_sec_count = d_seconds(st_diff).count();
+    // calculate seconds elapsed since prev_time
+    auto pv_diff = curr_time - prev;
+    double pv_sec_count = d_seconds(pv_diff).count();
+
     std::string lstr = std::format(
-        "{}: have taken {} seconds (current time is {})", desc, sec_count, stime);
+        "{}: have taken {} seconds since last, {} seconds since start (current time is {})", desc,
+        pv_sec_count, st_sec_count, stime);
     std::cout << lstr << std::endl;
+    return curr_time;
 }
 
 /// <summary>
@@ -182,6 +190,7 @@ int main(int argc, char **argv) {
     std::chrono::time_point<std::chrono::system_clock> start_time =
         std::chrono::system_clock::now();
     std::string stime = std::format("{0:%F}-{0:%H%M}{0:%S}", start_time);
+    std::chrono::time_point<std::chrono::system_clock> prev_time = start_time;
     dpath /= stime;
     fs::create_directories(dpath);
 
@@ -319,7 +328,7 @@ int main(int argc, char **argv) {
         << std::endl;
     if (load_from_file) {
         std::string logstr = std::format("Loading matrix elements from {}", loadname);
-        log_time_at_point(logstr.c_str(), start_time);
+        prev_time = log_time_at_point(logstr.c_str(), start_time, prev_time);
         bool result = calc.load_matrix_elts(loadname);
 
         if (!result) {
@@ -327,15 +336,15 @@ int main(int argc, char **argv) {
             exit(-1);
         }
         logstr = std::format("Finished loading matrix elements from {}", loadname);
-        log_time_at_point(logstr.c_str(), start_time);
+        prev_time = log_time_at_point(logstr.c_str(), start_time, prev_time);
     } else {
-        log_time_at_point("Calculating matrix elements", start_time);
+        prev_time = log_time_at_point("Starting matrix element calculations", start_time, prev_time);
         calc.calculate_matrix_elts();
         calc.diagonalize_H();
         if (nmax >= 20)
             calc.save_matrix_elts(dpath / "matrix.dat");
 
-        log_time_at_point("Finished matrix elt calcs", start_time);
+        prev_time = log_time_at_point("Finished matrix elt calcs", start_time, prev_time);
     }
 
     if (print_extras) {
@@ -455,7 +464,7 @@ int main(int argc, char **argv) {
 
 
     // Stark loop
-    log_time_at_point("About to start stark loop", start_time);
+    prev_time = log_time_at_point("About to start stark loop", start_time, prev_time);
     double max_dev_mf_f00 = -std::numeric_limits<double>::infinity();
     int idx_max_mf_f00 = -1;
     double max_dev_mf_f10 = -std::numeric_limits<double>::infinity();
@@ -569,7 +578,7 @@ int main(int argc, char **argv) {
 #endif
 
     std::cout << "--------- stark loop completed ---------" << std::endl;
-    log_time_at_point("Completed stark loop", start_time);
+    prev_time = log_time_at_point("Completed stark loop", start_time, prev_time);
     std::cout << std::format("Explicit m_f degeneracy breaking coeff is {:.4} Hz",
         hfs_constants::e_mf_break * 1E6)
         << std::endl;
