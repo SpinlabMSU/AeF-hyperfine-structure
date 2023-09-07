@@ -14,6 +14,11 @@ import numpy.linalg as npla
 import pandas as pd
 import numba
 
+_run_regex = re.compile(rf'\d+-\d\d?-\d\d?-\d+.\d+')
+#numeric_const_pattern = '[-+]? (?: (?: \d* \. \d+ ) | (?: \d+ \.? ) )(?: [Ee] [+-]? \d+ ) ?'
+def matches_run_spec(dirname):
+    return _run_regex.match(dirname)
+
 class aef_run(object):
     
     def __init__(self, dir_path):
@@ -68,6 +73,7 @@ class aef_run(object):
                     raise RuntimeError("Parameter line doesn't specify whether devonshire was enabled!")
                 f.close()
                 break
+            #elif line.
         raise RuntimeError(f"Devonshire status not found in {self.log_path}")
 
     def parse_gnd_stark_shift(self, *args, **kwargs):
@@ -77,6 +83,13 @@ class aef_run(object):
     def parse_stark_spect(self, *args, **kwargs):
         fpath = os.path.join(self.path, 'stark_spectrum.csv')
         return pd.read_csv(fpath, *args, **kwargs)
+
+def find_runs(scandir):
+    runlist = []
+    for rundir in os.scandir(scandir):
+        if matches_run_spec(rundir.name) and rundir.is_dir():
+            runlist.append(aef_run(rundir.path))
+    return runlist
 
 
 
