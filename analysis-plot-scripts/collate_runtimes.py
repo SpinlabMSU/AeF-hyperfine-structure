@@ -25,18 +25,54 @@ if len(sys.argv) > 1:
 runlist = aef_run.find_runs(indir)
 
 # matrix element calc times
-mtimes_deven = []
-mtimes_nodev = []
+mtimes_deven = {}
+mtimes_nodev = {}
 
 # stark loop times
-stimes_deven = []
-stimes_nodev = []
+stimes_deven = {}
+stimes_nodev = {}
 
 for run in runlist:
     if not run.valid:
         print(f"run {run.run} is not valid, please check the following path: {run.path}", file=sys.stderr)
+    nmax = run.nmax
     if run.dev_en:
-        mtimes_deven.append(run)
+        mtimes_deven[nmax] = run.mat_elt_dur
+        stimes_deven[nmax] = run.stk_lop_dur
+    else:
+        mtimes_nodev[nmax] = run.mat_elt_dur
+        stimes_nodev[nmax] = run.stk_lop_dur
+
+nmaxes = set(mtimes_deven.keys()).union(mtimes_nodev.keys())
+
+
+print(r'\begin{table}[]')
+print('\t\\centering')
+print('\t\\begin{tabular}{|c|c|c|c|c|}\\hline')
+print('\t\tMaximum n value & Vacuum matrix element calculation duration (s)& Vacuum Stark loop duration (s) '+
+      '& In-matrix matrix element calculation duration (s) & In-matrix stark loop duration (s)\\\\\\hline')
+for nmax in nmaxes:
+    mtime_nodev = -1
+    stime_nodev = -1
+    mtime_deven = -1
+    stime_deven = -1
+
+    if nmax in mtimes_nodev:
+        mtime_nodev = mtimes_nodev[nmax]
+        stime_nodev = stimes_nodev[nmax]
+    #else: print('no nmax for nodev')
+    if nmax in mtimes_deven:
+        mtime_deven = mtimes_deven[nmax]
+        stime_deven = stimes_deven[nmax]
+    #else: print('no nmax for deven')
+    #
+    dtab = '\t\t'
+    print(fr'{dtab}{nmax}&{mtime_nodev}&{stime_nodev}&{mtime_deven}&{stime_deven}\\\hline')
+print('''
+    \end{tabular}
+    \caption{Sample runtimes for a variety of values of $n_{max}$ with Devonshire enabled and disabled.}
+    \label{tab:runtimes}
+\end{table}''')
 #
 ############ CUT HERE #############
 sys.exit(0)

@@ -19,12 +19,19 @@ _run_regex = re.compile(rf'\d+-\d\d?-\d\d?-\d+.\d+')
 def matches_run_spec(dirname):
     return _run_regex.match(dirname)
 
+def get_ssv_val(line, marker, typ=int):
+  "parse a space-seperated value line, returning the value preceeded by marker"
+  pdx = line.index(marker) + len(marker) + 1
+  line_v_to_eol = line[pdx:]
+  val_str = re.split(r'[,\s]', line_v_to_eol)[0]
+  return typ(val_str)
+
 class aef_run(object):
     
     def __init__(self, dir_path):
         self.path = dir_path
         self.run = os.path.split(dir_path)[1]
-        self.timestamp = datetime.strptime(self.run, "%Y-%m-%d-%H%M%.%f")
+        self.timestamp = datetime.datetime.strptime(self.run[:-1], "%Y-%m-%d-%H%M%S.%f")
 
         self.log_path = os.path.join(self.path, 'out.log')
 
@@ -33,6 +40,9 @@ class aef_run(object):
         self.dev_K = math.nan
         self.nmax = -1 # n is the orbitorotational quantum number
         self.max_E_z = math.nan
+
+        self.stk_lop_dur = -1
+        self.mat_elt_dur = -1
 
         if self.valid:
             self.parse_log()
@@ -45,18 +55,19 @@ class aef_run(object):
 
     def parse_log(self):
         f = open(self.log_path, 'r')
+        found_param_line = False
         for line in f:
-            n_search = "nmax is "
-            e_search = "E_z is " # externally applied
+            n_search = "nmax is"
+            e_search = "E_z is" # externally applied
             k_search = "K is" # devonshire coupling constant named K, look for enabled
             if "nmax is" in line and k_search in line:
                 print(f"Found parameter line \"{line}\"")
 
-                ldx = line.find(n_search) + len(n_search)
-                self.nmax = int(line[ldx:].split(' ')[0])
+                #ldx = line.find(n_search) + len(n_search)
+                self.nmax = get_ssv_val(line, n_search, int)#self.nmax = int(line[ldx:].split(' ')[0])
 
-                ldx = line.find(e_search) + len(e_search)
-                self.max_E_z = float(line[ldx:].split(' ')[0])
+                #ldx = line.find(e_search) + len(e_search)
+                self.max_E_z = get_ssv_val(line, e_search, float)#self.max_E_z = float(line[ldx:].split(' ')[0])
 
                 ldx = line.rfind(k_search) + len(k_search)
                 dev_K = float(line[ldx+1:].split(' ')[0])
@@ -70,11 +81,23 @@ class aef_run(object):
                 elif text.lower() == dis_text:
                     self.dev_en = False
                 else:
+                    print(text.lower())
                     raise RuntimeError("Parameter line doesn't specify whether devonshire was enabled!")
-                f.close()
-                break
-            #elif line.
-        raise RuntimeError(f"Devonshire status not found in {self.log_path}")
+                found_param_line = True
+            elif "have taken" in line:
+                lline = line.lower()
+                print(f'found have taken line "{lline}"')
+                dur = get_ssv_val(lline, 'have taken', float)
+                if lline.startswith('finished matrix elt'):
+                    self.mat_elt_dur = dur
+                    print(f'found mat_elt_dur {dur}')
+                elif lline.startswith('completed stark loop'):
+                    self.stk_lop_dur = dur
+                    print(f'found stark loop dur {dur}')
+        f.close()
+        if not found_param_line:
+            raise RuntimeError(f"Devonshire status not found in {self.log_path}")
+        return self
 
     def parse_gnd_stark_shift(self, *args, **kwargs):
         fpath = os.path.join(self.path, 'stark_shift_gnd.csv')
@@ -88,7 +111,11 @@ def find_runs(scandir):
     runlist = []
     for rundir in os.scandir(scandir):
         if matches_run_spec(rundir.name) and rundir.is_dir():
-            runlist.append(aef_run(rundir.path))
+            try:
+                runlist.append(aef_run(rundir.path))
+            except BaseException as e:
+                print(f'directory {rundir} has an invalid run.  See exception for more information')
+                print(e)
     return runlist
 
 
