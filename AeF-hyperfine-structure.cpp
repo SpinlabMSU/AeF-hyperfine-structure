@@ -317,7 +317,7 @@ int main(int argc, char **argv) {
     /// Correct value of E_z is usually 50 kV/cm = 25170 MHz/D.
     /// </summary>
     constexpr double E_z = E_z_orig / 10.0;// *500;
-//#define USE_DEVONSHIRE
+#define USE_DEVONSHIRE
 
 #ifdef USE_DEVONSHIRE
     /// <summary>
