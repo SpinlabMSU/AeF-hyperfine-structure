@@ -344,7 +344,7 @@ int main(int argc, char **argv) {
         std::string dirty = bdirty ? "dirty" : "clean";
         std::cout << "AeF Hyperfine Structure version compiled on " << __DATE__ << " "
             << __TIME__ << ", git commit " << aef_git_commit << std::endl;
-        std::cout << "Git status is " << dirty << " string {" << status << "}";
+        std::cout << "Git status is " << dirty << " string {" << status << "}" << std::endl;
         std::cout << "Start time is " << start_time << std::endl;
         std::cout << std::format("Eigen will use {} threads", Eigen::nbThreads()) << std::endl;
     }
