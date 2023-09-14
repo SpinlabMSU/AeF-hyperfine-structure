@@ -88,6 +88,60 @@ j_basis_vec expectation_values(HyperfineCalculator& calc, int32_t E_idx) {
     return out;
 }
 
+
+/// <summary>
+/// Inverts the quantum q*(q+1) squaring for angular momenta
+/// </summary>
+/// <param name="expect_qsq">the expectation value of &lt;q(q+1)&gt; </param>
+/// <returns>the effective expectation of q/returns>
+template <class T> T invert_qsq(T expect_qsq) {
+    return (std::sqrt(expect_qsq * expect_qsq + 1.0) - 1.0) / 2.0;
+}
+
+/// <summary>
+/// Calculates the expectation values of the basis operators.  The squared
+/// </summary>
+/// <param name="calc">HyperfineCalculator: contains operator matrix elements
+/// and states</param> <param name="E_idx">the index of Energy level to
+/// calculate with</param> <returns></returns>
+j_basis_vec expectation_values_jsq(HyperfineCalculator& calc, int32_t E_idx) {
+    //
+    Eigen::VectorXcd state_vec = calc.Vs.col(E_idx);
+    j_basis_vec out;
+#ifdef _WIN32
+    SecureZeroMemory((void*)&out, sizeof(j_basis_vec));
+#else
+    explicit_bzero((void*)&out, sizeof(j_basis_vec));
+#endif
+    double prob_tot = 0;
+    for (int32_t kidx = 0; kidx < calc.nBasisElts; kidx++) {
+        const double prob = std::norm(state_vec[kidx]);
+
+        if (prob < std::numeric_limits<double>::epsilon()) {
+            continue;
+        }
+
+        prob_tot += prob;
+        j_basis_vec bs_ket = calc.basis[kidx];
+        // note that angular momenta
+        out.n += prob * bs_ket.n * (bs_ket.n + 1);
+        out.j += prob * bs_ket.j * (bs_ket.j + 1);
+        out.f += prob * bs_ket.f * (bs_ket.f + 1);
+        out.m_f += prob * bs_ket.m_f;
+    }
+
+    if (prob_tot > (1 + std::numeric_limits<double>::epsilon() * 100000)) {
+        DebugBreak();
+    }
+
+    out.n = invert_qsq(out.n / prob_tot);
+    out.j = invert_qsq(out.j / prob_tot);
+    out.f = invert_qsq(out.f / prob_tot);
+    out.m_f /= prob_tot;
+
+    return out;
+}
+
 static inline double diff_states(j_basis_vec v1, j_basis_vec v2) {
     constexpr double cn = 1.5;
     constexpr double cj = 0.5; // 1.0;
@@ -181,7 +235,7 @@ void output_state_info(std::ostream& output, HyperfineCalculator& calc) {
         dcomplex dz = d10;
 
         // basis operator expectation values
-        j_basis_vec v = expectation_values(calc, n);
+        j_basis_vec v = expectation_values_jsq(calc, n);
 
         // output
         auto mda_ifo =
