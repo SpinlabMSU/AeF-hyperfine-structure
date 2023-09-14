@@ -142,6 +142,28 @@ j_basis_vec expectation_values_jsq(HyperfineCalculator& calc, int32_t E_idx) {
     return out;
 }
 
+double expect_parity(HyperfineCalculator& calc, int32_t E_idx) {
+    double ex_parity = 0.0;
+    double prob_tot = 0.0;
+    Eigen::VectorXcd state_vec = calc.Vs.col(E_idx);
+    for (int32_t kidx = 0; kidx < calc.nBasisElts; kidx++) {
+        const double prob = std::norm(state_vec[kidx]);
+
+        if (prob < std::numeric_limits<double>::epsilon()) {
+            continue;
+        }
+
+        prob_tot += prob;
+        j_basis_vec bs_ket = calc.basis[kidx];
+        ex_parity += prob*std::pow(-1, bs_ket.n);
+    }
+
+    if (prob_tot > (1 + std::numeric_limits<double>::epsilon() * 100000)) {
+        DebugBreak();
+    }
+    return ex_parity / prob_tot;
+}
+
 static inline double diff_states(j_basis_vec v1, j_basis_vec v2) {
     constexpr double cn = 1.5;
     constexpr double cj = 0.5; // 1.0;
@@ -217,6 +239,7 @@ void output_state_info(std::ostream& output, HyperfineCalculator& calc) {
         "Im(<n|dx|n>), Im(<n|dy|n>), Im(<n|dz|n>), "
         "Re(<n|n|n>), Re(<n|j|n>), Re(<n|f|n>), Re(<n|m_f|n>),"
         "Im(<n|n|n>), Im(<n|j|n>), Im(<n|f|n>), Im(<n|m_f|n>),"
+        "<n|(-1)^n|n>"
         << std::endl;
 
     for (size_t n = 0; n < calc.nBasisElts; n++) {
@@ -244,7 +267,7 @@ void output_state_info(std::ostream& output, HyperfineCalculator& calc) {
                 std::imag(dy), std::imag(dz));
         auto re_njfmf = std::format("{},{},{},{}", std::real(v.n), std::real(v.j), std::real(v.f), std::real(v.m_f));
         auto im_njfmf = std::format("{},{},{},{}", std::imag(v.n), std::imag(v.j), std::imag(v.f), std::imag(v.m_f));
-        output << mda_ifo << ", " << re_njfmf << ", " << im_njfmf << std::endl;
+        output << mda_ifo << ", " << re_njfmf << ", " << im_njfmf << "," << expect_parity(calc, n) << std::endl;
     }
     output.flush();
 }
