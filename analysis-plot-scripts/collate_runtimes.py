@@ -45,10 +45,20 @@ for run in runlist:
 
 nmaxes = set(mtimes_deven.keys()).union(mtimes_nodev.keys())
 
+## config var
+tabularx = True
 
 print(r'\begin{table}[]')
 print('\t\\centering')
-print('\t\\begin{tabular}{|c|c|c|c|c|}\\hline')
+if not tabularx:
+    print('\t\\begin{tabular}{|c|c|c|c|c|}\\hline')
+else:
+    print(r'''\begin{tabularx}{1.0\textwidth}{ 
+  | >{\centering\arraybackslash}X 
+  | >{\centering\arraybackslash}X
+  | >{\centering\arraybackslash}X
+  | >{\centering\arraybackslash}X
+  | >{\centering\arraybackslash}X|}\hline%{|c|c|c|c|c|}\hline''')
 print('\t\tMaximum n value & Vacuum matrix element calculation duration (s)& Vacuum Stark loop duration (s) '+
       '& In-matrix matrix element calculation duration (s) & In-matrix stark loop duration (s)\\\\\\hline')
 for nmax in nmaxes:
