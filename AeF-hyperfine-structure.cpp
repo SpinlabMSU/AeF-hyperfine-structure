@@ -19,6 +19,8 @@
 using namespace std::chrono;
 namespace fs = std::filesystem;
 
+
+#include "AeF-hyperfine-structure.inl"
 // int32_t closest_approx(Eigen)
 
 #undef MATRIX_ELT_DEBUG
@@ -281,10 +283,17 @@ int main(int argc, char **argv) {
         pErrb = new tee::teebuf(pLogBuf, orig_cerrb);
         std::cerr.set_rdbuf(pErrb);
     }
-    std::cout << "AeF Hyperfine Structure version compiled on " << __DATE__ << " "
-        << __TIME__ << std::endl;
-    std::cout << "Start time is " << start_time << std::endl;
-    std::cout << std::format("Eigen will use {} threads", Eigen::nbThreads()) << std::endl;
+    // info lines
+    {
+        std::string status(aef_git_status);
+        bool bdirty = status.contains('M') || status.contains('d');
+        std::string dirty = bdirty ? "dirty" : "clean";
+        std::cout << "AeF Hyperfine Structure version compiled on " << __DATE__ << " "
+            << __TIME__ << ", git commit " << aef_git_commit << std::endl;
+        std::cout << "Git status is " << dirty << " string {" << status << "}";
+        std::cout << "Start time is " << start_time << std::endl;
+        std::cout << std::format("Eigen will use {} threads", Eigen::nbThreads()) << std::endl;
+    }
 #ifdef _OPENMP
     std::cout << "Reconfiguring openmp to use the correct number of threads (the number of physical cores)." << std::endl;
     int num_physical_cores = get_num_cores();
