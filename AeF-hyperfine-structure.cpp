@@ -95,7 +95,7 @@ j_basis_vec expectation_values(HyperfineCalculator& calc, int32_t E_idx) {
 /// <param name="expect_qsq">the expectation value of &lt;q(q+1)&gt; </param>
 /// <returns>the effective expectation of q/returns>
 template <class T> T invert_qsq(T expect_qsq) {
-    return (std::sqrt(expect_qsq * expect_qsq + 1.0) - 1.0) / 2.0;
+    return (std::sqrt(4 * expect_qsq + 1.0) - 1.0) / 2.0;
 }
 
 /// <summary>
