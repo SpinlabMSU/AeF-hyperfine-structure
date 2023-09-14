@@ -150,13 +150,17 @@ time_point<system_clock> log_time_at_point(
 }
 
 /// <summary>
-/// Outputs the molecular dipole in each energy eigenstate
+/// Outputs some key information about each energy eigenstate including:
+/// * the MDA expectation value (re then IM)
+/// * the expectation values of n, j, f, and m_f
 /// </summary>
-/// <param name="output"></param>
+/// <param name="output">the stream to output to</param>
 /// <param name="calc"></param>
-void calc_mol_dipole(std::ostream& output, HyperfineCalculator& calc) {
+void output_state_info(std::ostream& output, HyperfineCalculator& calc) {
     output << "Index n, Energy (MHz), Re(<n|dx|n>), Re(<n|dy|n>), Re(<n|dz|n>), "
-        "Im(<n|dx|n>), Im(<n|dy|n>), Im(<n|dz|n>)"
+        "Im(<n|dx|n>), Im(<n|dy|n>), Im(<n|dz|n>), "
+        "Re(<n|n|n>), Re(<n|j|n>), Re(<n|f|n>), Re(<n|m_f|n>),"
+        "Im(<n|n|n>), Im(<n|j|n>), Im(<n|f|n>), Im(<n|m_f|n>),"
         << std::endl;
 
     for (size_t n = 0; n < calc.nBasisElts; n++) {
@@ -174,11 +178,17 @@ void calc_mol_dipole(std::ostream& output, HyperfineCalculator& calc) {
         dcomplex dy = (d1t + d11) * 1i * inv_sqrt2;
         dcomplex dz = d10;
 
-        auto ifo =
+        // basis operator expectation values
+        j_basis_vec v = expectation_values(calc, n);
+
+        // output
+        auto mda_ifo =
             std::format("{}, {}, {}, {}, {}, {}, {}, {}", n, std::real(calc.Es[n]),
                 std::real(dx), std::real(dy), std::real(dz), std::real(dx),
                 std::imag(dy), std::imag(dz));
-        output << ifo << std::endl;
+        auto re_njfmf = std::format("{},{},{},{}", std::real(v.n), std::real(v.j), std::real(v.f), std::real(v.m_f));
+        auto im_njfmf = std::format("{},{},{},{}", std::imag(v.n), std::imag(v.j), std::imag(v.f), std::imag(v.m_f));
+        output << mda_ifo << ", " << re_njfmf << ", " << im_njfmf << std::endl;
     }
     output.flush();
 }
@@ -565,7 +575,7 @@ int main(int argc, char **argv) {
 //#ifdef USE_DEVONSHIRE
         auto dev_out_fname = std::format("info_Ez_{}.csv", std::lround(Ez_V_cm));
         std::ofstream dout(devpath / dev_out_fname);
-        calc_mol_dipole(dout, calc);
+        output_state_info(dout, calc);
 //#endif
     }
 
