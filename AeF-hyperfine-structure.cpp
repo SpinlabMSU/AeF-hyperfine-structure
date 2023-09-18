@@ -211,7 +211,7 @@ time_point<system_clock> log_time_at_point(
     std::chrono::time_point<std::chrono::system_clock>& prev) {
     using namespace std::chrono;
     time_point<system_clock> curr_time = system_clock::now();
-    std::string stime = std::format("{0:%F}-{0:%H%M}{0:%S}", curr_time);
+    std::string stime = fmt::format("{0:%F}-{0:%H%M}{0:%S}", curr_time);
     using d_seconds = std::chrono::duration<double>;
     // get seconds elapsed since start_time
     auto st_diff = curr_time - start;
@@ -220,7 +220,7 @@ time_point<system_clock> log_time_at_point(
     auto pv_diff = curr_time - prev;
     double pv_sec_count = d_seconds(pv_diff).count();
 
-    std::string lstr = std::format(
+    std::string lstr = fmt::format(
         "{}: have taken {} seconds since last, {} seconds since start (current time is {})", desc,
         pv_sec_count, st_sec_count, stime);
     std::cout << lstr << std::endl;
@@ -262,11 +262,11 @@ void output_state_info(std::ostream& output, HyperfineCalculator& calc) {
 
         // output
         auto mda_ifo =
-            std::format("{}, {}, {}, {}, {}, {}, {}, {}", n, std::real(calc.Es[n]),
+            fmt::format("{}, {}, {}, {}, {}, {}, {}, {}", n, std::real(calc.Es[n]),
                 std::real(dx), std::real(dy), std::real(dz), std::real(dx),
                 std::imag(dy), std::imag(dz));
-        auto re_njfmf = std::format("{},{},{},{}", std::real(v.n), std::real(v.j), std::real(v.f), std::real(v.m_f));
-        auto im_njfmf = std::format("{},{},{},{}", std::imag(v.n), std::imag(v.j), std::imag(v.f), std::imag(v.m_f));
+        auto re_njfmf = fmt::format("{},{},{},{}", std::real(v.n), std::real(v.j), std::real(v.f), std::real(v.m_f));
+        auto im_njfmf = fmt::format("{},{},{},{}", std::imag(v.n), std::imag(v.j), std::imag(v.f), std::imag(v.m_f));
         output << mda_ifo << ", " << re_njfmf << ", " << im_njfmf << "," << expect_parity(calc, n) << std::endl;
     }
     output.flush();
@@ -278,7 +278,7 @@ int main(int argc, char **argv) {
     auto dpath = fs::path("output");
     std::chrono::time_point<std::chrono::system_clock> start_time =
         std::chrono::system_clock::now();
-    std::string stime = std::format("{0:%F}-{0:%H%M}{0:%S}", start_time);
+    std::string stime = fmt::format("{0:%F}-{0:%H%M}{0:%S}", start_time);
     std::chrono::time_point<std::chrono::system_clock> prev_time = start_time;
     dpath /= stime;
     fs::create_directories(dpath);
@@ -369,14 +369,14 @@ int main(int argc, char **argv) {
             << __TIME__ << ", git commit " << aef_git_commit << std::endl;
         std::cout << "Git status is " << dirty << " string {" << status << "}" << std::endl;
         std::cout << "Start time is " << start_time << std::endl;
-        std::cout << std::format("Eigen will use {} threads", Eigen::nbThreads()) << std::endl;
+        std::cout << fmt::format("Eigen will use {} threads", Eigen::nbThreads()) << std::endl;
     }
 #ifdef _OPENMP
     std::cout << "Reconfiguring openmp to use the correct number of threads (the number of physical cores)." << std::endl;
     int num_physical_cores = get_num_cores();
     omp_set_num_threads(num_physical_cores);
     Eigen::setNbThreads(num_physical_cores);
-    std::cout << std::format("OpenMP/Eigen will use {} threads", num_physical_cores) << std::endl;
+    std::cout << fmt::format("OpenMP/Eigen will use {} threads", num_physical_cores) << std::endl;
 #endif
 
 
@@ -410,7 +410,7 @@ int main(int argc, char **argv) {
     constexpr const char* devstatus = "disabled";
 #endif
     dcomplex H_st = v.H_st(v, E_z_orig);
-    std::string str = std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(500kV/cm) = {} MHz", v,
+    std::string str = fmt::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(500kV/cm) = {} MHz", v,
             E_rot, H_hfs, H_st);
 
     std::cout << str << std::endl;
@@ -419,11 +419,11 @@ int main(int argc, char **argv) {
     int nmax = param_nmax;
     HyperfineCalculator calc(nmax, E_z, K);
 
-    std::cout << std::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({})",
+    std::cout << fmt::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({})",
         nmax, E_z, K, devstatus)
         << std::endl;
     if (load_from_file) {
-        std::string logstr = std::format("Loading matrix elements from {}", loadname);
+        std::string logstr = fmt::format("Loading matrix elements from {}", loadname);
         prev_time = log_time_at_point(logstr.c_str(), start_time, prev_time);
         bool result = calc.load_matrix_elts(loadname);
 
@@ -431,7 +431,7 @@ int main(int argc, char **argv) {
             std::cout << "couldn't load " << loadname << std::endl;
             exit(-1);
         }
-        logstr = std::format("Finished loading matrix elements from {}", loadname);
+        logstr = fmt::format("Finished loading matrix elements from {}", loadname);
         prev_time = log_time_at_point(logstr.c_str(), start_time, prev_time);
     } else {
         prev_time = log_time_at_point("Starting matrix element calculations", start_time, prev_time);
@@ -485,7 +485,7 @@ int main(int argc, char **argv) {
     std::ofstream oEs (epath, std::ios::trunc | std::ios::out);
     oEs << "idx,E-field (V/cm)";
     for (size_t idx = 0; idx < calc.nBasisElts; idx++) {
-        oEs << std::format(",E{}", idx);
+        oEs << fmt::format(",E{}", idx);
     }
     oEs << std::endl;
 
@@ -502,7 +502,7 @@ int main(int argc, char **argv) {
 
     std::cout << "if1t=" << if1t << " if10=" << if10 << " if11=" << if11
         << std::endl;
-    std::cout << std::format("f00={}; f1t={}, f10={}, f11={}", f00, f1t, f10, f11)
+    std::cout << fmt::format("f00={}; f1t={}, f10={}, f11={}", f00, f1t, f10, f11)
         << std::endl;
 
     // oStk << "E-field (V/cm), Stark-shifted Energy of " << gnd.ket_string() << "
@@ -532,7 +532,7 @@ int main(int argc, char **argv) {
             if (v1.m_f != v2.m_f && prob > 0) {
                 DebugBreak();
                 std::string ostr =
-                    std::format("ERROR v1 = {}, v2 = {}, prob = {}", v1, v2, prob);
+                    fmt::format("ERROR v1 = {}, v2 = {}, prob = {}", v1, v2, prob);
                 std::cout << ostr << std::endl;
                 std::cerr << ostr << std::endl;
                 assert(!(v1.m_f != v2.m_f && prob > 0));
@@ -589,9 +589,9 @@ int main(int argc, char **argv) {
 
         double Ez_V_cm = Ez_fdx / unit_conversion::MHz_D_per_V_cm;
         // energy output
-        oEs << std::format("{},{}", fdx, Ez_V_cm);
+        oEs << fmt::format("{},{}", fdx, Ez_V_cm);
         for (size_t idx = 0; idx < calc.nBasisElts; idx++) {
-            oEs << std::format(",{}", std::real(calc.Es[idx]));
+            oEs << fmt::format(",{}", std::real(calc.Es[idx]));
         }
         oEs << std::endl;
 
@@ -633,24 +633,24 @@ int main(int argc, char **argv) {
         double stark_scale =
             Ez_V_cm * hfs_constants::mu_e * unit_conversion::MHz_D_per_V_cm;
 
-        std::cout << std::format(
+        std::cout << fmt::format(
                 "Electric field strength is {} V/cm, stark scale is {} MHz",
                 Ez_V_cm, stark_scale)
             << std::endl;
-        std::cout << std::format("Gnd state expectation values: {}",
+        std::cout << fmt::format("Gnd state expectation values: {}",
             expectation_values(calc, gnd_idx))
             << std::endl;
-        std::cout << std::format("f1t state expectation values: {}",
+        std::cout << fmt::format("f1t state expectation values: {}",
             expectation_values(calc, _if1t))
             << std::endl;
-        std::cout << std::format("f10 state expectation values: {}",
+        std::cout << fmt::format("f10 state expectation values: {}",
             expectation_values(calc, _if10))
             << std::endl;
-        std::cout << std::format("f11 state expectation values: {}",
+        std::cout << fmt::format("f11 state expectation values: {}",
             expectation_values(calc, _if11))
             << std::endl;
 
-        std::cout << std::format("Closest Energy-estate to 0-E-field gnd state is "
+        std::cout << fmt::format("Closest Energy-estate to 0-E-field gnd state is "
             "{}, with energy {}", gnd_idx, E) << std::endl;
         oStk << Ez_V_cm << "," << E << "," << dE_f1t << "," << dE_f10 << ","
             << dE_f11 << std::endl;
@@ -664,7 +664,7 @@ int main(int argc, char **argv) {
         E3s[fdx] = EVAL(calc.Es[3]);
 
 //#ifdef USE_DEVONSHIRE
-        auto dev_out_fname = std::format("info_Ez_{}.csv", std::lround(Ez_V_cm));
+        auto dev_out_fname = fmt::format("info_Ez_{}.csv", std::lround(Ez_V_cm));
         std::ofstream dout(devpath / dev_out_fname);
         output_state_info(dout, calc);
 //#endif
@@ -680,19 +680,19 @@ int main(int argc, char **argv) {
 
     std::cout << "--------- stark loop completed ---------" << std::endl;
     prev_time = log_time_at_point("Completed stark loop", start_time, prev_time);
-    std::cout << std::format("Explicit m_f degeneracy breaking coeff is {:.4} Hz",
+    std::cout << fmt::format("Explicit m_f degeneracy breaking coeff is {:.4} Hz",
         hfs_constants::e_mf_break * 1E6)
         << std::endl;
-    std::cout << std::format("Maximum m_f deviation for {} is {} at index {}",
+    std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
         f00, max_dev_mf_f00, idx_max_mf_f00)
         << std::endl;
-    std::cout << std::format("Maximum m_f deviation for {} is {} at index {}",
+    std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
         f10, max_dev_mf_f10, idx_max_mf_f10)
         << std::endl;
-    std::cout << std::format("Maximum m_f deviation for {} is {} at index {}",
+    std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
         f1t, max_dev_mf_f1t, idx_max_mf_f1t)
         << std::endl;
-    std::cout << std::format("Maximum m_f deviation for {} is {} at index {}",
+    std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
         f11, max_dev_mf_f11, idx_max_mf_f11)
         << std::endl;
 

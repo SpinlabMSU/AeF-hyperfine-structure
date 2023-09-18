@@ -63,7 +63,7 @@ void simultaneously_diagonalize(Matrix &U, Matrix &Ut, const Matrix &A,
     // if both are diagonalized then return
     if (agood && bgood)
       return;
-    std::cout << std::format("{} FAIL FAIL FAIL", t) << std::endl;
+    std::cout << fmt::format("{} FAIL FAIL FAIL", t) << std::endl;
     DebugBreak();
   }
 }

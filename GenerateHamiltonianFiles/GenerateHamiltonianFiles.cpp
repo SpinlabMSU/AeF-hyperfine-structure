@@ -21,7 +21,7 @@ int main() {
     const double E_z = unit_conversion::BAD_MHz_D_per_V_cm * 50 * 1000;
 
     dcomplex H_st = v.H_st(v, E_z);
-    std::string str = std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(50kV/cm) = {} MHz",
+    std::string str = fmt::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(50kV/cm) = {} MHz",
         v, E_rot, H_hfs, H_st);
 
     std::ofstream out(fs::path(u8"log.txt"), std::ios::out);
@@ -67,7 +67,7 @@ int main() {
         times.push_back(duration);
 
 
-        std::string outnam = std::format("out/matrix_{}.dat", nmax);
+        std::string outnam = fmt::format("out/matrix_{}.dat", nmax);
         calc.save_matrix_elts(outnam);
     }
 

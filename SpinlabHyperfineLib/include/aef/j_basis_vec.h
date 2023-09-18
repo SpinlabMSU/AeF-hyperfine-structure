@@ -181,9 +181,9 @@ public:
 std::ostream& operator<<(std::ostream& os, j_basis_vec& v);
 bool operator == (const j_basis_vec& v1, const j_basis_vec& v2);
 
-template <> struct std::formatter<j_basis_vec> : std::formatter<std::string> {
+template <> struct fmt::formatter<j_basis_vec> : fmt::formatter<std::string> {
     auto format(j_basis_vec v, format_context& ctx) const {
-        return formatter<string>::format(std::format("|n={},j={},f={},m_f={}>", v.n, v.j, v.f, v.m_f), ctx);
+        return formatter<std::string>::format(fmt::format("|n={},j={},f={},m_f={}>", v.n, v.j, v.f, v.m_f), ctx);
     }
 };
 

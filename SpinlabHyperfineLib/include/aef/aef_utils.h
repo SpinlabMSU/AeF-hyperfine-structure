@@ -188,12 +188,12 @@ static inline double w9j(double j1, double j2, double j3, double j4, double j5,
 }
 
 /// <summary>
-/// Allows the use of std::complex<double> in std::format.
+/// Allows the use of std::complex<double> in fmt::format.
 /// </summary>
-template <> struct std::formatter<dcomplex> : std::formatter<std::string> {
+template <> struct fmt::formatter<dcomplex> : fmt::formatter<std::string> {
     auto format(dcomplex v, format_context& ctx) const {
-        return formatter<string>::format(
-            std::format("({} + i*{})", std::real(v), std::imag(v)), ctx);
+        return formatter<std::string>::format(
+            fmt::format("({} + i*{})", std::real(v), std::imag(v)), ctx);
     }
 };
 
@@ -243,7 +243,7 @@ template <class Matrix> void simultaneously_diagonalize(const Matrix& A, const M
 
         // if both are diagonalized then return
         if (agood && bgood) return;
-        std::cout << std::format("{} FAIL FAIL FAIL", t) << std::endl;
+        std::cout << fmt::format("{} FAIL FAIL FAIL", t) << std::endl;
         DebugBreak();
     }
 }

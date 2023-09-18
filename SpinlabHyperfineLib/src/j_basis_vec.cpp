@@ -143,7 +143,7 @@ dcomplex j_basis_vec::H_st(j_basis_vec other, double E_z) {
     dcomplex retval = mu_e * E_z * xi_factors * threej_factors * sixj_factors * phase;
 
     if (std::abs(retval) > 1) {
-        std::cout << std::format("{} H_st {} nonzero {} MHz", *this, other, retval) << std::endl;
+        std::cout << fmt::format("{} H_st {} nonzero {} MHz", *this, other, retval) << std::endl;
     }
 
     return retval;
@@ -170,7 +170,7 @@ dcomplex j_basis_vec::d10(j_basis_vec other) {
     dcomplex retval = xi_factors * threej_factors * sixj_factors * phase;
 
     if (std::abs(retval) > 1) {
-        std::cout << std::format("{} d10 {} nonzero {} (dimensionless)", *this, other, retval) << std::endl;
+        std::cout << fmt::format("{} d10 {} nonzero {} (dimensionless)", *this, other, retval) << std::endl;
     }
 
     return retval;
@@ -198,7 +198,7 @@ dcomplex j_basis_vec::d11(j_basis_vec other) {
     dcomplex retval = xi_factors * threej_factors * sixj_factors * phase;
 
     if (std::abs(retval) > 1) {
-        std::cout << std::format("{} d11 {} nonzero {} (dimensionless)", *this, other, retval) << std::endl;
+        std::cout << fmt::format("{} d11 {} nonzero {} (dimensionless)", *this, other, retval) << std::endl;
     }
 
     return retval;
@@ -226,7 +226,7 @@ dcomplex j_basis_vec::d1t(j_basis_vec other) {
     dcomplex retval = xi_factors * threej_factors * sixj_factors * phase;
 
     if (std::abs(retval) > 1) {
-        std::cout << std::format("{} d1t {} nonzero {} (dimensionless)", *this, other, retval) << std::endl;
+        std::cout << fmt::format("{} d1t {} nonzero {} (dimensionless)", *this, other, retval) << std::endl;
     }
 
     return retval;
@@ -250,11 +250,11 @@ dcomplex j_basis_vec::H_dev(j_basis_vec other, double K) {
 }
 
 std::string j_basis_vec::ket_string() {
-    return std::format("|n={}, j={}, f={}, m_f={}>", n, j, f, m_f);
+    return fmt::format("|n={}, j={}, f={}, m_f={}>", n, j, f, m_f);
 }
 
 std::string j_basis_vec::ket_csv_str() {
-    return std::format("|n={} j={} f={} m_f={}>", n, j, f, m_f);
+    return fmt::format("|n={} j={} f={} m_f={}>", n, j, f, m_f);
 }
 
 j_basis_vec j_basis_vec::from_index(int idx) {
@@ -286,7 +286,7 @@ int j_basis_vec::index_of_n(spin n) {
 }
 
 std::ostream& operator<<(std::ostream& os, j_basis_vec& v) {
-    return (os << std::format("|n={}, j={}, f={}, m_f={}>", v.n, v.j, v.f, v.m_f));
+    return (os << fmt::format("|n={}, j={}, f={}, m_f={}>", v.n, v.j, v.f, v.m_f));
 }
 
 bool operator==(const j_basis_vec& v1, const j_basis_vec& v2) {

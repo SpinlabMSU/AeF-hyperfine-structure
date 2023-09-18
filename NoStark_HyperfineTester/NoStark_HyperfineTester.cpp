@@ -49,7 +49,7 @@ int main() {
     const double E_z = unit_conversion::MHz_D_per_V_cm * 500 * 1000;
 
     dcomplex H_st = v.H_st(v, E_z);
-    std::string str = std::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(50kV/cm) = {} MHz",
+    std::string str = fmt::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(50kV/cm) = {} MHz",
         v, E_rot, H_hfs, H_st);
 
     std::ofstream out("log.txt", std::ios::out);
@@ -61,7 +61,7 @@ int main() {
     HyperfineCalculator calc(nmax, 0, false);
     
 #if 0
-    std::string spath = std::format("out/matrix_{}.dat", nmax);
+    std::string spath = fmt::format("out/matrix_{}.dat", nmax);
 
     bool result = calc.load_matrix_elts(spath);
 
@@ -89,7 +89,7 @@ int main() {
     double dE_f11 = energy_of_closest(calc, if11) - E;
 
 
-    std::string ostr = std::format("Gnd state energy: {}, Shift of f=1 m_f=-1: {}, Shift of f=1 m_f=0: {},"
+    std::string ostr = fmt::format("Gnd state energy: {}, Shift of f=1 m_f=-1: {}, Shift of f=1 m_f=0: {},"
         "Shift of f = 1 m_f = 1: {}", E, dE_f1t, dE_f10, dE_f11);
     std::cout << ostr << std::endl;
 
