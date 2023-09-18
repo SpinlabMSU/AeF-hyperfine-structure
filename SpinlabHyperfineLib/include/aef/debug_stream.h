@@ -7,6 +7,8 @@
 // platform-dependent
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <stdio.h>
 #endif
 
 namespace debug_stream {
@@ -30,7 +32,8 @@ namespace debug_stream {
                 OutputDebugStringA((char*)tbuf);
             }
 #else
-
+            ptrdiff_t len = end - begin;
+            std::cerr.write(reinterpret_cast<char*>(begin), len);
 #endif
             //this->set
         }
@@ -51,7 +54,13 @@ namespace debug_stream {
                     OutputDebugStringA((char*)arr);
                 }
 #else
-
+                if constexpr (std::is_same<traits, char>::value) {
+                    std::cerr.write(arr, sizeof(arr));
+                } else if constexpr (std::is_same<traits, wchar_t>::value) {
+                    std::wcerr.put(c);
+                } else {
+                    std::cerr.write(arr, sizeof(arr));
+                }
 #endif
             }
             return rc ? traits::not_eof(c) : traits::eof();

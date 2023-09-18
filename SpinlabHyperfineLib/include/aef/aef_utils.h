@@ -5,7 +5,7 @@
 #include "aef_types.h"
 #include "gcem.hpp"
 #include "gsl/gsl_sf_coupling.h"
-#include <format>
+#include <fmt.hpp>
 #include <complex>
 #include <numbers>
 #include <random>
@@ -191,7 +191,7 @@ static inline double w9j(double j1, double j2, double j3, double j4, double j5,
 /// Allows the use of std::complex<double> in std::format.
 /// </summary>
 template <> struct std::formatter<dcomplex> : std::formatter<std::string> {
-    auto format(dcomplex v, format_context& ctx) {
+    auto format(dcomplex v, format_context& ctx) const {
         return formatter<string>::format(
             std::format("({} + i*{})", std::real(v), std::imag(v)), ctx);
     }

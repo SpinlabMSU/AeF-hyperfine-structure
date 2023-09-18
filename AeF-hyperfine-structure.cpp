@@ -9,7 +9,7 @@
 #include <chrono>
 #include <cstring>
 #include <filesystem>
-#include <format>
+#include <fmt.hpp>
 #include <fstream>
 #include <iostream>
 #include <numbers>
@@ -355,10 +355,10 @@ int main(int argc, char **argv) {
             pLogBuf = oLog.rdbuf();
         }
         pOutb = new tee::teebuf(pLogBuf, orig_coutb);
-        std::cout.set_rdbuf(pOutb);
+        std::cout.rdbuf(pOutb);
 
         pErrb = new tee::teebuf(pLogBuf, orig_cerrb);
-        std::cerr.set_rdbuf(pErrb);
+        std::cerr.rdbuf(pErrb);
     }
     // info lines
     {
@@ -609,10 +609,15 @@ int main(int argc, char **argv) {
         double dE_f11 = std::real(calc.Es[_if11]) - E;
 
         // measure deviation of m_f for each n=0,f=0 and n=0,f=1 state
+#define DEC_MDEV(idx) j_basis_vec jb_f##idx = f##idx
+        DEC_MDEV(00);
+        DEC_MDEV(10);
+        DEC_MDEV(11);
+        DEC_MDEV(1t);
 #define MDEV(idx)                                                              \
   do {                                                                         \
     double dev_mf_##idx =                                                      \
-        std::abs(expectation_values(calc, _i##idx).m_f - ##idx.m_f);           \
+        std::abs(expectation_values(calc, _i##idx).m_f - jb_##idx.m_f);           \
     if (std::abs(dev_mf_##idx) > max_dev_mf_##idx) {                           \
       max_dev_mf_##idx = dev_mf_##idx;                                         \
       idx_max_mf_##idx = fdx;                                                  \

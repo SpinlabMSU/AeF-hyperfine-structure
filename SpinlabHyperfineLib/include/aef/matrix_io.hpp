@@ -3,8 +3,9 @@
 #include <Eigen/Eigen>
 #include <iostream>
 #include <fstream>
+#include <stdexcept>
 #include <zlib.h>
-#include <format>
+#include <fmt.hpp>
 //#include <boost/iostreams/stream.hpp>
 extern uint64_t stream_pos;
 
@@ -93,7 +94,7 @@ namespace Eigen {
             }
 #endif
             DebugBreak();
-            throw std::exception("BAD MAGIC");
+            throw std::runtime_error("BAD MAGIC");
         }
 
         typename Matrix::Index rows = 0, cols = 0;
@@ -124,7 +125,7 @@ namespace Eigen {
         if (in.eof() || in.fail() || in.bad()) {
             std::cout << "Error eof=" << in.eof() << " fail=" << in.fail() << " bad=" << in.bad() << " tellg=" << in.tellg() << std::endl;
             //printf("ERROR eof=%d fail=%d bad=%d, %zu\n", in.eof(), in.fail(), in.bad(), in.tellg());
-            throw std::exception("EOF or FAIL or BAD");
+            throw std::runtime_error("EOF or FAIL or BAD");
         }
 
         constexpr uint32_t emarker = 0xffddccff;
@@ -135,7 +136,7 @@ namespace Eigen {
         std::cout << std::format("Read end-marker {:x}", rmarker) << std::endl;
 
         if (rmarker != emarker) {
-            throw std::exception("BAD END MARKER");
+            throw std::runtime_error("BAD END MARKER");
         }
     }
 

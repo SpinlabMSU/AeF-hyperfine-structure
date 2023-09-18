@@ -10,7 +10,7 @@ namespace tee {
 
         std::streambuf* obuf = std::cout.rdbuf();
         teebuf* pBuff = new teebuf(obuf, oLog->rdbuf());
-        std::cout.set_rdbuf(pBuff);
+        std::cout.rdbuf(pBuff);//std::cout.set_rdbuf(pBuff);
         return pBuff;
     }
 
@@ -20,7 +20,8 @@ namespace tee {
 
         std::streambuf* obuf = std::cerr.rdbuf();
         teebuf* pBuff = new teebuf(obuf, oLog->rdbuf());
-        std::cerr.set_rdbuf(pBuff);
+        std::cerr.rdbuf(pBuff);
+        return pBuff;
     }
 
     teebuf *tee_cout_cerr(fs::path& opath) {
@@ -28,7 +29,7 @@ namespace tee {
         
         std::streambuf *obuf = std::cout.rdbuf();
         teebuf *pBuff = new teebuf(obuf, oLog->rdbuf());
-        std::cout.set_rdbuf(pBuff);
+        std::cout.rdbuf(pBuff);
 
         tee_cerr(opath);
 

@@ -8,10 +8,10 @@
 #define PCH_H
 
 // add headers that you want to pre-compile here
-#include "aef\framework.h"
+#include "aef/framework.h"
 
 
-#include "Eigen\Eigen"
+#include "Eigen/Eigen"
 #include "zlib.h"
 #include "pcg/pcg_random.hpp"
 #include "pcg/pcg_extras.hpp"
@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <iterator>
 #include <gsl/gsl_sf_coupling.h>
-#include <format>
+#include <fmt.hpp>
 #include <iostream>
 #include <algorithm>
 #include <vector>

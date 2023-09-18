@@ -31,6 +31,7 @@ namespace tee {
         basic_teebuf(std::basic_streambuf<charT, traits>* sb1, std::basic_streambuf<charT, traits>* sb2)
             : sb1_(sb1), sb2_(sb2) {
         }
+        
     };
 
     typedef basic_teebuf<char> teebuf;
@@ -40,7 +41,7 @@ namespace tee {
         , public std::basic_ostream<charT, traits> {
     public:
         basic_oteestream(std::basic_ostream<charT, traits>& out1, std::basic_ostream<charT, traits>& out2)
-            : basic_teebuf(out1.rdbuf(), out2.rdbuf())
+            : basic_teebuf<charT, traits>(out1.rdbuf(), out2.rdbuf())
             , std::basic_ostream<charT, traits>(this) {
             this->init(this);
         }
