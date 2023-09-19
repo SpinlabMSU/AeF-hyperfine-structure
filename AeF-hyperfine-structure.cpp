@@ -38,7 +38,9 @@ j_basis_vec expectation_values(HyperfineCalculator& calc, int32_t E_idx) {
 #ifdef _WIN32
     SecureZeroMemory((void*)&out, sizeof(j_basis_vec));
 #else
-    explicit_bzero((void*)&out, sizeof(j_basis_vec));
+    // explicit_bzero isn't neccessary and reduces portability
+    //explicit_bzero((void*)&out, sizeof(j_basis_vec));
+    memset((void*)&out, 0, sizeof(j_basis_vec));
 #endif
     double prob_tot = 0;
 #ifdef MATRIX_ELT_DEBUG
@@ -111,7 +113,8 @@ j_basis_vec expectation_values_jsq(HyperfineCalculator& calc, int32_t E_idx) {
 #ifdef _WIN32
     SecureZeroMemory((void*)&out, sizeof(j_basis_vec));
 #else
-    explicit_bzero((void*)&out, sizeof(j_basis_vec));
+    //explicit_bzero((void*)&out, sizeof(j_basis_vec));
+    memset((void*)&out, 0, sizeof(j_basis_vec));
 #endif
     double prob_tot = 0;
     for (int32_t kidx = 0; kidx < calc.nBasisElts; kidx++) {
@@ -368,7 +371,7 @@ int main(int argc, char **argv) {
         std::cout << "AeF Hyperfine Structure version compiled on " << __DATE__ << " "
             << __TIME__ << ", git commit " << aef_git_commit << std::endl;
         std::cout << "Git status is " << dirty << " string {" << status << "}" << std::endl;
-        std::cout << "Start time is " << start_time << std::endl;
+        std::cout << fmt::format("Start time is {}", start_time) << std::endl;
         std::cout << fmt::format("Eigen will use {} threads", Eigen::nbThreads()) << std::endl;
     }
 #ifdef _OPENMP
