@@ -13,10 +13,60 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\fmt">
+      <UniqueIdentifier>{435af363-3b52-48de-87a5-078ad28e0d76}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GenerateHamiltonianFiles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\cxxopts.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fmt.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fmt\args.h">
+      <Filter>Header Files\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fmt\chrono.h">
+      <Filter>Header Files\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fmt\color.h">
+      <Filter>Header Files\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fmt\compile.h">
+      <Filter>Header Files\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fmt\core.h">
+      <Filter>Header Files\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fmt\format.h">
+      <Filter>Header Files\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fmt\format-inl.h">
+      <Filter>Header Files\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fmt\os.h">
+      <Filter>Header Files\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fmt\ostream.h">
+      <Filter>Header Files\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fmt\printf.h">
+      <Filter>Header Files\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fmt\ranges.h">
+      <Filter>Header Files\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fmt\std.h">
+      <Filter>Header Files\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\fmt\xchar.h">
+      <Filter>Header Files\fmt</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

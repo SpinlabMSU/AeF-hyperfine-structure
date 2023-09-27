@@ -150,6 +150,23 @@
       <Project>{6d7ec651-0f40-4353-821f-e6ecbe0ea7d7}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\cxxopts.hpp" />
+    <ClInclude Include="..\include\fmt.hpp" />
+    <ClInclude Include="..\include\fmt\args.h" />
+    <ClInclude Include="..\include\fmt\chrono.h" />
+    <ClInclude Include="..\include\fmt\color.h" />
+    <ClInclude Include="..\include\fmt\compile.h" />
+    <ClInclude Include="..\include\fmt\core.h" />
+    <ClInclude Include="..\include\fmt\format-inl.h" />
+    <ClInclude Include="..\include\fmt\format.h" />
+    <ClInclude Include="..\include\fmt\os.h" />
+    <ClInclude Include="..\include\fmt\ostream.h" />
+    <ClInclude Include="..\include\fmt\printf.h" />
+    <ClInclude Include="..\include\fmt\ranges.h" />
+    <ClInclude Include="..\include\fmt\std.h" />
+    <ClInclude Include="..\include\fmt\xchar.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
