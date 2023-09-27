@@ -273,6 +273,38 @@ void output_state_info(std::ostream& output, HyperfineCalculator& calc) {
 }
 
 int main(int argc, char **argv) {
+    ///////////////////// constants
+
+    /// <summary>
+    /// WARNING: the wrong value was originally used in the conversion factor
+    /// This was supposed to be 50 kV/cm but is actually 500 kV/cm.
+    /// </summary>
+    constexpr double E_z_orig = unit_conversion::MHz_D_per_V_cm * 500 * 1000;
+    /// <summary>
+    /// 50 kV/cm = 25170 MHz/D is the field strength used to calculate H_stk.
+    /// DO NOT CHANGE THIS.
+    /// Instead use the E_max argument
+    /// </summary>
+    constexpr double calc_E_z = unit_conversion::MHz_D_per_V_cm * 50 * 1000;
+
+#define USE_DEVONSHIRE
+
+#ifdef USE_DEVONSHIRE
+    /// <summary>
+    /// Devonshire coupling constant: 100 Kelvin --> 2.083 THz
+    /// </summary>
+    constexpr double K = 100.0 * unit_conversion::MHz_per_Kelvin;
+    constexpr const char* devstatus = "enabled";
+#else
+    /// <summary>
+    /// Disable Devonshire potential: 0 MHz --> disabled
+    /// </summary>
+    constexpr double K = 0;
+    constexpr const char* devstatus = "disabled";
+#endif
+
+    ///////////////////////// main code
+
     // output file --> automatically make output based on current datetime
     // 2023-07-12: change output dir to output instead of oana
     auto dpath = fs::path("output");
@@ -290,6 +322,8 @@ int main(int argc, char **argv) {
     bool print_extras = true;
     bool output_Es = true;
     size_t nStarkIterations = 101;
+    double min_E_z = 0;
+    double max_E_z = calc_E_z;
 
     // todo parse args
     // args should include: E_max, nmax, enable_debug_log
@@ -297,7 +331,8 @@ int main(int argc, char **argv) {
         "diatomic Alkaline - monoflouride molecules");
     options.add_options()
         ("h,help", "Print usage")
-        ("e,E_max", "Maximum electric field", cxxopts::value<double>())
+        ("e,E_max", "Maximum electric field [V/cm]", cxxopts::value<double>())
+        ("E_min", "Minimum electric field [V/cm]", cxxopts::value<double>())
         ("n,n_max", "Maximum n level to include", cxxopts::value<int>())
         ("d,enable_debug", "Enable debug mode", cxxopts::value<bool>()->default_value("false"))
         ("print_extras", "Print extra information", cxxopts::value<bool>()->default_value("true"))
@@ -329,6 +364,14 @@ int main(int argc, char **argv) {
 
     if (result.count("stark_iterations")) {
         nStarkIterations = result["stark_iterations"].as<size_t>();
+    }
+
+    if (result.count("E_max")) {
+        max_E_z = result["E_max"].as<double>();
+    }
+
+    if (result.count("E_min")) {
+        min_E_z = result["E_min"].as<double>();
     }
 
     // create info log
@@ -385,30 +428,7 @@ int main(int argc, char **argv) {
     j_basis_vec v(1, .5, 0, 0);
     double E_rot = std::real(v.H_rot());
     dcomplex H_hfs = v.H_hfs(v);
-    /// <summary>
-    /// WARNING: the wrong value was originally used in the conversion factor
-    /// This was supposed to be 50 kV/cm but is actually 500 kV/cm.
-    /// </summary>
-    constexpr double E_z_orig = unit_conversion::MHz_D_per_V_cm * 500 * 1000;
-    /// <summary>
-    /// Correct value of E_z is usually 50 kV/cm = 25170 MHz/D.
-    /// </summary>
-    constexpr double E_z = E_z_orig / 10.0;// *500;
-#define USE_DEVONSHIRE
-
-#ifdef USE_DEVONSHIRE
-    /// <summary>
-    /// Devonshire coupling constant: 100 Kelvin --> 2.083 THz
-    /// </summary>
-    constexpr double K = 100.0 * unit_conversion::MHz_per_Kelvin;
-    constexpr const char* devstatus = "enabled";
-#else
-    /// <summary>
-    /// Disable Devonshire potential: 0 MHz --> disabled
-    /// </summary>
-    constexpr double K = 0;
-    constexpr const char* devstatus = "disabled";
-#endif
+    
     dcomplex H_st = v.H_st(v, E_z_orig);
     std::string str = fmt::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(500kV/cm) = {} MHz", v,
             E_rot, H_hfs, H_st);
@@ -417,10 +437,10 @@ int main(int argc, char **argv) {
 
     // maximum value of the n quantum number.  There will be 4*(nmax**2) states
     int nmax = param_nmax;
-    HyperfineCalculator calc(nmax, E_z, K);
+    HyperfineCalculator calc(nmax, calc_E_z, K);
 
     std::cout << fmt::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({})",
-        nmax, E_z, K, devstatus)
+        nmax, calc_E_z, K, devstatus)
         << std::endl;
     if (load_from_file) {
         std::string logstr = fmt::format("Loading matrix elements from {}", loadname);
@@ -570,9 +590,13 @@ int main(int argc, char **argv) {
     double max_dev_mf_f11 = -std::numeric_limits<double>::infinity();
     int idx_max_mf_f11 = -1;
 
+    const double scale_Ez = max_E_z - min_E_z;
+    const double scale_Ez_mhz = scale_Ez * unit_conversion::MHz_D_per_V_cm;
+    const double offset_Ez_mhz = min_E_z;
+
     for (int fdx = 0; fdx < nStarkIterations; fdx++) {
         double field_divisor = nStarkIterations - 1.0;
-        double Ez_fdx = (E_z) * (fdx / field_divisor);
+        double Ez_fdx_mhz = (scale_Ez_mhz) * (fdx / field_divisor) + offset_Ez_mhz;
 #ifdef MATRIX_ELT_DEBUG
         // degenerate states will probably break this
         if (fdx == 0)
@@ -580,14 +604,14 @@ int main(int argc, char **argv) {
 #endif
         // recalaculate H_tot -- from scratch to avoid accumulation of error
         // calc.H_tot.setZero();
-        calc.H_tot = calc.H_rot.toDenseMatrix() + /**/ calc.H_hfs + /**/ dcomplex(Ez_fdx / E_z) * calc.H_stk;
+        calc.H_tot = calc.H_rot.toDenseMatrix() + /**/ calc.H_hfs + /**/ dcomplex(Ez_fdx_mhz / calc_E_z) * calc.H_stk;
 
 #ifdef USE_DEVONSHIRE
         calc.H_tot += calc.H_dev;
 #endif
         calc.diagonalize_H();
 
-        double Ez_V_cm = Ez_fdx / unit_conversion::MHz_D_per_V_cm;
+        double Ez_V_cm = Ez_fdx_mhz / unit_conversion::MHz_D_per_V_cm;
         // energy output
         oEs << fmt::format("{},{}", fdx, Ez_V_cm);
         for (size_t idx = 0; idx < calc.nBasisElts; idx++) {
