@@ -44,6 +44,8 @@ class aef_run(object):
         self.stk_lop_dur = -1
         self.mat_elt_dur = -1
 
+        self.cdir = os.path.join(self.path, 'state_coeffs')
+
         if self.valid:
             self.parse_log()
 
@@ -106,6 +108,25 @@ class aef_run(object):
     def parse_stark_spect(self, *args, **kwargs):
         fpath = os.path.join(self.path, 'stark_spectrum.csv')
         return pd.read_csv(fpath, *args, **kwargs)
+
+    def get_coeff_dir(self):
+        return self.cdir
+    
+    def has_coeff_dir(self):
+        return os.path.exists(self.cdir)
+
+    def parse_state_coeffs(self, E_z, *args, **kwargs):
+        csvpath = os.path.join(self.cdir, f'{E_z}.csv')
+        return pd.read_csv(csvpath, *args, **kwargs)
+
+    def list_state_csvs(self):
+        csvlist = []
+        for ent in os.scandir(self.cdir):
+            if ent.is_file() and ent.name.lower().endswith('.csv'):
+                csvlist.append(ent.path)
+        return csvlist
+        
+        
 
 def find_runs(scandir):
     runlist = []

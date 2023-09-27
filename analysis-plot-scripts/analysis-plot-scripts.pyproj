@@ -28,6 +28,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="plot_dev_spect.py" />
+    <Compile Include="plot_state_coeffs.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="runscripts.py" />
     <Compile Include="plot_spectrum.py" />
     <Compile Include="plot_stark_shift.py" />
