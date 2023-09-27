@@ -5,11 +5,30 @@
 #include <filesystem>
 #include "Eigen/Eigen"
 
+enum class aefdat_version {
+    // original file format: was very similar to format rawmat, but save cod
+    invalid = 0,
+    // 
+    rawmat = 1,
+    //
+    rawmat_okq = 2,
+    // saves more information
+    rawmat_okq2 = 3,
+    xiff = 4,
+    max = xiff
+};
+
 class HyperfineCalculator {
 public:
     spin nmax;
     size_t nBasisElts;
     bool enableDev;
+    aefdat_version load_version;
+
+    // current file format: rawmat_okq2
+    static constexpr aefdat_version CURRENT_VERSION = aefdat_version::rawmat_okq2;
+    // minimum readable file format: needed because version 0 didn't open files as binary
+    static constexpr aefdat_version MINIMUM_VERSION = aefdat_version::rawmat;
 private:
     double E_z;
     double K;
@@ -72,6 +91,11 @@ public:
     bool save_matrix_elts(std::filesystem::path out);
 
     bool load_matrix_elts(std::istream& in);
+    /// <summary>
+    /// Save the various operators to an AeF0Dat stream.  Only supports writing as the latest version
+    /// </summary>
+    /// <param name="out"></param>
+    /// <returns></returns>
     bool save_matrix_elts(std::ostream& out);
 
     void set_nmax(spin nmax_);

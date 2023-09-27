@@ -7,7 +7,7 @@ namespace fs = std::filesystem;
 HyperfineCalculator::HyperfineCalculator(spin nmax_, double E_z_, double K_)
     : nmax(nmax_), E_z(E_z_), init(false), enableDev(K_ != 0),
       nBasisElts(j_basis_vec::index_of_n(nmax_ + 1)), diagonalized(false),
-      K(K_), dkq_init(false) {
+      K(K_), dkq_init(false), load_version(HyperfineCalculator::CURRENT_VERSION){
 
   set_nmax(nmax_);
 }
@@ -157,23 +157,8 @@ bool HyperfineCalculator::save_matrix_elts(fs::path outpath) {
 #include <zstr.hpp>
 
 static constexpr uint8_t MAGIC[8] = {'A', 'e', 'F', 0, 'H', 'D', 'a', 't'};
-// current file format
-static constexpr uint16_t VERSION = 2;
-// minimum readable file format: needed because version 0 didn't open fiels
-static constexpr uint16_t MIN_VERSION = 1;
 
-enum class aefdat_version {
-  // original file format: was very similar to format
-  invalid = 0,
-  rawmat = 1,
-  rawmat_okq = 2,
-  xiff = 3,
-  max = xiff
-};
-
-static constexpr aefdat_version min_version = aefdat_version::rawmat;
-
-enum hyp_flags : uint16_t { FLAG_DIAG = 1, FLAG_OKQ = 2 };
+enum hyp_flags : uint16_t { FLAG_DIAG = 1, FLAG_OKQ = 2, FLAG_E_DEV_PARMS = 4 };
 
 // #define _NO_COMPRESS
 uint64_t stream_pos;
@@ -212,20 +197,21 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
     data.u8 = test;
     std::cout << "READ CORRECT MAGIC " << *data.u64 << std::endl;
   }
-  uint16_t version = 0;
-  zin.read((char *)&version, sizeof(version));
-  stream_pos += sizeof(version);
+  uint16_t raw_version = 0;
+  zin.read((char *)&raw_version, sizeof(raw_version));
+  stream_pos += sizeof(raw_version);
+  aefdat_version version = static_cast<aefdat_version>(raw_version);
 
-  if (version > VERSION || version < MIN_VERSION) {
+  if (version > CURRENT_VERSION || version < MINIMUM_VERSION) {
     const char *reason =
-        (version > VERSION) ? " is too recent." : " is too old.";
-    std::cout << "Unsupported version " << version << reason << std::endl;
+        (version > CURRENT_VERSION) ? " is too recent." : " is too old.";
+    std::cout << "Unsupported version " << static_cast<uint16_t>(version) << reason << std::endl;
     uint16_t flags = 0;
     zin.read((char *)&flags, sizeof(flags));
     std::cout << "FLAGS WOULD BE " << flags << std::endl;
     return false;
   }
-
+  this->load_version = version;
   uint16_t flags;
   zin.read((char *)&flags, sizeof(flags));
   stream_pos += sizeof(flags);
@@ -237,6 +223,14 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
   std::cout << "NMax is " << nmax_ << std::endl;
   nmax = nmax_;
   set_nmax(nmax_);
+
+  // 
+  if (flags & FLAG_E_DEV_PARMS) {
+      zin.read((char*)&(this->E_z), sizeof(this->E_z));
+      zin.read((char*)&(this->K), sizeof(this->K));
+      this->enableDev = (K != 0);
+  }
+
 
   diagonalized = (flags & FLAG_DIAG);
   Eigen::read_binary(zin, H_rot.diagonal());
@@ -256,8 +250,7 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
   }
 
   // dipole-moment spherical tensor operators
-  if (version <= static_cast<int>(aefdat_version::xiff)
-      && (flags & FLAG_OKQ)) {
+  if (version <= aefdat_version::xiff && (flags & FLAG_OKQ)) {
     dkq_init = true;
     Eigen::read_binary(zin, d10);
     Eigen::read_binary(zin, d11);
@@ -274,7 +267,7 @@ bool HyperfineCalculator::save_matrix_elts(std::ostream &out) {
   auto &zout = out;
 #endif
   std::copy(MAGIC, MAGIC + 8, std::ostream_iterator<uint8_t>(zout));
-  zout.write((char *)&VERSION, sizeof(VERSION));
+  zout.write((char *)&CURRENT_VERSION, sizeof(CURRENT_VERSION));
   uint16_t flags = 0;
 
   if (diagonalized) {
@@ -284,9 +277,14 @@ bool HyperfineCalculator::save_matrix_elts(std::ostream &out) {
   if (dkq_init) {
     flags |= FLAG_OKQ;
   }
+  flags |= FLAG_E_DEV_PARMS;
   zout.write((char *)&flags, sizeof(flags));
   uint32_t nmax_ = (uint32_t)nmax;
   zout.write((char *)&nmax_, sizeof(nmax_));
+
+  if (flags & FLAG_E_DEV_PARMS) {
+  }
+
 
   Eigen::write_binary(zout, H_rot.diagonal());
   Eigen::write_binary(zout, H_hfs);
