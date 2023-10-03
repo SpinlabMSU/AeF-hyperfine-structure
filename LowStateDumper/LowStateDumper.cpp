@@ -139,7 +139,10 @@ int main(int argc, char **argv) {
     std::cout << fmt::format("OpenMP/Eigen will use {} threads", num_physical_cores) << std::endl;
 #endif
 
-    std::cout << fmt::format("[Low State dumper] attempting to load matrix elements from {}", loadname) << std::endl;
+    fs::path p = fs::absolute(loadname);
+    fs::path dir = p.parent_path();
+
+    std::cout << fmt::format("[Low State dumper] attempting to load matrix elements from {}", p.string()) << std::endl;
     
     HyperfineCalculator calc(4, 0, 0);
     bool success = calc.load_matrix_elts(loadname);
@@ -160,8 +163,6 @@ int main(int argc, char **argv) {
         std::exit(255);
     }
 
-    fs::path p = fs::absolute(loadname);
-    fs::path dir = p.parent_path();
     fs::path odir = dir / "state_coeffs";
     fs::create_directories(odir);
 
@@ -207,7 +208,7 @@ int main(int argc, char **argv) {
         std::cout << fmt::format("H_rot rows={}, cols={}", calc.H_rot.toDenseMatrix().rows(), calc.H_rot.toDenseMatrix().cols()) << std::endl;
         std::cout << fmt::format("H_hfs rows={}, cols={}", calc.H_hfs.rows(), calc.H_hfs.cols()) << std::endl;
         std::cout << fmt::format("H_stk rows={}, cols={}", calc.H_stk.rows(), calc.H_stk.cols()) << std::endl;
-        calc.H_tot = calc.H_rot.toDenseMatrix() + calc.H_hfs + scale * calc.H_stk;
+        calc.H_tot = calc.H_rot.toDenseMatrix() + calc.H_hfs + scale * calc.H_stk + calc.H_dev;
 
         calc.diagonalize_H();
 

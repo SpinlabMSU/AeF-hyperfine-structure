@@ -90,6 +90,15 @@ j_basis_vec expectation_values(HyperfineCalculator& calc, int32_t E_idx) {
     return out;
 }
 
+/// <summary>
+/// Performs the quantum q*(q+1) squaring for angular momenta
+/// </summary>
+/// <param name="q"> q </param>
+/// <returns>q*(q+1)</returns>
+template <class T> T qsq(T q) {
+    return q * (q + (T)1);
+}
+
 
 /// <summary>
 /// Inverts the quantum q*(q+1) squaring for angular momenta

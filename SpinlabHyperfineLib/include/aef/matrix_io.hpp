@@ -70,7 +70,7 @@ namespace Eigen {
     void print_stream_position(std::istream& in) {
         auto tellg = in.tellg();
         std::streamoff pos = tellg;
-        std::cout << fmt::format("Stream position {} = 0x{:x}", pos, pos) << std::endl;
+        std::cout << fmt::format("Stream position {} = 0x{:x}", (int64_t)pos, (int64_t)pos) << std::endl;
     }
 #else
 #define print_stream_position(in) ((void)in)
