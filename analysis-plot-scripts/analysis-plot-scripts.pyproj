@@ -23,6 +23,7 @@
   <ItemGroup>
     <Compile Include="aef_run.py" />
     <Compile Include="analysis_plot_scripts.py" />
+    <Compile Include="baf_state.py" />
     <Compile Include="compare_stark_mdp.py" />
     <Compile Include="collate_runtimes.py">
       <SubType>Code</SubType>
