@@ -453,8 +453,7 @@ int main(int argc, char **argv) {
     HyperfineCalculator calc(nmax, calc_E_z, K);
 
     std::cout << fmt::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({})",
-        nmax, calc_E_z, K, devstatus)
-        << std::endl;
+        nmax, calc_E_z, K, devstatus) << std::endl;
     if (load_from_file) {
         std::string logstr = fmt::format("Loading matrix elements from {}", loadname);
         prev_time = log_time_at_point(logstr.c_str(), start_time, prev_time);
@@ -500,8 +499,7 @@ int main(int argc, char **argv) {
         for (int i = 0; i < calc.nBasisElts; i++) {
             double dE = std::real(Es[i]) - EPrev;
             std::cout << i << ", " << std::real(Es[i]) << "MHz, DeltaE = " << dE
-                << " MHz, " << expectation_values(calc, i).ket_string()
-                << std::endl;
+                << " MHz, " << expectation_values(calc, i).ket_string() << std::endl;
             EPrev = std::real(Es[i]);
             // std::cout << i << ", " << calc.basis[i] << ", " << Es[i] << std::endl;
         }
@@ -533,10 +531,8 @@ int main(int argc, char **argv) {
     j_basis_vec f11(0, 0.5, 1, 1);
     int32_t if11 = f11.index();
 
-    std::cout << "if1t=" << if1t << " if10=" << if10 << " if11=" << if11
-        << std::endl;
-    std::cout << fmt::format("f00={}; f1t={}, f10={}, f11={}", f00, f1t, f10, f11)
-        << std::endl;
+    std::cout << "if1t=" << if1t << " if10=" << if10 << " if11=" << if11 << std::endl;
+    std::cout << fmt::format("f00={}; f1t={}, f10={}, f11={}", f00, f1t, f10, f11) << std::endl;
 
     // oStk << "E-field (V/cm), Stark-shifted Energy of " << gnd.ket_string() << "
     // (MHz)";
@@ -577,12 +573,9 @@ int main(int argc, char **argv) {
     // directory to put devonshire info
     auto devpath = dpath / "devonshire_info";
     fs::create_directories(devpath);
-    std::cout << "does H_tot commute with d10? " << commutes(calc.H_tot, calc.d10)
-        << std::endl;
-    std::cout << "does H_tot commute with d11? " << commutes(calc.H_tot, calc.d11)
-        << std::endl;
-    std::cout << "does H_tot commute with d1t? " << commutes(calc.H_tot, calc.d1t)
-        << std::endl;
+    std::cout << "does H_tot commute with d10? " << commutes(calc.H_tot, calc.d10) << std::endl;
+    std::cout << "does H_tot commute with d11? " << commutes(calc.H_tot, calc.d11) << std::endl;
+    std::cout << "does H_tot commute with d1t? " << commutes(calc.H_tot, calc.d1t) << std::endl;
     std::cout << std::endl;
 
     std::cout << "Is d10  all zero " << calc.d10.isZero(1E-6) << std::endl;
@@ -667,32 +660,18 @@ int main(int argc, char **argv) {
         MDEV(f11);
 #undef MDEV
 
-        double stark_scale =
-            Ez_V_cm * hfs_constants::mu_e * unit_conversion::MHz_D_per_V_cm;
+        double stark_scale = Ez_V_cm * hfs_constants::mu_e * unit_conversion::MHz_D_per_V_cm;
 
-        std::cout << fmt::format(
-                "Electric field strength is {} V/cm, stark scale is {} MHz",
-                Ez_V_cm, stark_scale)
-            << std::endl;
-        std::cout << fmt::format("Gnd state expectation values: {}",
-            expectation_values(calc, gnd_idx))
-            << std::endl;
-        std::cout << fmt::format("f1t state expectation values: {}",
-            expectation_values(calc, _if1t))
-            << std::endl;
-        std::cout << fmt::format("f10 state expectation values: {}",
-            expectation_values(calc, _if10))
-            << std::endl;
-        std::cout << fmt::format("f11 state expectation values: {}",
-            expectation_values(calc, _if11))
-            << std::endl;
+        std::cout << fmt::format("Electric field strength is {} V/cm, stark scale is {} MHz", Ez_V_cm, stark_scale) << std::endl;
+        std::cout << fmt::format("Gnd state expectation values: {}", expectation_values(calc, gnd_idx)) << std::endl;
+        std::cout << fmt::format("f1t state expectation values: {}", expectation_values(calc, _if1t)) << std::endl;
+        std::cout << fmt::format("f10 state expectation values: {}", expectation_values(calc, _if10)) << std::endl;
+        std::cout << fmt::format("f11 state expectation values: {}", expectation_values(calc, _if11)) << std::endl;
 
         std::cout << fmt::format("Closest Energy-estate to 0-E-field gnd state is "
             "{}, with energy {}", gnd_idx, E) << std::endl;
-        oStk << Ez_V_cm << "," << E << "," << dE_f1t << "," << dE_f10 << ","
-            << dE_f11 << std::endl;
-        std::cout << stark_scale << "," << E << "," << dE_f1t << "," << dE_f10
-            << "," << dE_f11 << std::endl;
+        oStk << Ez_V_cm << "," << E << "," << dE_f1t << "," << dE_f10 << "," << dE_f11 << std::endl;
+        std::cout << stark_scale << "," << E << "," << dE_f1t << "," << dE_f10 << "," << dE_f11 << std::endl;
 
         // collect energy of lowest three states
         E0s[fdx] = EVAL(calc.Es[0]);
@@ -700,11 +679,9 @@ int main(int argc, char **argv) {
         E2s[fdx] = EVAL(calc.Es[2]);
         E3s[fdx] = EVAL(calc.Es[3]);
 
-//#ifdef USE_DEVONSHIRE
         auto dev_out_fname = fmt::format("info_Ez_{}.csv", std::lround(Ez_V_cm));
         std::ofstream dout(devpath / dev_out_fname);
         output_state_info(dout, calc);
-//#endif
     }
 
 #if 1
@@ -718,20 +695,15 @@ int main(int argc, char **argv) {
     std::cout << "--------- stark loop completed ---------" << std::endl;
     prev_time = log_time_at_point("Completed stark loop", start_time, prev_time);
     std::cout << fmt::format("Explicit m_f degeneracy breaking coeff is {:.4} Hz",
-        hfs_constants::e_mf_break * 1E6)
-        << std::endl;
+        hfs_constants::e_mf_break * 1E6) << std::endl;
     std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
-        f00, max_dev_mf_f00, idx_max_mf_f00)
-        << std::endl;
+        f00, max_dev_mf_f00, idx_max_mf_f00) << std::endl;
     std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
-        f10, max_dev_mf_f10, idx_max_mf_f10)
-        << std::endl;
+        f10, max_dev_mf_f10, idx_max_mf_f10) << std::endl;
     std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
-        f1t, max_dev_mf_f1t, idx_max_mf_f1t)
-        << std::endl;
+        f1t, max_dev_mf_f1t, idx_max_mf_f1t) << std::endl;
     std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
-        f11, max_dev_mf_f11, idx_max_mf_f11)
-        << std::endl;
+        f11, max_dev_mf_f11, idx_max_mf_f11) << std::endl;
 
     // diagonalize
 
