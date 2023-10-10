@@ -1,5 +1,6 @@
 // AeF-hyperfine-structure.cpp : This file contains the 'main' function. Program
 // execution begins and ends there.
+// This code implements the "main program" of the aef-hyperfine-structure toolkit.
 //
 #include <pch.h>
 #include <aef/aef.h>
@@ -420,7 +421,7 @@ int main(int argc, char **argv) {
         std::string status(aef_git_status);
         bool bdirty = status.contains('M') || status.contains('d');
         std::string dirty = bdirty ? "dirty" : "clean";
-        std::cout << "AeF Hyperfine Structure version compiled on " << __DATE__ << " "
+        std::cout << "AeF Hyperfine Structure main program, version compiled on " << __DATE__ << " "
             << __TIME__ << ", git commit " << aef_git_commit << std::endl;
         std::cout << "Git status is " << dirty << " string {" << status << "}" << std::endl;
         std::cout << fmt::format("Start time is {}", start_time) << std::endl;
