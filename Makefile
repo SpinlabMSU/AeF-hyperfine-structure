@@ -1,9 +1,12 @@
+## AeF-hyprfine-structure makefile
+## Intended for use on linux only
 AR:=gcc-ar
 CXX:=g++
 LD:=$(CXX)
 CXXFLAGS:=-I./include -I./SpinlabHyperfineLib/include -std=gnu++23 -O4 -fopenmp -fPIC -flto -fmodules-ts -freport-bug -save-temps
+##
 LDFLAGS=-L. -pthread -fopenmp -flto -static-libstdc++ -static-libgcc
-LDLIBS:=-l:./libSpinlabHyperfine.a -lhwloc -lgsl -lgslcblas -lm -lz
+LDLIBS:=-l:./libSpinlabHyperfine.a -lgsl -lgslcblas -lm -lz
 
 .PHONY: all clean libs AeF-hyperfine-structure.inl
 all: libs aef_hyperfine_structure

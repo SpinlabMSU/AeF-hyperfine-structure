@@ -5,6 +5,10 @@
 #include "pcg/pcg_extras.hpp"
 #include <stdint.h>
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 pcg64 *pcg;
 
 void init_rng() {
@@ -22,6 +26,8 @@ void init_rng() {
 #endif
 #include <tchar.h>
 
+#elif defined(__linux__)
+// we will use sysconf, so hwloc not needed
 #else
 #include <hwloc.h>
 #endif
@@ -32,7 +38,7 @@ void init_rng() {
 int get_num_cores() {
 #ifdef _WIN32
     PSYSTEM_LOGICAL_PROCESSOR_INFORMATION pBuf = nullptr, ptr = nullptr;
-    DWORD len;
+    DWORD len = 0;
     bool done = false;
     
     // allocate buffer --> this is dumb
@@ -40,8 +46,7 @@ int get_num_cores() {
         DWORD rc = GetLogicalProcessorInformation(pBuf, &len);
 
         if (FALSE == rc) {
-            if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
-            {
+            if (GetLastError() == ERROR_INSUFFICIENT_BUFFER){
                 if (pBuf)
                     free(pBuf);
 
@@ -56,6 +61,13 @@ int get_num_cores() {
     }
 
     ptr = pBuf;
+
+    if (!ptr) {
+        std::cerr << "GetLogicalProcessorInformation returned null pointer" << std::endl;
+        throw std::runtime_error("GetLogicalProcessorInformation returned null pointer in " __FILE__ ":" __PRETTY_FUNCTION__);
+    }
+    assert("GetLogicalProcessorInformation returned" && ptr);
+
     ptrdiff_t offset = 0;
     constexpr size_t sz = sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
     int numCores = 0;
@@ -66,8 +78,10 @@ int get_num_cores() {
         ptr++;
         offset += sz;
     }
-    delete pBuf;
+    free(pBuf);
     return numCores;
+#elif defined(__linux__)
+    return sysconf(_SC_NPROCESSORS_ONLN);
 #else
     int nPhysicalProcessorCount = 0;
 
