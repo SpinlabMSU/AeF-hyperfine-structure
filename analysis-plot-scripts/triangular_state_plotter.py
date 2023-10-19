@@ -91,7 +91,7 @@ class nlevel:
 
     def get_box_pos(self, j, f, m_f):
         gidx = self.gidx(j, f)
-        height = (m_f + f) + self.base_offset(gidx)
+        height = m_f #(m_f + f) + self.base_offset(gidx)
         return (gidx, height)
 
     def draw_boxes(self, ax, ofs=0):
@@ -113,8 +113,8 @@ if __name__ == '__main__':
         nl.draw_boxes(plt.gca(), njs)
         prev_njs = njs
         njs += 4 if (n > 0) else 2
-        plt.hlines(-2, prev_njs, njs - 0.5, color='k', linestyle='-', label=f'n={n}')
+        plt.hlines(-5, prev_njs, njs - 0.5, color='k', linestyle='-', label=f'n={n}')
         dx = ((njs - 0.5) - (prev_njs)) / 2
         x = prev_njs + 0.5
-        plt.text(x + dx, -1.5, f'n={n}', ha='right', va='center')
+        plt.text(x + dx, -4.5, f'n={n}', ha='right', va='center')
     plt.show()
