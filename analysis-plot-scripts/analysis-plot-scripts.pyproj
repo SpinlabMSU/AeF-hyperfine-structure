@@ -36,6 +36,7 @@
     <Compile Include="plot_spectrum.py" />
     <Compile Include="plot_stark_shift.py" />
     <Compile Include="src\plot_stark_mdp.py" />
+    <Compile Include="triangular_state_plotter.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\" />
