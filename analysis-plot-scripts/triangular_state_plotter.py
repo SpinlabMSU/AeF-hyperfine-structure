@@ -53,8 +53,12 @@ def jfs_for_n(n):
     jp = n + 0.5
     jfs += ((jp, jp - 0.5), (jp, jp + 0.5))
     return jfs
-#def get_indicies_njf(n, j, f):
-#    return ur mom
+
+def draw_pan(ax, x_start, x_end, y, h, txt, *args, **kwargs):
+    ax.hlines(y, x_start, x_end, *args, **kwargs)
+    ax.vlines([x_start, x_end], y, y+h, **kwargs)
+    x_txt = (x_start + x_end) / 2
+    ax.annotate(txt, (x_txt, y + 0.1), ha='center')
 
 class nlevel:
     def __init__(self, n):
@@ -95,14 +99,32 @@ class nlevel:
         return (gidx, height)
 
     def draw_boxes(self, ax, ofs=0):
+        x = 0
+        y = 0
         for idx in self.indicies:
             st = baf_state.state_from_index(int(idx))
             x, y = self.get_box_pos(st.j, st.f, st.m_f)
             x += ofs
             print(st, x, y)
             ax.plot(x, y, 'ro')
-            ax.annotate(f'|{st.n},{st.j}\n{st.f},{st.m_f}>', (x, y))
-
+            #ax.annotate(f'|{st.n},{st.j}\n{st.f},{st.m_f}>', (x, y))
+            ax.annotate(f'|{st.f},{st.m_f}>', (x, y + 0.1), ha='center')
+            if st.m_f == -st.f:
+                draw_pan(ax, x - 0.45, x + 0.45, y - 0.5, 2*st.f+1, f'f={st.j}', color='m', linestyle='-')
+                ax.annotate(f'f={st.f}', (x, y + 2 * st.f + 1), ha='center')
+                #ax.annotate(f'f={st.f}', (x, y - 0.5), ha='center')
+                #plt.hlines(y - 0.6, x - 0.4, x + 0.4, color='m')
+                if st.f > st.j:
+                    # j+
+                    draw_pan(ax, x - 1.5, x + 0.5, y - 0.9, 0.4, f'j={st.j}', color='b', linestyle='-')
+                    #plt.hlines(y - 0.9, x - 1.25, x + 0.25, color='b', linestyle='-')
+                    #ax.annotate(f'j={st.j}', (x - 0.5, y - 0.8), ha='center')
+        x_start = ofs - 0.8; x_end = x + 0.8
+        y = -y
+        draw_pan(ax, x_start, x_end, y - 1.2, 1, f'n={self.n}', color='g', linestyle='-')
+        x_txt = ofs + (x - ofs) / 2.0
+        #ax.annotate(f'n={self.n}', (x_txt, y - 1.1), ha='center')
+        #plt.hlines(y - 1.2, x_start, x_end, color='g', linestyle='-')
 
 if __name__ == '__main__':
     print('running')
@@ -112,9 +134,12 @@ if __name__ == '__main__':
         nl = nlevel(n)
         nl.draw_boxes(plt.gca(), njs)
         prev_njs = njs
-        njs += 4 if (n > 0) else 2
-        plt.hlines(-5, prev_njs, njs - 0.5, color='k', linestyle='-', label=f'n={n}')
+        njs += 5 if (n > 0) else 3
+        #plt.hlines(-5, prev_njs, njs - 0.5, color='k', linestyle='-', label=f'n={n}')
         dx = ((njs - 0.5) - (prev_njs)) / 2
         x = prev_njs + 0.5
-        plt.text(x + dx, -4.5, f'n={n}', ha='right', va='center')
+        #plt.text(x + dx, -4.5, f'n={n}', ha='right', va='center')
+    plt.title('J-basis basis-state plot')
+    plt.ylabel('m_f')
+    plt.xlabel('Arbitrary')
     plt.show()
