@@ -98,7 +98,10 @@ class nlevel:
         height = m_f #(m_f + f) + self.base_offset(gidx)
         return (gidx, height)
 
-    def draw_boxes(self, ax, ofs=0):
+    def draw_boxes(self, ax:plt.Axes, ofs:float=0, func=None):
+        """
+        Misnomer -- draws the states associated with this n level, including the "pans"
+        """
         x = 0
         y = 0
         for idx in self.indicies:
@@ -106,7 +109,9 @@ class nlevel:
             x, y = self.get_box_pos(st.j, st.f, st.m_f)
             x += ofs
             print(st, x, y)
-            ax.plot(x, y, 'ro')
+            if func != None:
+                func(ax, idx, x, y)
+            else: ax.plot(x, y, 'ro')
             #ax.annotate(f'|{st.n},{st.j}\n{st.f},{st.m_f}>', (x, y))
             ax.annotate(f'|{st.f},{st.m_f}>', (x, y + 0.1), ha='center')
             if st.m_f == -st.f:
@@ -128,7 +133,7 @@ class nlevel:
 
 if __name__ == '__main__':
     print('running')
-    fig = plt.figure()
+    fig = plt.figure(figsize=(19.2, 16.8))
     njs = 0
     for n in range(4):
         nl = nlevel(n)
@@ -142,4 +147,5 @@ if __name__ == '__main__':
     plt.title('J-basis basis-state plot')
     plt.ylabel('m_f')
     plt.xlabel('Arbitrary')
+    plt.savefig('j-basis-plot.png')
     plt.show()
