@@ -14,6 +14,7 @@
 namespace aef {
 };
 
+#include <numeric>
 #include "aef_types.h"
 #include "j_basis_vec.h"
 #include "aef_utils.h"
@@ -21,7 +22,12 @@ namespace aef {
 #include "units.hpp"
 #include "HyperfineCalculator.hpp"
 
-namespace hfs_constants = baf_constants;
+
+namespace aef {
+    constexpr double nan = std::numeric_limits<double>::quiet_NaN();
+};
+
+//namespace hfs_constants = baf_constants;
 
 
 #endif

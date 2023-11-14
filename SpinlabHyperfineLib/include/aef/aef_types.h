@@ -6,10 +6,13 @@
 #include <cmath>
 #include <complex>
 
-typedef double spin;
-
-constexpr spin half = spin(0.5);
-
-typedef std::complex<double> dcomplex;
+namespace aef {
+    typedef double spin;
+    constexpr spin half = spin(0.5);
+    typedef std::complex<double> dcomplex;
+}
+using aef::spin;
+using aef::half;
+using aef::dcomplex;
 
 #endif

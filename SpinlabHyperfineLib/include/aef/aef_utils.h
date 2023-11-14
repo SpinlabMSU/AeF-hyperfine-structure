@@ -75,6 +75,14 @@ constexpr double xi_prime(spin a, spin b) {
     }
 }
 
+constexpr double q_mag(spin q) {
+    if (std::is_constant_evaluated()) {
+        return constexpr_sqrt(q * (q + 1.0) * (2 * q + 1.0));
+    } else {
+        return sqrt(q * (q + 1.0) * (2 * q + 1.0));
+    }
+}
+
 #ifndef NO_MEMOIZE
 template <typename R, typename... Args>
 std::function<R(Args...)> memo(R(*fn)(Args...)) {

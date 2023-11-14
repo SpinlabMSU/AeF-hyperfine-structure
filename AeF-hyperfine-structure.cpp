@@ -19,6 +19,7 @@
 
 using namespace std::chrono;
 namespace fs = std::filesystem;
+namespace hfs_constants = baf_constants;
 
 
 #include "AeF-hyperfine-structure.inl"
