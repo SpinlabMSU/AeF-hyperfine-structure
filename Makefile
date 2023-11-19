@@ -1,12 +1,25 @@
 AR:=gcc-ar
 CXX:=g++
 LD:=$(CXX)
-CXXFLAGS:=-I./include -I./SpinlabHyperfineLib/include -std=gnu++23 -O4 -fopenmp -fPIC -flto -fmodules-ts -freport-bug -save-temps
+
+MIN_GCC_VERSION = "13.0"
+GCC_VERSION := "`gcc -dumpversion`"
+IS_GCC_ABOVE_MIN_VERSION := $(shell expr "$(GCC_VERSION)" ">=" "$(MIN_GCC_VERSION)")
+ifeq "$(IS_GCC_ABOVE_MIN_VERSION)" "1"
+    # stuff that requires GCC_VERSION >= VERSION
+    BUG_FLAGS:=
+else
+    BUG_FLAGS:=-freport-bug -save-temps 
+endif
+$(info $$BUG_FLAGS is [${BUG_FLAGS}]) 
+INCLUDES:=-I./include -I./SpinlabHyperfineLib/include
+CXX_VSN:=-std=gnu++23 -fmodules-ts -fopenmp
+CXXFLAGS:=$(INCLUDES) $(CXX_VSN) -O4 -fPIC -flto $(BUG_FLAGS)
 LDFLAGS=-L. -pthread -fopenmp -flto -static-libstdc++ -static-libgcc
 LDLIBS:=-l:./libSpinlabHyperfine.a -lhwloc -lgsl -lgslcblas -lm -lz
 
 .PHONY: all clean libs AeF-hyperfine-structure.inl
-all: libs aef_hyperfine_structure
+all: libs aef_hyperfine_structure low_state_dumper
 libs: libSpinlabHyperfine.a libSpinlabHyperfine.so
 
 
@@ -27,6 +40,7 @@ AeF-hyperfine-structure.inl:
 AeF-hyperfine-structure.o: AeF-hyperfine-structure.cpp AeF-hyperfine-structure.inl
 aef_hyperfine_structure: AeF-hyperfine-structure.o AeF-hyperfine-structure.inl libSpinlabHyperfine.so
 	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $< $(LDLIBS)
-
+low_state_dumper: LowStateDumper/LowStateDumper.o libSpinlabHyperfine.so
+	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $< $(LDLIBS)
 clean:
 	$(RM) aef_hyperfine_structure AeF-hyperfine-structure.inl $(LSPHF_OBJ) SpinlabHyperfineLib/include/pch.h.gch AeF-hyperfine-structure.o libSpinlabHyperfine.*

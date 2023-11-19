@@ -10,6 +10,8 @@
 /aef_hyperfine_structure
 *.so
 *.a
+/gcm.cache/*
+/low_state_dumper
 # User-specific files
 *.rsuser
 *.suo
