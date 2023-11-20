@@ -294,6 +294,12 @@
     <ClInclude Include="..\include\fmt.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\aef\jf_basis_vec.h">
+      <Filter>Header Files\aef</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\raf_constants.h">
+      <Filter>Header Files\aef</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp">
@@ -314,10 +320,13 @@
     <ClCompile Include="src\teestream.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MolecularSystem.cpp">
+    <ClCompile Include="src\xiffstream.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\xiffstream.cpp">
+    <ClCompile Include="src\MolecularSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\jf_basis_vec.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -30,6 +30,7 @@ constexpr fourcc xiff = fourcc({'X', 'I', 'F', 'F'});
 constexpr fourcc fmt_ = fourcc({'f', 'm', 't', ' '});
 constexpr fourcc list = fourcc({'l', 'i', 's', 't'});
 constexpr fourcc grup = fourcc({'g', 'r', 'p', ' '});
+constexpr fourcc mtrx = fourcc({'m', 't', 'r', 'x'});
 }; // namespace common_cc
 
 struct chunk_hdr {

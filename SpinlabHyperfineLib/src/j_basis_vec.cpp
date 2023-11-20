@@ -1,5 +1,6 @@
 #include "pch.h"
 #include <fmt.hpp>
+namespace hfs_constants = baf_constants;
 
 #define MATRIX_ELEMENT_DEBUG
 #undef USE_ANALYTICAL_FORMULAS
