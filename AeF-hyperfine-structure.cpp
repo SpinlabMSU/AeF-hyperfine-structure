@@ -301,7 +301,9 @@ int main(int argc, char **argv) {
     /// </summary>
     constexpr double calc_E_z = unit_conversion::MHz_D_per_V_cm * 50 * 1000;
 
+#ifndef _MAKEFILE_PROVIDES_DEVFLAG
 #define USE_DEVONSHIRE
+#endif
 
 #ifdef USE_DEVONSHIRE
     /// <summary>
