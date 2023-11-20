@@ -430,6 +430,16 @@ int main(int argc, char **argv) {
         std::cout << fmt::format("Start time is {}", start_time) << std::endl;
         std::cout << fmt::format("Eigen will use {} threads", Eigen::nbThreads()) << std::endl;
     }
+
+    // log arguments
+    {
+        std::cout << "Arguments: [";
+        for (int i = 0; i < argc; i++){
+            std::cout << fmt::format(" {{{}}}", argv[i]);
+        }
+        std::cout << "]" << std::endl;
+    }
+
 #ifdef _OPENMP
     std::cout << "Reconfiguring openmp to use the correct number of threads (the number of physical cores)." << std::endl;
     int num_physical_cores = get_num_cores();
