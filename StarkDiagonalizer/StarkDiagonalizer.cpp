@@ -303,6 +303,15 @@ int main(int argc, char **argv) {
 
 
     HyperfineCalculator calc(param_nmax, calc_E_z);
+
+    prev_time = log_time_at_point("Starting matrix element calculations", start_time, prev_time);
+    calc.calculate_matrix_elts();
+    calc.diagonalize_H();
+    if (param_nmax >= 20)
+        calc.save_matrix_elts(dpath / "matrix.dat");
+
+    prev_time = log_time_at_point("Finished matrix elt calcs", start_time, prev_time);
+
     // set H_tot = H_stk
     calc.H_tot = calc.H_stk;
     calc.diagonalize_H();
