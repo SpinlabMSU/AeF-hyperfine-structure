@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "format": "cpp"
+        "format": "cpp",
+        "chrono": "cpp",
+        "streambuf": "cpp"
     }
 }
