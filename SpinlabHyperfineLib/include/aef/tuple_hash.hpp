@@ -1,3 +1,10 @@
+/*
+    aef/tuple_hash.hpp -- implements a hash function for tuples.
+
+    This file comes from https://stackoverflow.com/a/21439212 and hence is
+    under the CC BY-SA 3.0. See https://creativecommons.org/licenses/by-sa/3.0/
+    for details.
+*/
 #pragma once
 
 // from https://stackoverflow.com/a/21439212

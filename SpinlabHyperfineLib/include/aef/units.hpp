@@ -1,3 +1,10 @@
+/*
+  aef/units.hpp -- constants related to unit conversion along with a few elemental constants.
+  Note: as a pure collection of constants, this file is not eligible to be copyrighted
+  in the United States.  For any place/time where this is held to not be the case, 
+  I place this file into the public domain following the CC0.  See 
+  https://creativecommons.org/public-domain/cc0/ for details.
+*/
 #ifndef _UNITS_HPP
 #define _UNITS_HPP 1
 #pragma once

@@ -1,5 +1,25 @@
 // LowStateDumper.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+/*
+    LowStateDumper/LowStateDumper.cpp -- this program dumps some of the 
+    low-lying states of a loaded HyperfineCalculator.  For the case of 138BaF
+    when the devonshire potential is enabled, these states correspond to the
+    lowest lying positive-z and negative-z singlet-triplet group. 
+
+    This file is part of the AeF-hyperfine-structure program. 
+    
+    AeF-hyperfine-structure is free software: you can redistribute it and/or
+    modify it under the terms of the GNU General Public License as published
+    by the Free Software Foundation, either version 3 of the License, or 
+    (at your option) any later version.
+
+    AeF-hyperfine-structure is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+    or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+    more details.
+
+    You should have received a copy of the GNU General Public License along with
+    AeF-hyperfine-structure. If not, see <https://www.gnu.org/licenses/>.
+*/
 
 #include <pch.h>
 #include <aef/aef.h>

@@ -1,3 +1,10 @@
+/*
+    aef/teestream.hpp -- implements a stream that tees its input to two outputs.
+
+    This file comes from https://stackoverflow.com/a/27216591 and hence is
+    under the CC BY-SA 3.0. See https://creativecommons.org/licenses/by-sa/3.0/
+    for details.
+*/
 #pragma once
 // from https://stackoverflow.com/a/27216591
 

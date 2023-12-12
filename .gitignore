@@ -10,6 +10,11 @@
 /aef_hyperfine_structure
 *.so
 *.a
+/gcm.cache/*
+/low_state_dumper
+/deven_aef_hf
+/nodev_aef_hf
+/stark_diagonalizer
 # User-specific files
 *.rsuser
 *.suo

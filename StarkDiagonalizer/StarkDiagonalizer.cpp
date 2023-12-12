@@ -1,5 +1,24 @@
 // StarkDiagonalizer.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
+/*
+    StarkDiagonalizer/StarkDiagonalizer.cpp -- this program diagonalizes the stark hamiltonian
+    using the same j-basis that the main AeF-hyperfine-structure program uses.
+
+    This file is part of the AeF-hyperfine-structure program. 
+    
+    AeF-hyperfine-structure is free software: you can redistribute it and/or
+    modify it under the terms of the GNU General Public License as published
+    by the Free Software Foundation, either version 3 of the License, or 
+    (at your option) any later version.
+
+    AeF-hyperfine-structure is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+    or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+    more details.
+
+    You should have received a copy of the GNU General Public License along with
+    AeF-hyperfine-structure. If not, see <https://www.gnu.org/licenses/>.
+*/
 #include <pch.h>
 #include <aef/aef.h>
 #include <aef/debug_stream.h>
@@ -303,6 +322,15 @@ int main(int argc, char **argv) {
 
 
     HyperfineCalculator calc(param_nmax, calc_E_z);
+
+    prev_time = log_time_at_point("Starting matrix element calculations", start_time, prev_time);
+    calc.calculate_matrix_elts();
+    calc.diagonalize_H();
+    if (param_nmax >= 20)
+        calc.save_matrix_elts(dpath / "matrix.dat");
+
+    prev_time = log_time_at_point("Finished matrix elt calcs", start_time, prev_time);
+
     // set H_tot = H_stk
     calc.H_tot = calc.H_stk;
     calc.diagonalize_H();

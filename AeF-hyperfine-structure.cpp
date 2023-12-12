@@ -1,7 +1,22 @@
 // AeF-hyperfine-structure.cpp : This file contains the 'main' function. Program
 // execution begins and ends there.
 // This code implements the "main program" of the aef-hyperfine-structure toolkit.
-//
+/*
+    This file is part of the AeF-hyperfine-structure program. 
+    
+    AeF-hyperfine-structure is free software: you can redistribute it and/or
+    modify it under the terms of the GNU General Public License as published
+    by the Free Software Foundation, either version 3 of the License, or 
+    (at your option) any later version.
+
+    AeF-hyperfine-structure is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+    or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+    more details.
+
+    You should have received a copy of the GNU General Public License along with
+    AeF-hyperfine-structure. If not, see <https://www.gnu.org/licenses/>.
+*/
 #include <pch.h>
 #include <aef/aef.h>
 #include <aef/debug_stream.h>
@@ -301,7 +316,9 @@ int main(int argc, char **argv) {
     /// </summary>
     constexpr double calc_E_z = unit_conversion::MHz_D_per_V_cm * 50 * 1000;
 
+#ifndef _MAKEFILE_PROVIDES_DEVFLAG
 #define USE_DEVONSHIRE
+#endif
 
 #ifdef USE_DEVONSHIRE
     /// <summary>
@@ -428,6 +445,16 @@ int main(int argc, char **argv) {
         std::cout << fmt::format("Start time is {}", start_time) << std::endl;
         std::cout << fmt::format("Eigen will use {} threads", Eigen::nbThreads()) << std::endl;
     }
+
+    // log arguments
+    {
+        std::cout << "Arguments: [";
+        for (int i = 0; i < argc; i++){
+            std::cout << fmt::format(" {{{}}}", argv[i]);
+        }
+        std::cout << "]" << std::endl;
+    }
+
 #ifdef _OPENMP
     std::cout << "Reconfiguring openmp to use the correct number of threads (the number of physical cores)." << std::endl;
     int num_physical_cores = get_num_cores();

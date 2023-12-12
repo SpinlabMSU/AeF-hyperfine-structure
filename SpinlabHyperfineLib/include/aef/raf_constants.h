@@ -1,3 +1,10 @@
+/*
+  aef/raf_constants.hpp -- constants related to the rotohyperfine structure of 225RaF
+  Note: as a pure collection of constants, this file is not eligible to be copyrighted
+  in the United States.  For any place/time where this is held to not be the case, 
+  I place this file into the public domain following the CC0.  See 
+  https://creativecommons.org/public-domain/cc0/ for details.
+*/
 #ifndef _RAF_CONSTANTS_HPP
 #define _RAF_CONSTANTS_HPP 1
 #pragma once

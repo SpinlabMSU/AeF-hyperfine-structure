@@ -1,3 +1,27 @@
+/*
+    aef/matrix_io.hpp -- implements functions that can save and load Eigen
+    matricies to a simple binary format. The format is as follows:
+    | u32 MAGIC = 0xffddeeff | Matrix::Index rows | Matrix::Index cols |\
+      Matrix::Scalar data[]
+    Note that this is specific to the _exact_ Matrix type used and is only
+    intended for use on little-endian machines implementing IEEE-754. Also,
+    this might not work cross-bittness or cross-architecture.
+
+    This file is part of the AeF-hyperfine-structure program. 
+    
+    AeF-hyperfine-structure is free software: you can redistribute it and/or
+    modify it under the terms of the GNU General Public License as published
+    by the Free Software Foundation, either version 3 of the License, or 
+    (at your option) any later version.
+
+    AeF-hyperfine-structure is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+    or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+    more details.
+
+    You should have received a copy of the GNU General Public License along with
+    AeF-hyperfine-structure. If not, see <https://www.gnu.org/licenses/>.
+*/
 #pragma once
 #include <string>
 #include <Eigen/Eigen>
