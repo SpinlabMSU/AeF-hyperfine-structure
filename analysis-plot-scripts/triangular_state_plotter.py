@@ -110,7 +110,7 @@ class nlevel:
             x += ofs
             print(st, x, y)
             if func != None:
-                func(ax, idx, x, y)
+                func(ax, st, idx, x, y)
             else: ax.plot(x, y, 'ro')
             #ax.annotate(f'|{st.n},{st.j}\n{st.f},{st.m_f}>', (x, y))
             ax.annotate(f'|{st.f},{st.m_f}>', (x, y + 0.1), ha='center')

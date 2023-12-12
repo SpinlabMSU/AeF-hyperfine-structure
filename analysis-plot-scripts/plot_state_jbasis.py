@@ -21,8 +21,8 @@ import baf_state
 import triangular_state_plotter
 
 
-rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-09-15-195553.6276441'
-#rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-08-09-135429.5590762'
+#rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-09-15-195553.6276441'
+rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-08-09-135429.5590762'
 if len(sys.argv) > 1:
     rundir = sys.argv[1]
 run = aef_run.aef_run(rundir)
@@ -84,16 +84,17 @@ def read_state(df, idx):
 
 def plot_state(st, stnam, fig:plt.Figure=None, typ = 'mag', cmap='viridis'):
     if fig == None:
-        fig = plt.figure(figsize=(19.2, 16.8)) #fig = plt.gcf()
+        fig = plt.figure(figsize=(19.2, 12.42))#11.0*19.2/17.0))#19.2, 16.8)) #fig = plt.gcf()
     # turn argument into colormap
     norm = colors.LogNorm(1e-19, 1)
     cmap = mpl.colormaps.get_cmap(cmap)
-    def f_mag(ax:plt.Axes, idx:int, x:float, y:float):
+    def f_mag(ax:plt.Axes, hst:baf_state.HyperfineState, idx:int, x:float, y:float):
         k = npla.norm(st[idx])**2
         #if k == 0: k = 1e-38
         # get color from map
         color = cmap(norm(k))
-        print(idx)
+        print(idx, hst, k, norm(k))
+        ax.annotate(f'{k:.2e}\n{idx}', (x, y - 0.2), ha='center', size=8)
         ax.plot(x, y, 'o', color=color)
         return 1
     njs = 0
