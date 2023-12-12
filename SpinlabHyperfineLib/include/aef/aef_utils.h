@@ -44,27 +44,10 @@
 extern pcg64 *pcg;
 void init_rng();
 
-/// <summary>
-/// 
-/// </summary>
-/// <returns>The number of physical cores in the system</returns>
-int get_num_cores();
-
 template <typename T> T genrandom(T lower, T upper) {
     std::uniform_real_distribution<T> dist(lower, upper);
     return dist(*pcg);
 }
-
-
-inline uint32_t make_4cc(char name[4]) {
-    union {
-      char     in[4];
-      uint32_t out;
-    } conv;
-    memcpy(conv.in, name, sizeof(conv.in));
-    return conv.out;
-}
-
 
 inline dcomplex parity(double z) {
     using namespace std::complex_literals;

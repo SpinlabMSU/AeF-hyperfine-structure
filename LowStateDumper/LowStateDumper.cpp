@@ -177,8 +177,10 @@ int main(int argc, char **argv) {
             std::cout << std::format("Hint: \"{}\" appears not to exist", loadname) << std::endl;
         } else if (!isfile) { // not relevant if file doesn't exist
             std::cout << std::format("Hint: \"{}\" appears to exist but not be a regular file", loadname) << std::endl;
-        } else {
-            std::cout << std::format("Hint: \"{}\" appears to exist and be a regular file, so it's probably corrupt", loadname) << std::endl;
+        } else if (!have_read_perms(loadname)) {
+            std::cout << std::format("Hint: \"{}\" appears to be unreadable but exists and is a regular file.", loadname) << std::endl;
+        }  else {
+            std::cout << std::format("Hint: \"{}\" appears to exist, be a regular file, and be readable, so it's probably corrupt", loadname) << std::endl;
         }
         std::exit(255);
     }

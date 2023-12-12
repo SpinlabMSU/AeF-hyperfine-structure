@@ -36,6 +36,7 @@ namespace aef {
 #include "aef_types.h"
 #include "j_basis_vec.h"
 #include "aef_utils.h"
+#include "plaf_utils.hpp"
 #include "baf_constants.hpp"
 #include "units.hpp"
 #include "HyperfineCalculator.hpp"
