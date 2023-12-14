@@ -153,6 +153,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <BuildStlModules>false</BuildStlModules>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>$(CudaToolkitIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -178,6 +179,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <BuildStlModules>false</BuildStlModules>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>$(CudaToolkitIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
