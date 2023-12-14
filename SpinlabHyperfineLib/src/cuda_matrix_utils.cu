@@ -25,6 +25,8 @@ namespace aef {
         cuDoubleComplex* d_A;
         // device eigenvalues pointer --> note: this is real bec
         double *d_W;
+        // host eigenvalues --> need this because 
+        std::vector<double> h_W;
         // device info ptr
         int *d_info = nullptr;
 
@@ -118,12 +120,15 @@ namespace aef {
 
         if (n == 0) {
             // don't bother allocating zero-sized arrays
+            h_W.resize(0);
             saved_n = n;
             return;
         }
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_A), szA, cu_stream));
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_W), szW, cu_stream));
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_info), sizeof(int), cu_stream));
+
+        h_W.reserve(n);
 
         checkCudaErrors(cudaStreamSynchronize(cu_stream));
         saved_n = n;
@@ -152,7 +157,7 @@ namespace aef {
         const size_t mat_size = sizeof(cuDoubleComplex) * mat.size();
         const size_t ws_size = sizeof(double) * rows;
         const cuDoubleComplex *data = reinterpret_cast<cuDoubleComplex*>(mat.data());
-        cuDoubleComplex *pW = reinterpret_cast<cuDoubleComplex*>(evals.data());
+        double* pW = h_W.data();//reinterpret_cast<cuDoubleComplex*>(evals.data());
         cuDoubleComplex *pV = reinterpret_cast<cuDoubleComplex*>(evecs.data());
         int info = 0;
 
@@ -162,10 +167,10 @@ namespace aef {
         // allocate workspace: first query how large it needs to be, then allocate
         const auto jobz = CUSOLVER_EIG_MODE_VECTOR;
         const auto uplo = CUBLAS_FILL_MODE_UPPER;
-        int lwork;
+        int lwork = 0;
         checkCudaErrors(cusolverDnZheevd_bufferSize(cu_handle, jobz, uplo, rows, d_A, rows, d_W, &lwork));
         std::cout << "[Cuda-based diagonalizer] zheev work size will be " << lwork * sizeof(cuDoubleComplex)<< " bytes" << std::endl;
-        cuDoubleComplex* d_Work;
+        cuDoubleComplex* d_Work = nullptr;
         checkCudaErrors(cudaMalloc(reinterpret_cast<void**>(&d_Work), lwork * sizeof(cuDoubleComplex)));
         std::cout << "[Cuda-based diagonalizer] allocated work space on gpu" << std::endl;
         
@@ -187,7 +192,13 @@ namespace aef {
         // wait for all operations to complete
         checkCudaErrors(cudaStreamSynchronize(cu_stream));
         std::cout << "[Cuda-based diagonalizer] diagonalizaion has completed execution" << std::endl;
-        
+
+        // copy from host memory to eigenvalue vector
+        // this is necessary because evals is a dcomplex vector
+        // but CUDA outputs a real double vector.
+        std::copy(h_W.begin(), h_W.end(), evals.data());
+        std::cout << "[Cuda-based diagonalizer] fixed up eigenvalue vector" << std::endl;
+
         //
         if (info != 0 || status != CUSOLVER_STATUS_SUCCESS) {
             // errcode
