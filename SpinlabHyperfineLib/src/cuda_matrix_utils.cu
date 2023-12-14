@@ -20,13 +20,16 @@ namespace aef {
         // stream
         cudaStream_t cu_stream;
         cusolverDnHandle_t cu_handle = 0;
+        cublasHandle_t hCublas = nullptr;
         cudaDeviceProp deviceProps;
         // device matrix pointer --> used both for input hermitian matrix and for evec output
-        cuDoubleComplex* d_A;
+        cuDoubleComplex* d_A; // main matrix ptr
+        cuDoubleComplex* d_U; // used for unitary
         // device eigenvalues pointer --> note: this is real bec
         double *d_W;
+        cuDoubleComplex* d_V;
         int lwork = 0;
-        cuDoubleComplex* d_Work = nullptr;
+        cuDoubleComplex* d_Work = nullptr; // also used as temproary
         // host eigenvalues --> need this because 
         std::vector<double> h_W;
         // device info ptr
@@ -47,9 +50,24 @@ namespace aef {
         checkCudaErrors(cusolverDnCreate(&cu_handle));
         checkCudaErrors(cudaStreamCreateWithFlags(&cu_stream, cudaStreamNonBlocking));
         checkCudaErrors(cusolverDnSetStream(cu_handle, cu_stream));
+        checkCudaErrors(cublasCreate(&hCublas));
+        checkCudaErrors(cublasSetStream(hCublas, cu_stream));
         saved_n = -1;
         init = true;
         return true;
+    }
+
+    static inline void ensure_work_capacity(size_t num_elts) {
+        if (num_elts <= lwork) {
+            return;
+        }
+        std::cout << "[aef::cuda_utils] need to reallocate work buffer, "
+            "old size was " << lwork * sizeof(cuDoubleComplex) << " bytes, new size will be "
+            << num_elts * sizeof(cuDoubleComplex) << " bytes" << std::endl;
+        checkCudaErrors(cudaFree(d_Work));
+        checkCudaErrors(cudaMalloc(reinterpret_cast<void**>(&d_Work), num_elts* sizeof(cuDoubleComplex)));
+        lwork = num_elts;
+        std::cout << "[aef::cuda_utils] allocated new work space on gpu" << std::endl;
     }
 
     bool shutdown_cuda() {
@@ -57,29 +75,21 @@ namespace aef {
             return true;
         }
         cudaStreamSynchronize(cu_stream);
-        if (d_A) {
-            checkCudaErrors(cudaFreeAsync(d_A, cu_stream));
-            d_A = nullptr;
-        }
 
-        if (d_W) {
-            checkCudaErrors(cudaFreeAsync(d_W, cu_stream));
-            d_W = nullptr;
-        }
+#define freePtr(d_X) if (d_X) { checkCudaErrors(cudaFreeAsync(d_X, cu_stream)); d_X = nullptr;}
 
-        if (d_info) {
-            checkCudaErrors(cudaFreeAsync(d_info, cu_stream));
-            d_info = nullptr;
-        }
-
-        if (d_Work) {
-            checkCudaErrors(cudaFreeAsync(d_Work, cu_stream));
-            d_Work = nullptr;
-        }
+        freePtr(d_A);
+        freePtr(d_U);
+        freePtr(d_W);
+        freePtr(d_V);
+        freePtr(d_info);
+        freePtr(d_Work);
 
         checkCudaErrors(cudaStreamSynchronize(cu_stream));
         checkCudaErrors(cusolverDnDestroy(cu_handle));
         cu_handle = nullptr;
+        checkCudaErrors(cublasDestroy(hCublas));
+        hCublas = nullptr;
         checkCudaErrors(cudaStreamDestroy(cu_stream));
         cu_stream = nullptr;
         checkCudaErrors(cudaDeviceReset());
@@ -107,6 +117,7 @@ namespace aef {
         assert(init);
 
         std::cout << "[Cuda-based diagonalizer] Resizing from " << saved_n << " rows to " << n << " rows." << std::endl;
+        const size_t szV = sizeof(cuDoubleComplex) * n;
         const size_t szA = sizeof(cuDoubleComplex) * n * n;
         const size_t szW = sizeof(double) * n;
 
@@ -120,6 +131,11 @@ namespace aef {
             d_W = nullptr;
         }
 
+        if (d_V) {
+            checkCudaErrors(cudaFreeAsync(d_V, cu_stream));
+            d_V = nullptr;
+        }
+
         if (d_info) {
             checkCudaErrors(cudaFreeAsync(d_info, cu_stream));
             d_info = nullptr;
@@ -131,7 +147,9 @@ namespace aef {
             saved_n = n;
             return;
         }
+        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_V), szV, cu_stream));
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_A), szA, cu_stream));
+        CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_U), szA, cu_stream));
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_W), szW, cu_stream));
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_info), sizeof(int), cu_stream));
 
@@ -150,6 +168,49 @@ namespace aef {
 
     void log_dev_props_info(std::ostream& out) {
         //deviceProps.
+    }
+
+    dcomplex cuda_expectation_value(Eigen::VectorXcd& v1, Eigen::MatrixXcd& A, Eigen::MatrixXcd& v2) {
+        const int rows = A.rows();
+        const size_t As_size = sizeof(cuDoubleComplex) * A.size();
+        const size_t vs_size = sizeof(double) * A.rows();
+
+        constexpr auto uplo = CUBLAS_FILL_MODE_UPPER;
+        constexpr cuDoubleComplex one = { 1.0, 0.0 };
+        constexpr cuDoubleComplex zero = { 0.0, 0.0 };
+
+        checkCudaErrors(cudaMemcpyAsync(d_V, v1.data(), vs_size, cudaMemcpyHostToDevice, cu_stream));
+        checkCudaErrors(cudaMemcpyAsync(d_A,  A.data(), As_size, cudaMemcpyHostToDevice, cu_stream));
+        //checkCudaErrors(cublasZsymv(hCublas, uplo, &one, d_A, rows, d_V, 1, &zero, nullptr))
+
+        return dcomplex();
+    }
+
+    dcomplex cuda_expectation_value(Eigen::VectorXcd& v1, Eigen::MatrixXcd& A) {
+        const size_t mat_size = sizeof(cuDoubleComplex) * A.size();
+        const size_t ws_size = sizeof(double) * A.rows();
+
+
+        return dcomplex();
+    }
+
+    void cuda_expectation_values(Eigen::MatrixXcd& U, Eigen::MatrixXcd& A, Eigen::MatrixXcd &out) {
+        const size_t As_size = sizeof(cuDoubleComplex) * A.size();
+        const int rows = A.rows();
+
+        constexpr auto nop = CUBLAS_OP_N;
+        constexpr auto oph = CUBLAS_OP_C;
+        constexpr cuDoubleComplex one = { 1.0, 0.0 };
+        constexpr cuDoubleComplex zero = { 0.0, 0.0 };
+        // ensure work buffer is large enough
+        ensure_work_capacity(A.size());
+        // memcpy
+        checkCudaErrors(cudaMemcpyAsync(d_A, A.data(), As_size, cudaMemcpyHostToDevice, cu_stream));
+        checkCudaErrors(cudaMemcpyAsync(d_U, U.data(), As_size, cudaMemcpyHostToDevice, cu_stream));
+        checkCudaErrors(cublasZgemm(hCublas, nop, nop, rows, rows, rows, &one, d_A, rows, d_U, rows, &zero, d_Work, rows));
+        checkCudaErrors(cublasZgemm(hCublas, oph, nop, rows, rows, rows, &one, d_U, rows, d_Work, rows, &zero, d_A, rows));
+        checkCudaErrors(cudaMemcpyAsync(out.data(), d_A, As_size, cudaMemcpyDeviceToHost, cu_stream));
+        checkCudaErrors(cudaStreamSynchronize(cu_stream));
     }
 
 
@@ -189,7 +250,8 @@ namespace aef {
                 "old size was " << lwork * sizeof(cuDoubleComplex) << " bytes, new size will be " 
                 << job_lwork * sizeof(cuDoubleComplex) << " bytes" << std::endl;
             checkCudaErrors(cudaFree(d_Work));
-            checkCudaErrors(cudaMalloc(reinterpret_cast<void**>(&d_Work), lwork * sizeof(cuDoubleComplex)));
+            checkCudaErrors(cudaMalloc(reinterpret_cast<void**>(&d_Work), job_lwork * sizeof(cuDoubleComplex)));
+            lwork = job_lwork;
             std::cout << "[Cuda-based diagonalizer] allocated new work space on gpu" << std::endl;
         } else {
             std::cout << "[Cuda-based diagonalizer] using pre-allocated workspace of " << lwork * sizeof(cuDoubleComplex) << " bytes." << std::endl;

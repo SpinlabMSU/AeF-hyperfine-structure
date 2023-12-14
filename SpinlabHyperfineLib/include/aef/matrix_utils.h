@@ -50,6 +50,10 @@ namespace aef {
 
     void log_dev_props_info(std::ostream& out);
 
+    dcomplex cuda_expectation_value(Eigen::VectorXcd& v1, Eigen::MatrixXcd& A, Eigen::MatrixXcd& v2);
+    dcomplex cuda_expectation_value(Eigen::VectorXcd& v1, Eigen::MatrixXcd& A);
+    void cuda_expectation_values(Eigen::MatrixXcd& U, Eigen::MatrixXcd& A, Eigen::MatrixXcd &out);
+
     /// <summary>
     /// 
     /// </summary>

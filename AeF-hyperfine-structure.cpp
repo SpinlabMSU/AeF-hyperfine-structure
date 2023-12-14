@@ -263,7 +263,11 @@ time_point<system_clock> log_time_at_point(
 /// </summary>
 /// <param name="output">the stream to output to</param>
 /// <param name="calc"></param>
-void output_state_info(std::ostream& output, HyperfineCalculator& calc) {
+void output_state_info(std::ostream& output, HyperfineCalculator& calc
+#ifndef DONT_USE_CUDA
+    , Eigen::MatrixXcd &vals
+#endif
+) {
     output << "Index n, Energy (MHz), Re(<n|dx|n>), Re(<n|dy|n>), Re(<n|dz|n>), "
         "Im(<n|dx|n>), Im(<n|dy|n>), Im(<n|dz|n>), "
         "Re(<n|n|n>), Re(<n|j|n>), Re(<n|f|n>), Re(<n|m_f|n>),"
@@ -271,13 +275,29 @@ void output_state_info(std::ostream& output, HyperfineCalculator& calc) {
         "<n|(-1)^n|n>"
         << std::endl;
 
+#ifndef DONT_USE_CUDA
+    Eigen::VectorXcd d10s;
+    Eigen::VectorXcd d11s;
+    Eigen::VectorXcd d1ts;
+    aef::cuda_expectation_values(calc.Vs, calc.d10, vals);
+    d10s = vals.diagonal();
+    aef::cuda_expectation_values(calc.Vs, calc.d11, vals);
+    d11s = vals.diagonal();
+    aef::cuda_expectation_values(calc.Vs, calc.d1t, vals);
+    d1ts = vals.diagonal();
+#endif
     for (size_t n = 0; n < calc.nBasisElts; n++) {
+#ifdef DONT_USE_CUDA
         auto e_n = calc.Vs.col(n);
         // molecular dipole vector in spherical tensor form
         dcomplex d10 = expectation_value(e_n, calc.d10);
         dcomplex d11 = expectation_value(e_n, calc.d11);
         dcomplex d1t = expectation_value(e_n, calc.d1t);
-
+#else
+        dcomplex d10 = d10s(n);
+        dcomplex d11 = d11s(n);
+        dcomplex d1t = d1ts(n);
+#endif
         constexpr double inv_sqrt2 = std::numbers::sqrt2 / 2.0;
 
         // convert to cartesian
@@ -560,6 +580,11 @@ int main(int argc, char **argv) {
         calc.H_tot -= calc.H_stk;
         calc.diagonalize_H();
     }
+#ifndef DONT_USE_CUDA
+    Eigen::MatrixXcd vals;
+    vals.resize(calc.nBasisElts, calc.nBasisElts);
+    vals.setZero();
+#endif
 
     // create output file
     auto fpath = dpath / "stark_shift_gnd.csv";
@@ -734,7 +759,7 @@ int main(int argc, char **argv) {
 
         auto dev_out_fname = fmt::format("info_Ez_{}.csv", std::lround(Ez_V_cm));
         std::ofstream dout(devpath / dev_out_fname);
-        output_state_info(dout, calc);
+        output_state_info(dout, calc, vals);
     }
 
 #if 1
