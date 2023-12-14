@@ -24,13 +24,23 @@
 #include <cmath>
 #include <complex>
 
+#ifdef _MSC_VER
+#define MSVC_ALIGN(x) __declspec(align(x))
+#define ATTR_ALIGN(x)
+#else
+#define MSVC_ALIGN(x) 
+#define ATTR_ALIGN(x) __attribute__((aligned(X)))
+#endif
+
 namespace aef {
     typedef double spin;
     constexpr spin half = spin(0.5);
-    typedef std::complex<double> dcomplex;
+    typedef MSVC_ALIGN(16) std::complex<double> dcomplex ATTR_ALIGN(16);
 }
 using aef::spin;
+#ifndef _AEF_WILL_USE_CUDA_HEADERS
 using aef::half;
+#endif
 using aef::dcomplex;
 
 #endif

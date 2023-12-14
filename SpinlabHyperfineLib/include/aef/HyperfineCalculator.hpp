@@ -89,7 +89,7 @@ public:
         return diagonalized;
     }
     bool calculate_matrix_elts();
-    bool diagonalize_H();
+    bool diagonalize_H(bool use_cuda=false);
 
     /// <summary>
     /// Are the orientation spherical tensor operatorsinitialized

@@ -103,46 +103,61 @@ bool HyperfineCalculator::calculate_matrix_elts() {
   return init;
 }
 
-bool HyperfineCalculator::diagonalize_H() {
+bool HyperfineCalculator::diagonalize_H(bool use_cuda) {
   Vs.setZero();
   Es.setZero();
-  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXcd> solver;
-  if (enableDev) {
-    // devonshire potential: m_f not a good quantum number --> directly
-    // diagonalize H_tot
-    solver.compute(H_tot);
-    Es = solver.eigenvalues();
-    Vs = solver.eigenvectors();
-    diagonalized = true;
+
+  if (use_cuda && !aef::is_cuda_initialized()) {
+      std::cout << "[HyperfineCalculator] CUDA not initialized but CUDA-based diagonalization called!!" << std::endl;
+      std::cout << "[HyperfineCalculator] Converting to Eigen-based diagonalization!!" << std::endl;
+      DebugBreak();
+      use_cuda = false;
+  }
+
+  if (use_cuda) {
+      aef::cuda_resize(nBasisElts);
+      aef::diagonalize(H_tot, Es, Vs);
+      diagonalized = true;
+      return true;
   } else {
-    // Free-space: m_f is a good quantum number, want to simultaneously
-    // diagonalize H_tot and F_z This is done using the method given in
-    // https://math.stackexchange.com/a/4388322 and proven in
-    // https://math.stackexchange.com/a/3951339.  However, I'm omitting the
-    // randomization portion because it shouldn't be necessary (if there's some
-    // small mixing of the m_f it doesn't really matter, and in practice they
-    // don't mix.
-    constexpr dcomplex t = 100.0; // +15i;
-    Eigen::MatrixXcd temp = H_tot + t * F_z;
-    solver.compute(temp);
-    Vs = solver.eigenvectors();
-    Vst = Vs.adjoint();
+      Eigen::SelfAdjointEigenSolver<Eigen::MatrixXcd> solver;
+      if (enableDev) {
+          // devonshire potential: m_f not a good quantum number --> directly
+          // diagonalize H_tot
+          solver.compute(H_tot);
+          Es = solver.eigenvalues();
+          Vs = solver.eigenvectors();
+          diagonalized = true;
+      } else {
+          // Free-space: m_f is a good quantum number, want to simultaneously
+          // diagonalize H_tot and F_z This is done using the method given in
+          // https://math.stackexchange.com/a/4388322 and proven in
+          // https://math.stackexchange.com/a/3951339.  However, I'm omitting the
+          // randomization portion because it shouldn't be necessary (if there's some
+          // small mixing of the m_f it doesn't really matter, and in practice they
+          // don't mix.
+          constexpr dcomplex t = 100.0; // +15i;
+          Eigen::MatrixXcd temp = H_tot + t * F_z;
+          solver.compute(temp);
+          Vs = solver.eigenvectors();
+          Vst = Vs.adjoint();
 #if 0
 #define TEST_DIAG
 #ifdef TEST_DIAG
-        temp = Vst * H_tot * Vs;
-        temp.diagonal().setZero();
-        assert(temp.isZero(1E-6));
+          temp = Vst * H_tot * Vs;
+          temp.diagonal().setZero();
+          assert(temp.isZero(1E-6));
 
-        temp = Vst * H_tot * Vs;
-        temp.diagonal().setZero();
-        assert(temp.isZero(1E-6));
+          temp = Vst * H_tot * Vs;
+          temp.diagonal().setZero();
+          assert(temp.isZero(1E-6));
 #endif
 #endif
-    Es = (Vst * H_tot * Vs).diagonal();
-    diagonalized = true;
+          Es = (Vst * H_tot * Vs).diagonal();
+          diagonalized = true;
+      }
+      return diagonalized;
   }
-  return diagonalized;
 }
 
 bool HyperfineCalculator::load_matrix_elts(std::string inpath) {

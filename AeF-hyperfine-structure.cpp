@@ -463,8 +463,16 @@ int main(int argc, char **argv) {
     std::cout << fmt::format("OpenMP/Eigen will use {} threads", num_physical_cores) << std::endl;
 #endif
 
-
     init_rng();
+
+#ifndef DONT_USE_CUDA
+    constexpr bool diag_use_cuda = true;
+    std::cout << "Initializing CUDA" << std::endl;
+    aef::init_cuda(argc, (const char**)argv);
+    std::cout << "Successfully initialized CUDA" << std::endl;
+#else
+    constexpr bool diag_use_cuda = false;
+#endif
 
     j_basis_vec v(1, .5, 0, 0);
     double E_rot = std::real(v.H_rot());
@@ -482,6 +490,7 @@ int main(int argc, char **argv) {
 
     std::cout << fmt::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({})",
         nmax, calc_E_z, K, devstatus) << std::endl;
+
     if (load_from_file) {
         std::string logstr = fmt::format("Loading matrix elements from {}", loadname);
         prev_time = log_time_at_point(logstr.c_str(), start_time, prev_time);
@@ -493,10 +502,26 @@ int main(int argc, char **argv) {
         }
         logstr = fmt::format("Finished loading matrix elements from {}", loadname);
         prev_time = log_time_at_point(logstr.c_str(), start_time, prev_time);
+
+
+#ifndef DONT_USE_CUDA
+        std::cout << fmt::format(
+            "Setting up CUDA device-side buffers with nRows={} after loading matrix elements",
+            calc.nBasisElts) << std::endl;
+        aef::cuda_resize(calc.nBasisElts);
+        std::cout << "Finished CUDA device-side buffer setup" << std::endl;
+#endif
     } else {
+#ifndef DONT_USE_CUDA
+        std::cout << fmt::format(
+            "Setting up CUDA device-side buffers with nRows={} before matrix element calculations",
+            calc.nBasisElts) << std::endl;
+        aef::cuda_resize(calc.nBasisElts);
+        std::cout << "Finished CUDA device-side buffer setup" << std::endl;
+#endif
         prev_time = log_time_at_point("Starting matrix element calculations", start_time, prev_time);
         calc.calculate_matrix_elts();
-        calc.diagonalize_H();
+        calc.diagonalize_H(false);
         if (nmax >= 20)
             calc.save_matrix_elts(dpath / "matrix.dat");
 
@@ -519,7 +544,7 @@ int main(int argc, char **argv) {
 
         std::cout << "----------- NO STARK -----------" << std::endl;
         calc.H_tot -= calc.H_stk;
-        calc.diagonalize_H();
+        calc.diagonalize_H(diag_use_cuda);
 
         Es = calc.Es;
         EPrev = 0;
@@ -601,9 +626,9 @@ int main(int argc, char **argv) {
     // directory to put devonshire info
     auto devpath = dpath / "devonshire_info";
     fs::create_directories(devpath);
-    std::cout << "does H_tot commute with d10? " << commutes(calc.H_tot, calc.d10) << std::endl;
-    std::cout << "does H_tot commute with d11? " << commutes(calc.H_tot, calc.d11) << std::endl;
-    std::cout << "does H_tot commute with d1t? " << commutes(calc.H_tot, calc.d1t) << std::endl;
+    std::cout << "does H_tot commute with d10? " << aef::commutes(calc.H_tot, calc.d10) << std::endl;
+    std::cout << "does H_tot commute with d11? " << aef::commutes(calc.H_tot, calc.d11) << std::endl;
+    std::cout << "does H_tot commute with d1t? " << aef::commutes(calc.H_tot, calc.d1t) << std::endl;
     std::cout << std::endl;
 
     std::cout << "Is d10  all zero " << calc.d10.isZero(1E-6) << std::endl;
@@ -643,7 +668,7 @@ int main(int argc, char **argv) {
 #ifdef USE_DEVONSHIRE
         calc.H_tot += calc.H_dev;
 #endif
-        calc.diagonalize_H();
+        calc.diagonalize_H(diag_use_cuda);
 
         double Ez_V_cm = Ez_fdx_mhz / unit_conversion::MHz_D_per_V_cm;
         // energy output

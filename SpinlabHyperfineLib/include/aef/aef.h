@@ -21,6 +21,7 @@
 #pragma once
 
 #ifdef _WIN32
+#define _SILENCE_ALL_CXX23_DEPRECATION_WARNINGS
 #define WIN32_MEAN_AND_LEAN
 #include <windows.h>
 #endif
@@ -42,12 +43,11 @@ namespace aef {
 #include "HyperfineCalculator.hpp"
 //#include "jf_basis_vec.h"
 //#include "MolecularSystem.h"
-
+#include "matrix_utils.h"
 
 namespace aef {
     constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 };
-
 //namespace hfs_constants = baf_constants;
 
 

@@ -306,6 +306,15 @@
     <ClInclude Include="include\aef\matrix_utils.h">
       <Filter>Header Files\aef</Filter>
     </ClInclude>
+    <ClInclude Include="src\cusolver_utils.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cuda_utils.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\helper_string.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp">
@@ -430,9 +439,13 @@
     <None Include="include\Eigen\UmfPackSupport">
       <Filter>Header Files\Eigen</Filter>
     </None>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="cuda_matrix_utils.cu">
+    <CudaCompile Include="src\cuda_matrix_utils.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="src\cuda_utils.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
   </ItemGroup>
