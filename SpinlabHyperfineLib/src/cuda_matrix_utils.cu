@@ -25,6 +25,8 @@ namespace aef {
         cuDoubleComplex* d_A;
         // device eigenvalues pointer --> note: this is real bec
         double *d_W;
+        int lwork = 0;
+        cuDoubleComplex* d_Work = nullptr;
         // host eigenvalues --> need this because 
         std::vector<double> h_W;
         // device info ptr
@@ -68,6 +70,11 @@ namespace aef {
         if (d_info) {
             checkCudaErrors(cudaFreeAsync(d_info, cu_stream));
             d_info = nullptr;
+        }
+
+        if (d_Work) {
+            checkCudaErrors(cudaFreeAsync(d_Work, cu_stream));
+            d_Work = nullptr;
         }
 
         checkCudaErrors(cudaStreamSynchronize(cu_stream));
@@ -128,7 +135,14 @@ namespace aef {
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_W), szW, cu_stream));
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_info), sizeof(int), cu_stream));
 
+        // allocate host-side eigenvalue buffer
         h_W.reserve(n);
+        // pre-allocate workspace: first query how large it needs to be, then allocate
+        const auto jobz = CUSOLVER_EIG_MODE_VECTOR;
+        const auto uplo = CUBLAS_FILL_MODE_UPPER;
+        checkCudaErrors(cusolverDnZheevd_bufferSize(cu_handle, jobz, uplo, n, d_A, n, d_W, &lwork));
+        std::cout << "[Cuda-based diagonalizer] zheev work size will be " << lwork * sizeof(cuDoubleComplex) << " bytes" << std::endl;
+        checkCudaErrors(cudaMallocAsync(reinterpret_cast<void**>(&d_Work), lwork * sizeof(cuDoubleComplex), cu_stream));
 
         checkCudaErrors(cudaStreamSynchronize(cu_stream));
         saved_n = n;
@@ -164,16 +178,22 @@ namespace aef {
         // upload to GPU
         checkCudaErrors(cudaMemcpyAsync(d_A, data, mat_size, cudaMemcpyHostToDevice, cu_stream));
         std::cout << "[Cuda-based diagonalizer] data uploaded to gpu" << std::endl;
-        // allocate workspace: first query how large it needs to be, then allocate
+        // check workspace buffer size is large enough
         const auto jobz = CUSOLVER_EIG_MODE_VECTOR;
         const auto uplo = CUBLAS_FILL_MODE_UPPER;
-        int lwork = 0;
-        checkCudaErrors(cusolverDnZheevd_bufferSize(cu_handle, jobz, uplo, rows, d_A, rows, d_W, &lwork));
-        std::cout << "[Cuda-based diagonalizer] zheev work size will be " << lwork * sizeof(cuDoubleComplex)<< " bytes" << std::endl;
-        cuDoubleComplex* d_Work = nullptr;
-        checkCudaErrors(cudaMalloc(reinterpret_cast<void**>(&d_Work), lwork * sizeof(cuDoubleComplex)));
-        std::cout << "[Cuda-based diagonalizer] allocated work space on gpu" << std::endl;
-        
+        int job_lwork = 0;
+        checkCudaErrors(cusolverDnZheevd_bufferSize(cu_handle, jobz, uplo, rows, d_A, rows, d_W, &job_lwork));
+        // reallocate if necessary
+        if (job_lwork > lwork) {
+            std::cout << "[Cuda-based diagonalizer] need to reallocate zheev work space, "
+                "old size was " << lwork * sizeof(cuDoubleComplex) << " bytes, new size will be " 
+                << job_lwork * sizeof(cuDoubleComplex) << " bytes" << std::endl;
+            checkCudaErrors(cudaFree(d_Work));
+            checkCudaErrors(cudaMalloc(reinterpret_cast<void**>(&d_Work), lwork * sizeof(cuDoubleComplex)));
+            std::cout << "[Cuda-based diagonalizer] allocated new work space on gpu" << std::endl;
+        } else {
+            std::cout << "[Cuda-based diagonalizer] using pre-allocated workspace of " << lwork * sizeof(cuDoubleComplex) << " bytes." << std::endl;
+        }
         // call cusolvers ZHEEV, then copy data back to CPU ram
         auto status = (cusolverDnZheevd(cu_handle, jobz, uplo, rows, d_A, rows, d_W, d_Work, lwork, d_info));
         std::cout << "[Cuda-based diagonalizer] queued zheev execution" << std::endl;
@@ -196,7 +216,10 @@ namespace aef {
         // copy from host memory to eigenvalue vector
         // this is necessary because evals is a dcomplex vector
         // but CUDA outputs a real double vector.
-        std::copy(h_W.begin(), h_W.end(), evals.data());
+        //std::copy(h_W.begin(), h_W.end(), evals.data());
+        for (int i = 0; i < evals.size(); i++) {
+            evals(i) = h_W[i];
+        }
         std::cout << "[Cuda-based diagonalizer] fixed up eigenvalue vector" << std::endl;
 
         //
