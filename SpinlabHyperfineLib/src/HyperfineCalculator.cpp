@@ -52,6 +52,7 @@ void HyperfineCalculator::set_nmax(spin nmax_) {
   this->d10 = Eigen::MatrixXcd(nBasisElts, nBasisElts);
   this->d11 = Eigen::MatrixXcd(nBasisElts, nBasisElts);
   this->d1t = Eigen::MatrixXcd(nBasisElts, nBasisElts);
+  Es.resize(nBasisElts);
   Vs.resize(nBasisElts, nBasisElts);
   Vst.resize(nBasisElts, nBasisElts);
 }

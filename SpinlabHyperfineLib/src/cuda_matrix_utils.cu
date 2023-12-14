@@ -94,6 +94,10 @@ namespace aef {
         if (n == saved_n) {
             return;
         }
+
+        assert(init);
+
+        std::cout << "[Cuda-based diagonalizer] Resizing from " << saved_n << " rows to " << n << " rows." << std::endl;
         const size_t szA = sizeof(cuDoubleComplex) * n * n;
         const size_t szW = sizeof(double) * n;
 
@@ -141,11 +145,12 @@ namespace aef {
         std::cout << "[Cuda-based diagonalizer] Diagonalize called" << std::endl;
 
         if (rows > saved_n || saved_n <= 0) {
+            std::cout << "[Cuda-based diagonalizer] Automatically resizing from " << saved_n << " rows to " << rows << " rows." << std::endl;
             cuda_resize(rows);
         }
 
         const size_t mat_size = sizeof(cuDoubleComplex) * mat.size();
-        const size_t ws_size = sizeof(cuDoubleComplex) * rows;
+        const size_t ws_size = sizeof(double) * rows;
         const cuDoubleComplex *data = reinterpret_cast<cuDoubleComplex*>(mat.data());
         cuDoubleComplex *pW = reinterpret_cast<cuDoubleComplex*>(evals.data());
         cuDoubleComplex *pV = reinterpret_cast<cuDoubleComplex*>(evecs.data());

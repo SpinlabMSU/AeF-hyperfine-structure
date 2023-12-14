@@ -521,7 +521,7 @@ int main(int argc, char **argv) {
 #endif
         prev_time = log_time_at_point("Starting matrix element calculations", start_time, prev_time);
         calc.calculate_matrix_elts();
-        calc.diagonalize_H(false);
+        calc.diagonalize_H(diag_use_cuda);
         if (nmax >= 20)
             calc.save_matrix_elts(dpath / "matrix.dat");
 
