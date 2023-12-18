@@ -102,6 +102,15 @@ int main(int argc, char **argv) {
     double K = 0;
     bool k_enabled = false;
 
+#ifndef DONT_USE_CUDA
+    constexpr bool diag_use_cuda = true;
+    std::cout << "Initializing CUDA" << std::endl;
+    aef::init_cuda(argc, (const char**)argv);
+    std::cout << "Successfully initialized CUDA" << std::endl;
+#else
+    constexpr bool diag_use_cuda = false;
+#endif
+
     /// <summary>
     /// The value of E_z used to calculate H_stk is 50 kV/cm = 25170 MHz/D.
     /// This isn't saved to file but all correctly-calculated aefdats use this
@@ -185,6 +194,14 @@ int main(int argc, char **argv) {
         std::exit(255);
     }
 
+#ifndef DONT_USE_CUDA
+        std::cout << fmt::format(
+            "Setting up CUDA device-side buffers with nRows={} after loading matrix elements",
+            calc.nBasisElts) << std::endl;
+        aef::cuda_resize(calc.nBasisElts);
+        std::cout << "Finished CUDA device-side buffer setup" << std::endl;
+#endif
+
     fs::path odir = dir / "state_coeffs";
     fs::create_directories(odir);
 
@@ -232,7 +249,7 @@ int main(int argc, char **argv) {
         std::cout << fmt::format("H_stk rows={}, cols={}", calc.H_stk.rows(), calc.H_stk.cols()) << std::endl;
         calc.H_tot = calc.H_rot.toDenseMatrix() + calc.H_hfs + scale * calc.H_stk + calc.H_dev;
 
-        calc.diagonalize_H();
+        calc.diagonalize_H(diag_use_cuda);
 
         fs::path csvpath = odir / fmt::format("{}.csv", Ez);
         std::ofstream out(csvpath);
