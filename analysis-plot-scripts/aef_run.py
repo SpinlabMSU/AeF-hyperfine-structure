@@ -46,7 +46,10 @@ class aef_run(object):
     def __init__(self, dir_path):
         self.path = dir_path
         self.run = os.path.split(dir_path)[1]
-        self.timestamp = datetime.datetime.strptime(self.run[:-1], "%Y-%m-%d-%H%M%S.%f")
+        ts = self.run.split('.')
+        us = ts[1][0:5]
+        rs = ts[0] + '.' + us
+        self.timestamp = datetime.datetime.strptime(rs, "%Y-%m-%d-%H%M%S.%f")
 
         self.log_path = os.path.join(self.path, 'out.log')
 
