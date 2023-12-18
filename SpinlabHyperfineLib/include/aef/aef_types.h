@@ -29,7 +29,7 @@
 #define ATTR_ALIGN(x)
 #else
 #define MSVC_ALIGN(x) 
-#define ATTR_ALIGN(x) __attribute__((aligned(X)))
+#define ATTR_ALIGN(x) __attribute__((aligned(x)))
 #endif
 
 namespace aef {

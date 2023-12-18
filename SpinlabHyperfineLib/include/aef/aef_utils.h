@@ -253,7 +253,7 @@ template <class Matrix> void simultaneously_diagonalize(const Matrix& A, const M
         // if both are diagonalized then return
         if (agood && bgood) return;
         std::cout << fmt::format("{} FAIL FAIL FAIL", t) << std::endl;
-        DebugBreak();
+        //DebugBreak();
     }
 }
 
