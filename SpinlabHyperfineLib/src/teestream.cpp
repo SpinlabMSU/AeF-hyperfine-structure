@@ -17,7 +17,7 @@
 #include "pch.h"
 #include "aef/teestream.hpp"
 
-namespace tee {
+namespace teestream {
     namespace fs = std::filesystem;
 
     teebuf *tee_cout(fs::path& opath)

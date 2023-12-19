@@ -427,33 +427,35 @@ int main(int argc, char **argv) {
 
     // create info log
     std::ofstream oLog;
-
+/*
     debug_stream::debug_ostream* pDebug = new debug_stream::debug_ostream;
-    tee::teebuf* pBuf, * pOutb, * pErrb;
+    teestream::teebuf* pBuf, * pOutb, * pErrb;
 
     std::streambuf* pLogBuf;
     std::streambuf* orig_coutb = std::cout.rdbuf();
     std::streambuf* orig_cerrb = std::cerr.rdbuf();
-
+*/
     {
         auto fpath = dpath / "out.log";
         oLog = std::ofstream(fpath, std::ios::trunc | std::ios::out);
-        // test if logging to debug window enabled
+        /*// test if logging to debug window enabled
         if (enable_debug_log) {
             // if enabled, tee to both the log file and the debug window
-            pBuf = new tee::teebuf(oLog.rdbuf(), pDebug->rdbuf());
+            pBuf = new teestream::teebuf(oLog.rdbuf(), pDebug->rdbuf());
             pLogBuf = pBuf;
         } else {
             // otherwise just output to the log file
             pBuf = nullptr;
             pLogBuf = oLog.rdbuf();
         }
-        pOutb = new tee::teebuf(pLogBuf, orig_coutb);
+        pOutb = new teestream::teebuf(pLogBuf, orig_coutb);
         std::cout.rdbuf(pOutb);
 
-        pErrb = new tee::teebuf(pLogBuf, orig_cerrb);
-        std::cerr.rdbuf(pErrb);
+        pErrb = new teestream::teebuf(pLogBuf, orig_cerrb);
+        std::cerr.rdbuf(pErrb);*/
+
     }
+    aef::LogRedirector lredir(oLog, enable_debug_log, true);
     // info lines
     {
         std::string status(aef_git_status);

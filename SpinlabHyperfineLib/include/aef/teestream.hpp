@@ -11,7 +11,7 @@
 #include <streambuf>
 #include <ostream>
 #include <filesystem>
-namespace tee {
+namespace teestream {
     template <class charT, class traits = std::char_traits<charT> >  class basic_teebuf
         : public std::basic_streambuf<charT, traits>
     {

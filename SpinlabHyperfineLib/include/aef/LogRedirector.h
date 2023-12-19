@@ -29,7 +29,7 @@ namespace aef {
     public:
         std::ostream &oLog;
 
-        tee::teebuf *pBuf, *pOutb, *pErrb;
+        teestream::teebuf *pBuf, *pOutb, *pErrb;
         std::streambuf *pLogBuf;
         debug_stream::debug_ostream *pDebug;
 

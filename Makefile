@@ -19,7 +19,7 @@ endif
 $(info $$BUG_FLAGS is [${BUG_FLAGS}])
 INCLUDES:=-I./include -I./SpinlabHyperfineLib/include
 CXX_VSN:=-std=gnu++23 -fmodules-ts -fopenmp
-CXXFLAGS:=$(INCLUDES) $(CXX_VSN) -O4 -fPIC -flto $(BUG_FLAGS) -g -march=native
+CXXFLAGS:=$(INCLUDES) $(CXX_VSN) -O4 -fPIC -flto $(BUG_FLAGS) -g -march=native -D_GNU_SOURCE
 NCXXFLAGS:=$(INCLUDES) -std=gnu++20 -O4 -fPIC -flto $(BUG_FLAGS) -g -march=native
 NVCCFLAGS:=$(INCLUDES) -O4 $(BUG_FLAGS) -g $(addprefix -Xcompiler ,$(NCXXFLAGS))
 LDFLAGS=-L. -pthread -fopenmp -flto -static-libstdc++ -static-libgcc -g -march=native -O4

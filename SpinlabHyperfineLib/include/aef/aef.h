@@ -44,6 +44,7 @@ namespace aef {
 //#include "jf_basis_vec.h"
 //#include "MolecularSystem.h"
 #include "matrix_utils.h"
+#include "LogRedirector.h"
 
 namespace aef {
     constexpr double nan = std::numeric_limits<double>::quiet_NaN();
