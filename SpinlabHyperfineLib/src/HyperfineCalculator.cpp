@@ -32,6 +32,7 @@ void HyperfineCalculator::set_nmax(spin nmax_) {
   nmax = nmax_;
   nBasisElts = j_basis_vec::index_of_n(nmax_ + 1);
   // construct basis
+  basis.clear();
   basis.reserve(nBasisElts);
   for (size_t idx = 0; idx < nBasisElts; idx++) {
     basis.emplace_back(j_basis_vec::from_index(idx));
@@ -190,7 +191,26 @@ bool HyperfineCalculator::save_matrix_elts(fs::path outpath) {
 
 static constexpr uint8_t MAGIC[8] = {'A', 'e', 'F', 0, 'H', 'D', 'a', 't'};
 
-enum hyp_flags : uint16_t { FLAG_DIAG = 1, FLAG_OKQ = 2, FLAG_E_DEV_PARMS = 4 };
+/*
+ * <summary>
+ * This enum class describes what each bit of flags means.
+ * </summary>
+ */
+enum hyp_flags : uint16_t {
+  // if this flag is set, then the file contains the computed eigenenergies/eigenstates of the Hamiltonian
+  FLAG_DIAG = 1,
+  // if this flag is set, then the file contains the MDA spherical tensor operators
+  FLAG_OKQ = 2,
+  // This flag will always be set for files with version >= aefdat_version::rawmat_okq2 so that flags is
+  // never all-zero to allow easy distinguishing of files affected by the 4-byte version bug.  Technically
+  // this is only neccessary for files with version == aefdat_version::rawmat_okq2 but it may as 
+  // note: FLAG_AVOID_ZERO_FLAGS_BUG used to be FLAG_E_DEV_PARMS, however, it was set without the writing
+  // code being implemented (oops), so the value of FLAG_E_DEV_PARMS value
+  FLAG_AVOID_ZERO_FLAGS_BUG = 4,
+  // if this flag is set, then the file contains the specific values of electric field strength and 
+  // devonshire coupling constant used to calculate these parts of the Hamiltonian.
+  FLAG_E_DEV_PARMS = 8
+};
 
 // #define _NO_COMPRESS
 uint64_t stream_pos;
@@ -234,6 +254,8 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
   stream_pos += sizeof(raw_version);
   aefdat_version version = static_cast<aefdat_version>(raw_version);
 
+  std::cout << "READ VERSION" <<raw_version << std::endl;
+
   if (version > CURRENT_VERSION || version < MINIMUM_VERSION) {
     const char *reason =
         (version > CURRENT_VERSION) ? " is too recent." : " is too old.";
@@ -247,6 +269,24 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
   uint16_t flags;
   zin.read((char *)&flags, sizeof(flags));
   stream_pos += sizeof(flags);
+
+  if (version == aefdat_version::rawmat_okq2 && flags == 0) {
+    // hacky bugfix for the "4-byte version bug": the version was sometimes accidentally written as four
+    // bytes for part of version aefdat_version::rawmat_okq2. This is because the version was written without
+    // being being cast to a u16 first, so sizeof(aefdat_version) bytes woud be written.  GCC and clang chose
+    // to use 4 bytes for aefdat_version, so two extra zero bytes were present where the flags should be. 
+    // Fortunately,the flags were never written as all-zero during the time this bug was present (and also
+    // never will be in newer versions because of FLAG_AVOID_ZERO_FLAGS_BUG). Thus, if "flags" is read as
+    // zero in a rawmat_okq2 file, then it was actually the accidental extra two bytes of version, so we need
+    // to reread flags to get the correct value -- i.e.:
+    // correct: | version - 2B | flags  - 2B | ....
+    // old bug: | version - 2B | 0x0000 - 2B | flags - 2B | ....
+    zin.read((char *)&flags, sizeof(flags));
+  }
+
+  // flags should never be zero for files with version >= aefdat_version::rawmat_okq2
+  assert (version <= aefdat_version::rawmat_okq2 || flags != 0);
+
   std::cout << std::bitset<16>(flags) << " = " << flags << std::endl;
 
   uint32_t nmax_ = 0;
@@ -256,15 +296,15 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
   nmax = nmax_;
   set_nmax(nmax_);
 
-  // 
+  // read electric field and devonshire coupling constant
   if (flags & FLAG_E_DEV_PARMS) {
       zin.read((char*)&(this->E_z), sizeof(this->E_z));
       zin.read((char*)&(this->K), sizeof(this->K));
       this->enableDev = (K != 0);
   }
 
-
   diagonalized = (flags & FLAG_DIAG);
+  // read the various parts of the hamiltonian
   Eigen::read_binary(zin, H_rot.diagonal());
   Eigen::read_binary(zin, H_hfs);
   Eigen::read_binary(zin, H_stk);
@@ -273,6 +313,7 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
 
   init = true;
 
+  // if diagonalized, read the eigenenergies and eigenstates
   if (diagonalized) {
     std::cout << "Hamiltonian has been diagonalized" << std::endl;
     Eigen::read_binary(zin, Es);
@@ -299,7 +340,9 @@ bool HyperfineCalculator::save_matrix_elts(std::ostream &out) {
   auto &zout = out;
 #endif
   std::copy(MAGIC, MAGIC + 8, std::ostream_iterator<uint8_t>(zout));
-  zout.write((char *)&CURRENT_VERSION, sizeof(CURRENT_VERSION));
+  constexpr aefdat_version version = CURRENT_VERSION;
+  uint16_t raw_version = static_cast<uint16_t>(version);
+  zout.write((char *)&raw_version, sizeof(raw_version));
   uint16_t flags = 0;
 
   if (diagonalized) {
@@ -309,26 +352,36 @@ bool HyperfineCalculator::save_matrix_elts(std::ostream &out) {
   if (dkq_init) {
     flags |= FLAG_OKQ;
   }
+  // always write out the electric field strength and devonshire coupling constant to make LowStateDumper's
+  // job easier
   flags |= FLAG_E_DEV_PARMS;
+  // flags must never be written out as zero because of a version 3 bug
+  flags |= FLAG_AVOID_ZERO_FLAGS_BUG;
   zout.write((char *)&flags, sizeof(flags));
   uint32_t nmax_ = (uint32_t)nmax;
   zout.write((char *)&nmax_, sizeof(nmax_));
 
+  // write out E_z and K
   if (flags & FLAG_E_DEV_PARMS) {
+    assert(version >= aefdat_version::rawmat_okq_params);
+    zout.write((char*)&(this->E_z), sizeof(this->E_z));
+    zout.write((char*)&(this->K), sizeof(this->K));
   }
 
-
+  // write out the Hamiltonian and its constituent parts
   Eigen::write_binary(zout, H_rot.diagonal());
   Eigen::write_binary(zout, H_hfs);
   Eigen::write_binary(zout, H_stk);
   Eigen::write_binary(zout, H_dev);
   Eigen::write_binary(zout, H_tot);
 
+  // write out Es and Vs if they're initialized
   if (diagonalized) {
     Eigen::write_binary(zout, Es);
     Eigen::write_binary(zout, Vs);
   }
 
+  // write out the spherical tensor operators if they're initialized
   if (flags & FLAG_OKQ) {
     Eigen::write_binary(zout, d10);
     Eigen::write_binary(zout, d11);

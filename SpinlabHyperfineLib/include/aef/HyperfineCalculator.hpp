@@ -24,19 +24,36 @@
 #include <filesystem>
 #include "Eigen/Eigen"
 
-enum class aefdat_version {
-    // original file format: was very similar to format rawmat, but save cod
+/**
+ * @brief This enum class describes the versions of the aefdat file format used to save HyperfineCalculator
+ * instances.
+ */
+enum class aefdat_version: uint16_t {
+    // original file format: was very similar to format rawmat, but forgot to save the files in binary mode
     invalid = 0,
-    // 
+    // second version: saved raw matricies.
     rawmat = 1,
-    //
+    // saves spherical tensor operators
     rawmat_okq = 2,
-    // saves more information
+    // was supposed to save more information, but there were two problems 
+    // but save/load code had a compiler-dependent bug
+    // where aefdat_version wasn't cast to a fixed-size type before being saved
+    // this lead to problems because only some compilers chose to make aefdat_version
+    // a 16-bit type.  This created problems with loading in GCC/clang-compiled versions
     rawmat_okq2 = 3,
-    xiff = 4,
+    // correctly saves electric field and devonshire temperature
+    rawmat_okq_params = 4,
+    // this will be a RIFF-style format but using 64-bits for size.  When this is implemented it should
+    // remove the need for major file format revisions.
+    xiff = 5,
     max = xiff
 };
 
+/// <summary>
+/// Instances of this class can be used to calculate the rotohyperfine hamiltonian of a BaF-like molecule
+/// either in-vacuum or in-matrix, diagonalize it, and then calculate various expectation values and matrix
+/// elements of of the energy eigenstates of the molecular system.
+/// </summary>
 class HyperfineCalculator {
 public:
     spin nmax;
@@ -44,8 +61,8 @@ public:
     bool enableDev;
     aefdat_version load_version;
 
-    // current file format: rawmat_okq2
-    static constexpr aefdat_version CURRENT_VERSION = aefdat_version::rawmat_okq2;
+    // current file format: rawmat_okq_params
+    static constexpr aefdat_version CURRENT_VERSION = aefdat_version::rawmat_okq_params;
     // minimum readable file format: needed because version 0 didn't open files as binary
     static constexpr aefdat_version MINIMUM_VERSION = aefdat_version::rawmat;
 private:
