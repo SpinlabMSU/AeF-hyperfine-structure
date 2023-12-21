@@ -263,7 +263,11 @@ def make_hyperfine_states(nmax):
     return states
 
 if __name__ == '__main__':
-    nmax = 8
+    nmax = 40
     hsts = make_hyperfine_states(nmax)
+
+    for idx in range(len(hsts)):
+        hst = hsts[idx]
+        assert(idx == hst.index())
     pprint.pprint((hsts))
     print(f'have {len(hsts)} hyperfine states with nmax={nmax}')
