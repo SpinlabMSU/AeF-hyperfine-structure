@@ -110,8 +110,8 @@ def plot_state(st, stnam, fig:plt.Figure=None, typ = 'mag', cmap='viridis'):
         # get color from map
         color = cmap(norm(k))
         print(idx, hst, k, norm(k))
-        ax.annotate(f'{k:.2e}\n{idx}', (x, y - 0.2), ha='center', size=8)
-        ax.plot(x, y, 'o', color=color)
+        ax.annotate(f'{k:.2e}\n{idx}', (x, y - 0.3), ha='center', size=8)
+        ax.plot(x, y, 'o', color=color, markersize=12)
         return 1
     njs = 0
     for n in range(4):
