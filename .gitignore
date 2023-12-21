@@ -15,6 +15,10 @@
 /deven_aef_hf
 /nodev_aef_hf
 /stark_diagonalizer
+/deven_cpu_hf
+/nodev_cpu_hf
+/core*
+/*.pdf
 # User-specific files
 *.rsuser
 *.suo
