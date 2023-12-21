@@ -82,9 +82,9 @@ void dump_state(HyperfineCalculator& calc, int state, std::ostream &out) {
     out << std::endl;
 }
 
+#include "../AeF-hyperfine-structure.inl"
 
 int main(int argc, char **argv) {
-    
     //auto dpath = fs::path("output");
     std::chrono::time_point<std::chrono::system_clock> start_time =
         std::chrono::system_clock::now();
@@ -101,15 +101,6 @@ int main(int argc, char **argv) {
     bool k_specified = false;
     double K = 0;
     bool k_enabled = false;
-
-#ifndef DONT_USE_CUDA
-    constexpr bool diag_use_cuda = true;
-    std::cout << "Initializing CUDA" << std::endl;
-    aef::init_cuda(argc, (const char**)argv);
-    std::cout << "Successfully initialized CUDA" << std::endl;
-#else
-    constexpr bool diag_use_cuda = false;
-#endif
 
     /// <summary>
     /// The value of E_z used to calculate H_stk is 50 kV/cm = 25170 MHz/D.
@@ -158,7 +149,37 @@ int main(int argc, char **argv) {
         k_enabled = K != 0;
     }
     
+    fs::path p = fs::absolute(loadname);
+    fs::path dir = p.parent_path();
+    
+    fs::path odir = dir / "state_coeffs";
+    fs::create_directories(odir);
+
+    // set up logging
+    std::ofstream oLog(odir / "low_state_dumper.log", std::ios::trunc | std::ios::out);
+    aef::LogRedirector lredir(oLog, false, true);
+
+    {
+        std::string status(aef_git_status);
+        bool bdirty = status.contains('M') || status.contains('d');
+        std::string dirty = bdirty ? "dirty" : "clean";
+        std::cout << "AeF Hyperfine Structure LowStateDumper, version compiled on " << __DATE__ << " "
+            << __TIME__ << ", git commit " << aef_git_commit << std::endl;
+        std::cout << "Git status is " << dirty << " string {" << status << "}" << std::endl;
+        std::cout << fmt::format("Start time is {}", start_time) << std::endl;
+        std::cout << fmt::format("Eigen will use {} threads", Eigen::nbThreads()) << std::endl;
+    }
+
     prev_time = log_time_at_point("[Low state dumper] Initializing", start_time, prev_time);
+
+#ifndef DONT_USE_CUDA
+    constexpr bool diag_use_cuda = true;
+    std::cout << "Initializing CUDA" << std::endl;
+    aef::init_cuda(argc, (const char**)argv);
+    std::cout << "Successfully initialized CUDA" << std::endl;
+#else
+    constexpr bool diag_use_cuda = false;
+#endif
 
 #ifdef _OPENMP
     std::cout << "Reconfiguring openmp to use the correct number of threads (the number of physical cores)." << std::endl;
@@ -167,9 +188,6 @@ int main(int argc, char **argv) {
     Eigen::setNbThreads(num_physical_cores);
     std::cout << fmt::format("OpenMP/Eigen will use {} threads", num_physical_cores) << std::endl;
 #endif
-
-    fs::path p = fs::absolute(loadname);
-    fs::path dir = p.parent_path();
 
     std::cout << fmt::format("[Low State dumper] attempting to load matrix elements from {}", p.string()) << std::endl;
     
@@ -201,9 +219,6 @@ int main(int argc, char **argv) {
         aef::cuda_resize(calc.nBasisElts);
         std::cout << "Finished CUDA device-side buffer setup" << std::endl;
 #endif
-
-    fs::path odir = dir / "state_coeffs";
-    fs::create_directories(odir);
 
 
     if (k_specified) {
