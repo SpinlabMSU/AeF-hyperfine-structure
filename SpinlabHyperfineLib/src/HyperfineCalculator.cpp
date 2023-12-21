@@ -118,7 +118,25 @@ bool HyperfineCalculator::diagonalize_H(bool use_cuda) {
 
   if (use_cuda) {
       aef::cuda_resize(nBasisElts);
-      aef::diagonalize(H_tot, Es, Vs);
+      if (enableDev) {
+        aef::diagonalize(H_tot, Es, Vs);
+      } else {
+        // Free-space: m_f is a good quantum number, want to simultaneously
+        // diagonalize H_tot and F_z This is done using the method given in
+        // https://math.stackexchange.com/a/4388322 and proven in
+        // https://math.stackexchange.com/a/3951339.  However, I'm omitting the
+        // randomization portion because it shouldn't be necessary (if there's some
+        // small mixing of the m_f it doesn't really matter, and in practice they
+        // don't mix.
+        constexpr dcomplex t = 100.0; // +15i;
+        // naughty hack: H_dev doesn't actually contain anything when enableDev == false, so we can use it
+        // as our temporary here instead of making a new temporary matrix
+        H_dev = H_tot + t * F_z;
+        aef::diagonalize(H_dev, Es, Vs);
+        aef::cuda_expectation_values(Vs, H_tot, H_dev);
+        Es = H_dev.diagonal();
+        H_dev.setZero();
+      }
       diagonalized = true;
       return true;
   } else {

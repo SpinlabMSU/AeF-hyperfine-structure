@@ -761,7 +761,11 @@ int main(int argc, char **argv) {
 
         auto dev_out_fname = fmt::format("info_Ez_{}.csv", std::lround(Ez_V_cm));
         std::ofstream dout(devpath / dev_out_fname);
-        output_state_info(dout, calc, vals);
+        output_state_info(dout, calc
+#ifndef DONT_USE_CUDA
+        , vals
+#endif
+        );
     }
 
 #if 1
