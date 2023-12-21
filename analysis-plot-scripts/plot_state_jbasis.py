@@ -48,6 +48,13 @@ coeffdir = run.get_coeff_dir()
 
 Ez = 500 
 #Ez = 50000
+
+if len(sys.argv) > 2:
+    try:
+        Ez = int(sys.argv[2])
+    except:
+        Ez = float(sys.argv[2])
+
 df = run.parse_state_coeffs(Ez)#50000)
 #df = pd.DataFrame()
 pltdir = os.path.join(coeffdir, f'{Ez}')
