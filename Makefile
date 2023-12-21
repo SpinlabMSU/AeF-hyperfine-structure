@@ -27,7 +27,7 @@ CUDA_LIBS:=-lcusolver -lcublas -lcublasLt -lcuda -lcudart_static
 LDLIBS:=-l:./libSpinlabHyperfine.a -lgsl -lgslcblas $(CUDA_LIBS) -lz -lm
 
 .PHONY: all clean libs AeF-hyperfine-structure.inl
-all: libs aef_hyperfine_structure low_state_dumper stark_diagonalizer
+all: libs aef_hyperfine_structure low_state_dumper stark_diagonalizer nodev_aef_hf deven_aef_hf
 libs: libSpinlabHyperfine.a libSpinlabHyperfine.so
 
 
@@ -55,7 +55,11 @@ aef_hyperfine_structure: AeF-hyperfine-structure.o AeF-hyperfine-structure.inl l
 nodev_aef_hf: AeF-hyperfine-structure.cpp AeF-hyperfine-structure.inl libSpinlabHyperfine.so
 	$(CXX) -o $@ $(CXXFLAGS) -D_MAKEFILE_PROVIDES_DEVFLAG $(LDFLAGS) $< $(LDLIBS)
 deven_aef_hf: AeF-hyperfine-structure.cpp AeF-hyperfine-structure.inl libSpinlabHyperfine.so
-	$(CXX) -o $@ $(CXXFLAGS) -D_MAKEFILE_PROVIDES_DEVFLAG -DENABLE_DEVONSHIRE $(LDFLAGS) $< $(LDLIBS)
+	$(CXX) -o $@ $(CXXFLAGS) -D_MAKEFILE_PROVIDES_DEVFLAG -DUSE_DEVONSHIRE $(LDFLAGS) $< $(LDLIBS)
+nodev_cpu_hf: AeF-hyperfine-structure.cpp AeF-hyperfine-structure.inl libSpinlabHyperfine.so
+	$(CXX) -o $@ $(CXXFLAGS) -D_MAKEFILE_PROVIDES_DEVFLAG -DDONT_USE_CUDA $(LDFLAGS) $< $(LDLIBS)
+deven_cpu_hf: AeF-hyperfine-structure.cpp AeF-hyperfine-structure.inl libSpinlabHyperfine.so
+	$(CXX) -o $@ $(CXXFLAGS) -D_MAKEFILE_PROVIDES_DEVFLAG -DUSE_DEVONSHIRE -DDONT_USE_CUDA $(LDFLAGS) $< $(LDLIBS)
 low_state_dumper: LowStateDumper/LowStateDumper.o libSpinlabHyperfine.so
 	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $< $(LDLIBS)
 stark_diagonalizer: StarkDiagonalizer/StarkDiagonalizer.o libSpinlabHyperfine.so AeF-hyperfine-structure.inl

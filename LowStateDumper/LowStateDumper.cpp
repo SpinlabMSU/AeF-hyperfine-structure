@@ -229,6 +229,7 @@ int main(int argc, char **argv) {
         }
         //
     }
+    std::cout << fmt::format("K_enabled = {}", calc.enableDev ? "true" : "false") << std::endl;
     // XXX this is only needed because AeFDat currently doesn't save K
     if (!k_specified && calc.load_version <= aefdat_version::rawmat_okq) {
         // attempt to locate out.log
