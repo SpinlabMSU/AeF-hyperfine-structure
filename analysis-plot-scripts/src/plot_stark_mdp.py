@@ -35,6 +35,11 @@ else:
     print(dirname)
     print(type(dirname))
 
+use_zero_field = True
+if len(sys.argv) > 2:
+    use_zero_field = not (sys.argv[2].lower().startswith('n'))
+    print(f"use_zero_field?: {use_zero_field}")
+
 top_dir = dirname
 
 def static_vars(**kwargs):
@@ -119,6 +124,7 @@ for entry in os.listdir(dirname):
     print(f'Accepted entry {entry}')
     stmp = entry.split('_')[2]
     Ez = float(stmp.replace('.csv', ''))
+    if Ez == 0 and not use_zero_field: continue
     print(f"Ez is {Ez}")
     dat = pd.read_csv(fnam, encoding='windows-1252')
     key = None
@@ -149,5 +155,8 @@ plt.title(title_text)
 plt.xlabel('Externally applied electric field (V/cm)')
 plt.ylabel('Molecular Dipole-Axis z component (unitless)')
 plt.plot(Ez, Dz, 'ro')
-plt.savefig(os.path.join(top_dir, 'mdz_stark_plot.png'))
+if use_zero_field:
+    plt.savefig(os.path.join(top_dir, 'mdz_stark_plot.png'))
+else:
+    plt.savefig(os.path.join(top_dir, 'mdz_stark_plot_no_zero.png'))
 plt.show()
