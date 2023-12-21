@@ -62,7 +62,8 @@ stark_diagonalizer: StarkDiagonalizer/StarkDiagonalizer.o libSpinlabHyperfine.so
 	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $< $(LDLIBS)
 
 clean:
-	$(RM) aef_hyperfine_structure AeF-hyperfine-structure.inl $(LSPHF_OBJ)\
-	SpinlabHyperfineLib/include/pch.h.gch AeF-hyperfine-structure.o libSpinlabHyperfine.*
-	StarkDiagonalizer/*.o NoStark_HyperfineTester/*.o LowStateDumper/*.o GenerateHamiltonianFiles/*.o\
+	$(RM) aef_hyperfine_structure AeF-hyperfine-structure.inl $(LSPHF_OBJ) \
+	SpinlabHyperfineLib/include/pch.h.gch AeF-hyperfine-structure.o libSpinlabHyperfine.* \
+	StarkDiagonalizer/StarkDiagonalizer.o NoStark_HyperfineTester/NoStark_HyperfineTester.o \
+	LowStateDumper/LowStateDumper.o GenerateHamiltonianFiles/GenerateHamiltonianFiles.o \
 	nodev_aef_hf deven_aef_hf low_state_dumper stark_diagonalizer
