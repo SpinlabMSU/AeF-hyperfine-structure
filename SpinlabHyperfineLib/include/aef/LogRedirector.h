@@ -35,6 +35,7 @@ namespace aef {
 
         LogRedirector(std::ostream &oLog_, bool enable_debug_stream = false, bool redirect_stdio_ = true);
         ~LogRedirector();
+        void touch();
 
     private:
         bool debug_enabled;

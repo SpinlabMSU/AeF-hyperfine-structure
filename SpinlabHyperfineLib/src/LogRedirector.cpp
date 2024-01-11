@@ -101,12 +101,47 @@ aef::LogRedirector::~LogRedirector() {
 
     // redirect
     std::cout.rdbuf(orig_coutb);
-    std::cout.rdbuf(orig_cerrb);
-
+    std::cerr.rdbuf(orig_cerrb);
 
     // delete teebufs
     delete pOutb; pOutb = nullptr;
     delete pErrb; pErrb = nullptr;
     // don't delete pLogBuf becuase we don't own oLog
+#endif
+}
+
+
+#if defined(__GNUC__) && (defined(__x86_64__) || defined(__I386__)) 
+#include <cpuid.h>
+#endif
+void aef::LogRedirector::touch() {
+#if defined(__GNUC__)
+    #if defined(__I386__) || defined(__x86_64__)
+    // serializing inst
+    //asm volatile("SERIALIZE": : :"memory"); // crashes with SIGILL
+    asm volatile("": : :"memory");
+    // use cpuid instead
+    union {
+      char text[16];
+      uint32_t reg[4];
+    } mfr;
+    explicit_bzero(&mfr, sizeof(mfr));
+    uint32_t max_leaf = 0;
+    // leaf 0: max_leaf in eax, ManufacturerID in {ebx,edx,ecx} 
+    __cpuid(0, max_leaf, mfr.reg[0], mfr.reg[2], mfr.reg[1]);
+    std::cout << fmt::format("CPU manufacturer {}, max leaf id {}", mfr.text, max_leaf) << std::endl;
+    #elif defined(__aarch64__)
+    // 
+    asm volatile("dmb ish\ndsb ish\nisb sy": : :"memory");
+    #endif
+    __sync_synchronize();
+#elif defined(_MSC_VER)
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 0);
+    char cpu_mfr[sizeof(cpuInfo) + 1];
+    SecureZeroMemory(cpu_mfr, sizeof(cpu_mfr));
+    memcpy(cpu_mfr, cpuInfo, sizeof(cpuInfo) - sizeof(int));
+    std::cout << "Printing manufacturer info to prevent spurious optimization :" << cpu_mfr << std::endl;
+    MemoryBarrier();
 #endif
 }

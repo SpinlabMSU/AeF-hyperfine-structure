@@ -29,6 +29,7 @@ from dataclasses import dataclass
 import pprint
 import sys
 from typing import ClassVar
+#import warnings
 
 use_sympy = not True
 
@@ -88,10 +89,11 @@ class HConstants:
     c:ClassVar[rational] =  8.224 # MHz 
     mu_e: ClassVar[rational] = 3.170 #D
 
-
+#@warnings.deprecated
 def angular_H_st(n,j,f,mf, nn,jj,ff,mff):
     """
-    This code is probably broken and is included only 
+    This code is broken and is included only for documentation purposes (of what the original python-based code did).
+    DO NOT USE
     """
     ## only includes the
     ## \vec{F} == total angular momentum
@@ -266,6 +268,8 @@ if __name__ == '__main__':
     nmax = 40
     hsts = make_hyperfine_states(nmax)
 
+    # Tested good up til nmax = 40
+    ## should be good for all nmax, but we only need up to 40
     for idx in range(len(hsts)):
         hst = hsts[idx]
         assert(idx == hst.index())

@@ -28,6 +28,10 @@
 
 //#include <pch.h>
 #include "cuda_utils.h"
+#include <iostream>
+#ifndef __CUDACC__
+#include <format>
+#endif
 
 // CUDA Runtime error messages
 #ifdef __DRIVER_TYPES_H__
@@ -752,13 +756,14 @@ int cuda::gpuGetMaxGflopsDeviceId() {
 
     uint64_t max_compute_perf = 0;
     checkCudaErrors(cudaGetDeviceCount(&device_count));
-
+    //std::cout << "Have " << device_count << 
     if (device_count == 0) {
         fprintf(stderr,
             "gpuGetMaxGflopsDeviceId() CUDA error:"
             " no devices supporting CUDA.\n");
         exit(EXIT_FAILURE);
     }
+    printf("%d devices support CUDA\n", device_count);
 
     // Find the best CUDA capable GPU device
     current_device = 0;
@@ -811,14 +816,14 @@ int cuda::gpuGetMaxGflopsDeviceId() {
             " all devices have compute mode prohibited.\n");
         exit(EXIT_FAILURE);
     }
-
+    std::cout << "Max perf device is " << max_perf_device << std::endl;
     return max_perf_device;
 }
 
 // Initialization code to find the best CUDA Device
 int cuda::findCudaDevice(int argc, const char** argv) {
     int devID = 0;
-
+    std::cout << "Finding CUDA device" << std::endl;
     // If the command-line has a device number specified, use it
     if (checkCmdLineFlag(argc, argv, "device")) {
         devID = getCmdLineArgumentInt(argc, argv, "device=");
@@ -827,8 +832,9 @@ int cuda::findCudaDevice(int argc, const char** argv) {
             printf("Invalid command line parameter\n ");
             exit(EXIT_FAILURE);
         } else {
+            std::cout << "Picking device with ID " << devID << " per command line arg."
+                << std::endl;
             devID = gpuDeviceInit(devID);
-
             if (devID < 0) {
                 printf("exiting...\n");
                 exit(EXIT_FAILURE);
@@ -841,9 +847,13 @@ int cuda::findCudaDevice(int argc, const char** argv) {
         int major = 0, minor = 0;
         checkCudaErrors(cudaDeviceGetAttribute(&major, cudaDevAttrComputeCapabilityMajor, devID));
         checkCudaErrors(cudaDeviceGetAttribute(&minor, cudaDevAttrComputeCapabilityMinor, devID));
+        #ifdef __CUDACC__
         printf("GPU Device %d: \"%s\" with compute capability %d.%d\n\n",
             devID, _ConvertSMVer2ArchName(major, minor), major, minor);
-
+        #else
+        std::cout << std::format("GPU Device {}: \"{}\" with compute capability {}.{}\n", devID, 
+                                 _ConvertSMVer2ArchName(major, minor), major, minor) << std::endl;
+        #endif
     }
 
     return devID;

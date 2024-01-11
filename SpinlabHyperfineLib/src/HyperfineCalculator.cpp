@@ -277,7 +277,7 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
   if (version > CURRENT_VERSION || version < MINIMUM_VERSION) {
     const char *reason =
         (version > CURRENT_VERSION) ? " is too recent." : " is too old.";
-    std::cout << "Unsupported version " << static_cast<uint16_t>(version) << reason << std::endl;
+    std::cout << fmt::format("Unsupported version {} -- version is {}", static_cast<uint16_t>(version), reason) << std::endl;
     uint16_t flags = 0;
     zin.read((char *)&flags, sizeof(flags));
     std::cout << "FLAGS WOULD BE " << flags << std::endl;
@@ -319,6 +319,7 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
       zin.read((char*)&(this->E_z), sizeof(this->E_z));
       zin.read((char*)&(this->K), sizeof(this->K));
       this->enableDev = (K != 0);
+      stream_pos += sizeof(this->E_z) + sizeof(this->K);
   }
 
   diagonalized = (flags & FLAG_DIAG);

@@ -75,7 +75,7 @@ namespace cuda {
     const char* cudaGetErrorEnum(cusparseStatus_t error);
     const char* cudaGetErrorEnum(cusolverStatus_t error);
     const char* cudaGetErrorEnum(curandStatus_t error);
-    // const char* _cudaGetErrorEnum(nvjpegStatus_t error);
+    // const char* cudaGetErrorEnum(nvjpegStatus_t error);
     // const char* cudaGetErrorEnum(NppStatus error);
 
     // Float To Int conversion

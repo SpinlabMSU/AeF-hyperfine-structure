@@ -221,19 +221,20 @@ int main(int argc, char **argv) {
 #endif
 
 
+    // note: we actually don't need the actual value of K here, since H_dev is stored pre-multiplied by K
+    // we only need to know whether K is zero (in-vacuum) or not (in-matrix).
     if (k_specified) {
-        // future versions 
-        if (calc.load_version > aefdat_version::rawmat_okq) {
-            std::cout << fmt::format("") << std::endl;
+        // Starting with aefdat_version::rawmat_okq_params, aefdat files save E_z and K, thus specifying 
+        if (calc.load_version >= aefdat_version::rawmat_okq_params) {
+            std::cout << fmt::format("Attempt") << std::endl;
             exit(253);
         }
         //
     }
     std::cout << fmt::format("K_enabled = {}", calc.enableDev ? "true" : "false") << std::endl;
-    // XXX this is only needed because AeFDat currently doesn't save K
-    if (!k_specified && calc.load_version <= aefdat_version::rawmat_okq) {
+    // XXX this is only needed because AeFDat used to not save K
+    if (!k_specified && calc.load_version <= aefdat_version::rawmat_okq_params) {
         // attempt to locate out.log
-        
         fs::path olog_path = dir / "out.log";
         
         if (!fs::is_regular_file(olog_path)) {
@@ -242,14 +243,14 @@ int main(int argc, char **argv) {
             std::cout << str << std::endl;
             exit(254);
         }
+        // TODO parse log file???
 
     }
 
     // load succeded
     prev_time = log_time_at_point("[Low state dumper] Finished loading matrix elements.", start_time, prev_time);
 
-    // give info --> note: enableDev and K aren't saved (oops)
-    // todo: new file version that actually saves that information
+    // give info --> note: enableDev and K weren't saved in older formats 
     std::cout << fmt::format("Molecular System information: nmax = {}", calc.nmax) << std::endl;//, calc.enableDev);
     std::cout << fmt::format("[] Starting to dump states, {} field values", E_zs.size()) << std::endl;
 
@@ -275,11 +276,11 @@ int main(int argc, char **argv) {
             out << fmt::format(",Re(<j_{}|E_n>),Im(<j_{}|E_n>", kdx, kdx);
         }
         out << std::endl;
-        // dump 
+        // dump +Z-oriented f=0/f=1 singlet-triplet
         for (int idx = bidx_posz; idx < bidx_posz + num_singlet_triplet; idx++) {
             dump_state(calc, idx, out);
         }
-
+        // dump -Z-oriented f=0/f=1 singlet-triplet
         for (int idx = bidx_negz; idx < bidx_negz + num_singlet_triplet; idx++) {
             dump_state(calc, idx, out);
         }
@@ -287,7 +288,7 @@ int main(int argc, char **argv) {
         prev_time = log_time_at_point(desc.c_str(), start_time, prev_time);
         out.close();
     }
-
+    lredir.touch();
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

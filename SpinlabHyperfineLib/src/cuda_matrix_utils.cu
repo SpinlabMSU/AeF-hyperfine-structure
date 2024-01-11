@@ -76,14 +76,14 @@ namespace aef {
         }
         cudaStreamSynchronize(cu_stream);
 
-#define freePtr(d_X) if (d_X) { checkCudaErrors(cudaFreeAsync(d_X, cu_stream)); d_X = nullptr;}
-
+        #define freePtr(d_X) if (d_X) { checkCudaErrors(cudaFreeAsync(d_X, cu_stream)); d_X = nullptr;}
         freePtr(d_A);
         freePtr(d_U);
         freePtr(d_W);
         freePtr(d_V);
         freePtr(d_info);
         freePtr(d_Work);
+        #undef freePtr
 
         checkCudaErrors(cudaStreamSynchronize(cu_stream));
         checkCudaErrors(cusolverDnDestroy(cu_handle));
@@ -102,9 +102,12 @@ namespace aef {
     }
 
     void mat_init(cudaStream_t stream) {
-        auto status = cusolverDnCreate(&cu_handle);
         cu_stream = stream;
+        checkCudaErrors(cusolverDnCreate(&cu_handle));
         CUSOLVER_CHECK(cusolverDnSetStream(cu_handle, stream));
+        checkCudaErrors(cublasCreate(&hCublas));
+        checkCudaErrors(cublasSetStream(hCublas, cu_stream));
+        saved_n = -1;
         init = true;
     }
 

@@ -41,9 +41,8 @@ import triangular_state_plotter
 rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-08-09-135429.5590762'
 if len(sys.argv) > 1:
     rundir = sys.argv[1]
-run = aef_run.aef_run(rundir)
 
-#
+run = aef_run.aef_run(rundir)
 coeffdir = run.get_coeff_dir()
 
 Ez = 500 
@@ -55,8 +54,7 @@ if len(sys.argv) > 2:
     except:
         Ez = float(sys.argv[2])
 
-df = run.parse_state_coeffs(Ez)#50000)
-#df = pd.DataFrame()
+df = run.parse_state_coeffs(Ez)
 pltdir = os.path.join(coeffdir, f'{Ez}')
 os.makedirs(pltdir, exist_ok=True)
 

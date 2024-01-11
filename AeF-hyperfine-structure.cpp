@@ -426,35 +426,7 @@ int main(int argc, char **argv) {
     }
 
     // create info log
-    std::ofstream oLog;
-/*
-    debug_stream::debug_ostream* pDebug = new debug_stream::debug_ostream;
-    teestream::teebuf* pBuf, * pOutb, * pErrb;
-
-    std::streambuf* pLogBuf;
-    std::streambuf* orig_coutb = std::cout.rdbuf();
-    std::streambuf* orig_cerrb = std::cerr.rdbuf();
-*/
-    {
-        auto fpath = dpath / "out.log";
-        oLog = std::ofstream(fpath, std::ios::trunc | std::ios::out);
-        /*// test if logging to debug window enabled
-        if (enable_debug_log) {
-            // if enabled, tee to both the log file and the debug window
-            pBuf = new teestream::teebuf(oLog.rdbuf(), pDebug->rdbuf());
-            pLogBuf = pBuf;
-        } else {
-            // otherwise just output to the log file
-            pBuf = nullptr;
-            pLogBuf = oLog.rdbuf();
-        }
-        pOutb = new teestream::teebuf(pLogBuf, orig_coutb);
-        std::cout.rdbuf(pOutb);
-
-        pErrb = new teestream::teebuf(pLogBuf, orig_cerrb);
-        std::cerr.rdbuf(pErrb);*/
-
-    }
+    std::ofstream oLog(dpath / "out.log", std::ios::trunc | std::ios::out);
     aef::LogRedirector lredir(oLog, enable_debug_log, true);
     // info lines
     {
@@ -524,8 +496,6 @@ int main(int argc, char **argv) {
         }
         logstr = fmt::format("Finished loading matrix elements from {}", loadname);
         prev_time = log_time_at_point(logstr.c_str(), start_time, prev_time);
-
-
 #ifndef DONT_USE_CUDA
         std::cout << fmt::format(
             "Setting up CUDA device-side buffers with nRows={} after loading matrix elements",
@@ -534,6 +504,7 @@ int main(int argc, char **argv) {
         std::cout << "Finished CUDA device-side buffer setup" << std::endl;
 #endif
     } else {
+        // not loading from file --> calculate
 #ifndef DONT_USE_CUDA
         std::cout << fmt::format(
             "Setting up CUDA device-side buffers with nRows={} before matrix element calculations",
