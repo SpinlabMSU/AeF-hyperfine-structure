@@ -76,8 +76,11 @@ constexpr int bidx_negz = bottom_group_size - num_singlet_triplet;
 
 void dump_state(HyperfineCalculator& calc, int state, std::ostream &out) {
     out << state;
+    // BUGFIX: states are column vectors not row vectors
+    Eigen::VectorXcd state_vec = calc.Vs.col(state);
     for (int kdx = 0; kdx < calc.nBasisElts; kdx++) {
-        out << "," << std::real(calc.Vs(state, kdx)) << "," << std::imag(calc.Vs(state, kdx));
+        dcomplex ampl = state_vec[kdx];
+        out << "," << std::real(ampl) << "," << std::imag(ampl);
     }
     out << std::endl;
 }
