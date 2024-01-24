@@ -44,6 +44,7 @@ def get_ssv_val(line, marker, typ=int):
 class aef_run(object):
     
     def __init__(self, dir_path):
+        dir_path = dir_path.rstrip('/')
         self.path = dir_path
         self.run = os.path.split(dir_path)[1]
         ts = self.run.split('.')
