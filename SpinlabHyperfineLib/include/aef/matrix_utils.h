@@ -21,7 +21,9 @@
 #define _AEF_MATRIX_UTILS
 
 #include "aef_types.h"
+#ifndef __NVCC__
 #include "aef_utils.h"
+#endif
 #include "gcem.hpp"
 #include <complex>
 #include <numbers>
