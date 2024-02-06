@@ -34,5 +34,6 @@ function lowstatedump {
     echo "specify an aef run directory"
     return
   fi
-  $AEF_DIR/low_state_dumper -e 0 -e 500 -e 50000 -l $1/matrix.dat
+  out=$1
+  $AEF_DIR/low_state_dumper -e 0 -e 500 -e 50000 -l $out/matrix.dat ${1+"$@"}
 }
