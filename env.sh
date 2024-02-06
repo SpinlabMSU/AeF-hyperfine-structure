@@ -27,3 +27,13 @@ function plot_state_jbasis {
   fi
   python3 "$pyscr_path/plot_state_jbasis.py" ${1+"$@"} 2>&1 | tee $olog
 }
+
+## run low_state_dumper and log output
+function lowstatedump {
+  if [ -z $1 -o ! -d $1 -o ! -f $1/out.log ]; then
+    echo "specify an aef run directory"
+    return
+  fi
+  out=$1
+  $AEF_DIR/low_state_dumper -e 0 -e 500 -e 50000 -l $out/matrix.dat ${1+"$@"}
+}
