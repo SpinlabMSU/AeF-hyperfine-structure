@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
 
     if (result.count("k")) {
         k_specified = true;
-        K = result["k"].as<double>();
+        K = result["k"].as<double>() * unit_conversion::MHz_per_Kelvin;
         k_enabled = K != 0;
     }
     
@@ -194,7 +194,7 @@ int main(int argc, char **argv) {
 
     std::cout << fmt::format("[Low State dumper] attempting to load matrix elements from {}", p.string()) << std::endl;
     
-    HyperfineCalculator calc(4, 0, 0);
+    HyperfineCalculator calc(4, 0, K);
     bool success = calc.load_matrix_elts(loadname);
 
     if (!success) {
@@ -232,7 +232,6 @@ int main(int argc, char **argv) {
             std::cout << fmt::format("Attempt") << std::endl;
             exit(253);
         }
-        //
     }
     std::cout << fmt::format("K_enabled = {}", calc.enableDev ? "true" : "false") << std::endl;
     // XXX this is only needed because AeFDat used to not save K

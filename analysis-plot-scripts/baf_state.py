@@ -273,5 +273,6 @@ if __name__ == '__main__':
     for idx in range(len(hsts)):
         hst = hsts[idx]
         assert(idx == hst.index())
+        assert(state_from_index(idx).index() == idx)
     pprint.pprint((hsts))
     print(f'have {len(hsts)} hyperfine states with nmax={nmax}')
