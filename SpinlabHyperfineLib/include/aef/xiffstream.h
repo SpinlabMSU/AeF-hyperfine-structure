@@ -32,6 +32,7 @@
  */
 namespace xiff {
 
+    namespace fs = std::filesystem;
 /*
  * A traditional Four Character Code (4 ascii characters == 32 bits)
  * Note that these generally aren't zero-terminated, so don't try to use them as strings!
@@ -72,7 +73,18 @@ struct xiff_hdr {
 };
 
 class xiffstream {
-  void *dataptr;
+private:
+    void* _context_ptr;
+    xiff_hdr fheader;
+    std::vector<chunk_hdr*> chunklist;
+    void* posn;
+
+public:
+    xiffstream(fs::path p);
+    ~xiffstream();
+
+    void append_chunk(chunk_hdr* chunk);
+    void writeout();
 };
 
 } // namespace xiff
