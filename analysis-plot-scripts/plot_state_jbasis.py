@@ -62,6 +62,14 @@ nBasisElts = (len(df.keys()) - 1) // 2
 
 hsts = baf_state.make_hyperfine_states(run.nmax)
 
+plot_nmax = 4
+if len(sys.argv) > 3:
+    plot_nmax = int(sys.argv[3])
+
+no_text = False
+if len(sys.argv) > 4:
+   no_text = sys.argv[4].lower().startswith('no_text') 
+
 @numba.njit
 def mag_sq(vec):
     vabs = np.absolute(vec)
@@ -103,7 +111,7 @@ def read_state(df, idx):
     print(f'magsq of {idx} is {prob_tot} w/ dev {dev}, rel_dev {rel_dev}')
     return ket
 
-def plot_state(st, stnam, fig:plt.Figure=None, typ = 'mag', cmap='viridis'):
+def plot_state(st, stnam, fig:plt.Figure=None, typ = 'mag', cmap='viridis', nmax=4):
     if fig == None:
         fig = plt.figure(figsize=(19.2, 12.42))#11.0*19.2/17.0))#19.2, 16.8)) #fig = plt.gcf()
     # turn argument into colormap
@@ -115,13 +123,14 @@ def plot_state(st, stnam, fig:plt.Figure=None, typ = 'mag', cmap='viridis'):
         # get color from map
         color = cmap(norm(k))
         print(idx, hst, k, norm(k))
-        ax.annotate(f'{k:.2e}\n{idx}', (x, y - 0.3), ha='center', size=8)
+        if not no_text:
+            ax.annotate(f'{k:.2e}\n{idx}', (x, y - 0.3), ha='center', size=8)
         ax.plot(x, y, 'o', color=color, markersize=12)
         return 1
     njs = 0
-    for n in range(4):
+    for n in range(nmax):
         nl = triangular_state_plotter.nlevel(n)
-        nl.draw_boxes(plt.gca(), njs, f_mag)
+        nl.draw_boxes(plt.gca(), njs, f_mag, no_text)
         prev_njs = njs
         njs += 5 if (n > 0) else 3
         #plt.hlines(-5, prev_njs, njs - 0.5, color='k', linestyle='-', label=f'n={n}')
@@ -153,14 +162,14 @@ if __name__ == '__main__':
     print('Read states, starting plotting')
     fig = None
     #fig = plt.figure(figsize=(19.2, 16.8))
-    plot_state(pz_f00, 'pz_f00', fig)
-    plot_state(pz_f10, 'pz_f10', fig)
-    plot_state(pz_f1t, 'pz_f1t', fig)
-    plot_state(pz_f11, 'pz_f11', fig)
+    plot_state(pz_f00, 'pz_f00', fig, nmax=plot_nmax)
+    plot_state(pz_f10, 'pz_f10', fig, nmax=plot_nmax)
+    plot_state(pz_f1t, 'pz_f1t', fig, nmax=plot_nmax)
+    plot_state(pz_f11, 'pz_f11', fig, nmax=plot_nmax)
     #nz
-    plot_state(nz_f00, 'nz_f00', fig)
-    plot_state(nz_f10, 'nz_f10', fig)
-    plot_state(nz_f1t, 'nz_f1t', fig)
-    plot_state(nz_f11, 'nz_f11', fig)
+    plot_state(nz_f00, 'nz_f00', fig, nmax=plot_nmax)
+    plot_state(nz_f10, 'nz_f10', fig, nmax=plot_nmax)
+    plot_state(nz_f1t, 'nz_f1t', fig, nmax=plot_nmax)
+    plot_state(nz_f11, 'nz_f11', fig, nmax=plot_nmax)
     plt.show()
     
