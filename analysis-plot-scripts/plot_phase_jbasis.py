@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-## plot_state_jbasis.py -- plots the probability of each j-basis ket in
+## plot_phase_jbasis.py -- plots the phase of each j-basis ket in
 ## a given state. 
 # This file is part of the AeF-hyperfine-structure program. 
     
@@ -55,7 +55,7 @@ if len(sys.argv) > 2:
         Ez = float(sys.argv[2])
 
 df = run.parse_state_coeffs(Ez)
-pltdir = os.path.join(coeffdir, f'{Ez}')
+pltdir = os.path.join(coeffdir, f'phs_{Ez}')
 os.makedirs(pltdir, exist_ok=True)
 
 nBasisElts = (len(df.keys()) - 1) // 2
@@ -115,13 +115,13 @@ def plot_state(st, stnam, fig:plt.Figure=None, typ = 'mag', cmap='viridis', nmax
     if fig == None:
         fig = plt.figure(figsize=(19.2, 12.42))#11.0*19.2/17.0))#19.2, 16.8)) #fig = plt.gcf()
     # turn argument into colormap
-    norm = colors.LogNorm(1e-19, 1)
+    norm = colors.Normalize(vmin=-np.pi, vmax=np.pi)#colors.LogNorm(1e-19, 1)
     cmap = mpl.colormaps.get_cmap(cmap)
     def f_mag(ax:plt.Axes, hst:baf_state.HyperfineState, idx:int, x:float, y:float):
-        k = npla.norm(st[idx])**2
+        k = np.angle(st[idx])#npla.norm(st[idx])**2
         #if k == 0: k = 1e-38
         # get color from map
-        color = cmap(norm(k))
+        color = cmap(k)#cmap(norm(k))
         print(idx, hst, k, norm(k))
         if not no_text:
             ax.annotate(f'{k:.2e}\n{idx}', (x, y - 0.3), ha='center', size=8)
@@ -137,14 +137,14 @@ def plot_state(st, stnam, fig:plt.Figure=None, typ = 'mag', cmap='viridis', nmax
         dx = ((njs - 0.5) - (prev_njs)) / 2
         x = prev_njs + 0.5
         #plt.text(x + dx, -4.5, f'n={n}', ha='right', va='center')
-    plt.title(f'J-basis-ket state plot for state {stnam} of run {run.run}, E_z = {Ez} V/cm\n'
-              + r'Plotting magnitude-squared of $\left<n,j,f,m_f|E_{idx}\right>$')
+    plt.title(f'J-basis-ket state plot for state {stnam} of run {run.run}, E_z = {Ez} V/cm'
+              + r'\nPlotting phase of $\left<n,j,f,m_f\middle|E_{idx}\right>')
     plt.ylabel('m_f')
     plt.xlabel('Arbitrary')
     print("state coeff 0: ", st[0], ' sq val: ', npla.norm(st[0])**2)
     print("state coeff 6: ", st[6], ' sq val: ', npla.norm(st[6])**2)
     plt.colorbar(mplcm.ScalarMappable(norm=norm, cmap=cmap), ax=plt.gca())
-    onam = os.path.join(run.cdir, f'{Ez}', f'{stnam}.png')
+    onam = os.path.join(run.cdir, f'phs_{Ez}', f'{stnam}.png')
     plt.savefig(onam)#'state_j-basis-plot.png')
 
 if __name__ == '__main__':
@@ -163,14 +163,14 @@ if __name__ == '__main__':
     print('Read states, starting plotting')
     fig = None
     #fig = plt.figure(figsize=(19.2, 16.8))
-    plot_state(pz_f00, 'pz_f00', fig, nmax=plot_nmax)
-    plot_state(pz_f10, 'pz_f10', fig, nmax=plot_nmax)
-    plot_state(pz_f1t, 'pz_f1t', fig, nmax=plot_nmax)
-    plot_state(pz_f11, 'pz_f11', fig, nmax=plot_nmax)
+    plot_state(pz_f00, 'u_phs_pz_f00', fig, nmax=plot_nmax)
+    plot_state(pz_f10, 'u_phs_pz_f10', fig, nmax=plot_nmax)
+    plot_state(pz_f1t, 'u_phs_pz_f1t', fig, nmax=plot_nmax)
+    plot_state(pz_f11, 'u_phs_pz_f11', fig, nmax=plot_nmax)
     #nz
-    plot_state(nz_f00, 'nz_f00', fig, nmax=plot_nmax)
-    plot_state(nz_f10, 'nz_f10', fig, nmax=plot_nmax)
-    plot_state(nz_f1t, 'nz_f1t', fig, nmax=plot_nmax)
-    plot_state(nz_f11, 'nz_f11', fig, nmax=plot_nmax)
+    plot_state(nz_f00, 'u_phs_nz_f00', fig, nmax=plot_nmax)
+    plot_state(nz_f10, 'u_phs_nz_f10', fig, nmax=plot_nmax)
+    plot_state(nz_f1t, 'u_phs_nz_f1t', fig, nmax=plot_nmax)
+    plot_state(nz_f11, 'u_phs_nz_f11', fig, nmax=plot_nmax)
     plt.show()
     

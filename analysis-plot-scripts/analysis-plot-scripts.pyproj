@@ -32,6 +32,8 @@
     <Compile Include="plot_state_coeffs.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="plot_phase_jbasis.py" />
+    <Compile Include="plot_summed_mf.py" />
     <Compile Include="plot_state_jbasis.py" />
     <Compile Include="runscripts.py" />
     <Compile Include="plot_spectrum.py" />
