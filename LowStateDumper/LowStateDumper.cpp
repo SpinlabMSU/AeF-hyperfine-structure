@@ -73,6 +73,8 @@ constexpr int bottom_group_size = num_singlet_triplet * num_orientations;
 constexpr int bidx_posz = 0;
 // starting/base index of -Z oriented states
 constexpr int bidx_negz = bottom_group_size - num_singlet_triplet;
+// start of +- XY oriented states -- don't know how to distinguish which is which at the present time
+constexpr int bidx_pmxy = num_singlet_triplet;
 
 void dump_state(HyperfineCalculator& calc, int state, std::ostream &out) {
     out << state;
@@ -290,6 +292,12 @@ int main(int argc, char **argv) {
         for (int idx = bidx_negz; idx < bidx_negz + num_singlet_triplet; idx++) {
             dump_state(calc, idx, out);
         }
+
+        // dump "+-XY oriented" f=0/f=1 singlet-triplets (note: these mix --> not actually oriented)
+        for (int idx = bidx_pmxy; idx < bidx_pmxy + 4 * num_singlet_triplet; idx++) {
+            dump_state(calc, idx, out);
+        }
+
         desc = fmt::format("[Low state dumper] Finished calculations for electric field {}", Ez);
         prev_time = log_time_at_point(desc.c_str(), start_time, prev_time);
         out.close();
