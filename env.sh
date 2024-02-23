@@ -28,6 +28,38 @@ function plot_state_jbasis {
   python3 "$pyscr_path/plot_state_jbasis.py" ${1+"$@"} 2>&1 | tee $olog
 }
 
+## run plot_phase_jbasis.py and log output
+function plot_phase_jbasis {
+  if [ -z $1 -o ! -d $1 -o ! -f $1/out.log ]; then
+    echo "specify an aef run directory"
+    return
+  fi
+  olog=/dev/null/invalid_path
+  re='^[+-]?[0-9]+([.][0-9]+)?$'
+  if ! [[ $2 =~ $re ]] ; then
+   olog=$1/state_coeffs/jbp_default.log
+  else
+   olog=$1/state_coeffs/jbp_$2.log
+  fi
+  python3 "$pyscr_path/plot_phase_jbasis.py" ${1+"$@"} 2>&1 | tee $olog
+}
+
+## run plot_psummed_mf.py and log output
+function plot_summed_mf {
+  if [ -z $1 -o ! -d $1 -o ! -f $1/out.log ]; then
+    echo "specify an aef run directory"
+    return
+  fi
+  olog=/dev/null/invalid_path
+  re='^[+-]?[0-9]+([.][0-9]+)?$'
+  if ! [[ $2 =~ $re ]] ; then
+   olog=$1/state_coeffs/jbsum_default.log
+  else
+   olog=$1/state_coeffs/jbsum_$2.log
+  fi
+  python3 "$pyscr_path/plot_summed_mf.py" ${1+"$@"} 2>&1 | tee $olog
+}
+
 ## run low_state_dumper and log output
 function lowstatedump {
   if [ -z $1 -o ! -d $1 -o ! -f $1/out.log ]; then

@@ -198,6 +198,7 @@
     <ClInclude Include="include\aef\aef.h" />
     <ClInclude Include="include\aef\aef_types.h" />
     <ClInclude Include="include\aef\aef_utils.h" />
+    <ClInclude Include="include\aef\backends\EigenMatrixBackend.h" />
     <ClInclude Include="include\aef\baf_constants.hpp" />
     <ClInclude Include="include\aef\debug_stream.h" />
     <ClInclude Include="include\aef\HyperfineCalculator.hpp" />
@@ -292,6 +293,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\aef_utils.cpp" />
+    <ClCompile Include="src\backends\EigenMatrixBackend.cpp" />
     <ClCompile Include="src\HyperfineCalculator.cpp" />
     <ClCompile Include="src\jf_basis_vec.cpp" />
     <ClCompile Include="src\j_basis_vec.cpp" />

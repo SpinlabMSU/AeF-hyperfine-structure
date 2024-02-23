@@ -12,17 +12,24 @@
 
 namespace aef::matrix {
 
+    /// <summary>
+    /// Result codes
+    /// A result code indicates success if it is non-negative
+    /// </summary>
+    enum class ResultCode : int32_t {
+        // Successful result codes
+        Success = 0, // non-detailed
 
-    enum class StatusCode : int32_t {
-        Success = 0,
-        OutOfMemory = 1,
-        Timeout = 2,
-        InvalidArgument = 3,
-        IllegalState = 4,
-        Unimplemented = 5,
-        InternalError = 6,
-        HardwareFailure = 7,
-        NotAvailable = 8,
+
+        /// error result codes
+        OutOfMemory = -1,
+        Timeout = -2,
+        InvalidArgument = -3,
+        IllegalState = -4,
+        Unimplemented = -5,
+        InternalError = -6,
+        HardwareFailure = -7,
+        NotAvailable = -8,
         NumCodes
     };
 
@@ -30,12 +37,27 @@ namespace aef::matrix {
     /// Interface describing what operations must be implemented by a backend
     /// </summary>
     class IMatrixOpBackend {
-        virtual StatusCode init(int argc, char** argv) = 0;
-        virtual StatusCode shutdown() = 0;
+        /// <summary>
+        /// Initialize the backend with optional arguments, specified the same
+        /// </summary>
+        /// <param name="argc">Argument count</param>
+        /// <param name="argv">Argument vector, can be null if argc == 0</param>
+        /// <returns>Resutl code</returns>
+        virtual ResultCode init(int argc, char** argv) = 0;
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns>Result code</returns>
+        virtual ResultCode shutdown() = 0;
 
-        virtual StatusCode resize(int nmax) = 0;
+        /// <summary>
+        /// Allocates enough space for 
+        /// </summary>
+        /// <param name="nMaxDim">Maximum matrix dimension</param>
+        /// <returns>Result code</returns>
+        virtual ResultCode set_max_size(int nMaxDim) = 0;
 
-        virtual StatusCode multiply(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd& out) = 0;
+        virtual ResultCode multiply(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd& out) = 0;
         /// <summary>
         /// Computes UAU^{-1}
         /// </summary>
@@ -43,9 +65,9 @@ namespace aef::matrix {
         /// <param name="A"></param>
         /// <param name="out"></param>
         /// <returns></returns>
-        virtual StatusCode expectation_values(Eigen::MatrixXcd& out, Eigen::MatrixXcd& U, Eigen::MatrixXcd& A) = 0;
-        virtual StatusCode expectation_value(dcomplex& out, Eigen::VectorXcd& v1, Eigen::MatrixXcd& A) = 0;
-        virtual StatusCode expectation_value(dcomplex& out, Eigen::VectorXcd& v1, Eigen::MatrixXcd& A, Eigen::VectorXcd& v2) = 0;
+        virtual ResultCode expectation_values(Eigen::MatrixXcd& out, Eigen::MatrixXcd& U, Eigen::MatrixXcd& A) = 0;
+        virtual ResultCode expectation_value(dcomplex& out, Eigen::VectorXcd& v1, Eigen::MatrixXcd& A) = 0;
+        virtual ResultCode expectation_value(dcomplex& out, Eigen::VectorXcd& v1, Eigen::MatrixXcd& A, Eigen::VectorXcd& v2) = 0;
 
         /// <summary>
         /// Diagonalizes complex Hermitian matricies (ZHEEV)
@@ -53,7 +75,7 @@ namespace aef::matrix {
         /// <param name="mat">The matrix to diagonalize, must be hermitian</param>
         /// <param name="evals"></param>
         /// <param name="evecs"></param>
-        virtual StatusCode diagonalize(Eigen::MatrixXcd& mat, Eigen::VectorXcd& evals, Eigen::MatrixXcd& evecs) = 0;
+        virtual ResultCode diagonalize(Eigen::MatrixXcd& mat, Eigen::VectorXcd& evals, Eigen::MatrixXcd& evecs) = 0;
     };
 
     /// <summary>
@@ -68,6 +90,7 @@ namespace aef::matrix {
         // Intel OneAPI: probable next backend implementation since it works on all main vendors
         IntelOneAPI = 3,
         OpenCL = 4,
+        VKCompute = 5,
         // Will not implement
         // AMDRocmSockem -- no matter how good the pun sounds, this only works on _some_ AMD GPUs --> no
         // AppleMetal -- I don't have any devices supporting this, and it only works on Apple's devices --> no
