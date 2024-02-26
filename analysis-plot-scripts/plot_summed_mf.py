@@ -131,6 +131,7 @@ def plot_state(st, stnam, fig:plt.Figure=None, typ = 'mag', cmap='viridis', nmax
     #
     hst = baf_state.HyperfineState(n=0,j=0,f=0,m_f=0)
     njf_sums = np.zeros(n_njfs)
+    labels = []
     for idx in range(n_njfs):
         hst.n, hst.j, hst.f = njfs[idx]
         sum_prob = 0.0
@@ -138,14 +139,39 @@ def plot_state(st, stnam, fig:plt.Figure=None, typ = 'mag', cmap='viridis', nmax
             prob = np.absolute(st[hst.index()])**2
             sum_prob += prob
         njf_sums[idx] = sum_prob
-    # turn argument into colormap
-    plt.plot(njf_sums, 'o')
+        labels.append(f"|n={hst.n},j={hst.j},f={hst.f}>")
+    line, = plt.plot(njf_sums, 'o')
+    ax = plt.gca()
     plt.yscale('log')
-    plt.gca().set_ylim(bottom=1e-12)
+    ax.set_ylim(bottom=1e-12)
     plt.title(f'Summed-$m_f$ j-basis state plot for state {stnam} of run {run.run}, E_z = {Ez} V/cm\n'
               + r'Plotting magnitude-squared of $\sum_{m_f}\left<n,j,f,m_f|E_{idx}\right>$')
     plt.ylabel('Summed probability')
     plt.xlabel('Arbitrary')
+    ### set up hover handler, based heavily on https://stackoverflow.com/a/47166787/9537054
+    annot = ax.annotate("", xy=(0,0), xytext=(-20,20),textcoords="offset points",
+                    bbox=dict(boxstyle="round", fc="w"),
+                    arrowprops=dict(arrowstyle="->"))
+    annot.set_visible(False)
+    # close over 
+    def motion_notify_handler(event):
+        is_vis = annot.get_visible()
+        if event.inaxes != ax:
+            return # not us
+        cont, det = line.contains(event)
+        if not cont:
+            if is_vis:
+                annot.set_visible(False)
+                fig.canvas.draw_idle()
+            return
+        ind = det['ind']
+        x, y = line.get_data()
+        annot.xy = (x[ind[0]], y[ind[0]])
+        text = "{}, {}".format(" ".join(list(map(str,ind))), 
+                           " ".join([labels[n] for n in ind]))
+        annot.set_text(text); annot.get_bbox_patch().set_alpha(0.4)
+        annot.set_visible(True); fig.canvas.draw_idle()
+    fig.canvas.mpl_connect('motion_notify_event', motion_notify_handler)
     print("state coeff 0: ", st[0], ' sq val: ', npla.norm(st[0])**2)
     print("state coeff 6: ", st[6], ' sq val: ', npla.norm(st[6])**2)
     #plt.colorbar(mplcm.ScalarMappable(norm=norm, cmap=cmap), ax=plt.gca())
