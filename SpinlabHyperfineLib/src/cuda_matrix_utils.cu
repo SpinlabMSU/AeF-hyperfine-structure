@@ -119,10 +119,12 @@ namespace aef {
 
         assert(init);
 
-        std::cout << "[Cuda-based diagonalizer] Resizing from " << saved_n << " rows to " << n << " rows." << std::endl;
+        std::cout << "[Cuda matrix backend] Resizing from " << saved_n << " rows to " << n << " rows." << std::endl;
         const size_t szV = sizeof(cuDoubleComplex) * n;
         const size_t szA = sizeof(cuDoubleComplex) * n * n;
         const size_t szW = sizeof(double) * n;
+        size_t szTotal = szV + 2 * szA + szW;
+        std::cout << "[Cuda matrix backend] Estimated initial allocation size is " << szTotal << "bytes = " << szTotal / (1 << 20) << "MiB" << std::endl;
 
         if (d_A) {
             checkCudaErrors(cudaFreeAsync(d_A, cu_stream));
@@ -162,11 +164,15 @@ namespace aef {
         const auto jobz = CUSOLVER_EIG_MODE_VECTOR;
         const auto uplo = CUBLAS_FILL_MODE_UPPER;
         checkCudaErrors(cusolverDnZheevd_bufferSize(cu_handle, jobz, uplo, n, d_A, n, d_W, &lwork));
-        std::cout << "[Cuda-based diagonalizer] zheev work size will be " << lwork * sizeof(cuDoubleComplex) << " bytes" << std::endl;
+        const size_t szWork = lwork * sizeof(cuDoubleComplex);
+        std::cout << "[Cuda matrix backend] zheev work size will be " << szWork << " bytes" << std::endl;
+        szTotal += szWork;
+        std::cout << "[Cuda matrix backend] Estimated total allocation size is " << szTotal << "bytes = " << szTotal / (1 << 20) << "MiB" << std::endl;
         checkCudaErrors(cudaMallocAsync(reinterpret_cast<void**>(&d_Work), lwork * sizeof(cuDoubleComplex), cu_stream));
 
         checkCudaErrors(cudaStreamSynchronize(cu_stream));
         saved_n = n;
+        std::cout << "[Cuda matrix backend] Resizing to size " << n << " complete" << std::endl;
     }
 
     void log_dev_props_info(std::ostream& out) {
