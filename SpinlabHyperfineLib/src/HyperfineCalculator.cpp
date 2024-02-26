@@ -17,6 +17,7 @@
 #include <pch.h>
 #include "aef/aef.h"
 #include <bitset>
+#include <ctype.h>
 
 namespace fs = std::filesystem;
 
@@ -238,22 +239,29 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
 #else
   auto &zin = in;
 #endif
-  uint8_t test[8] = {};
+  // read magic
+  uint8_t rmagic[8] = {};
   stream_pos = 0;
   std::cout << "READING MAGIC :";
-  for (int idx = 0; idx < sizeof(test); idx++) {
-    zin >> test[idx];
+  for (int idx = 0; idx < sizeof(rmagic); idx++) {
+    zin >> rmagic[idx];
     stream_pos++;
-    std::cout << test[idx];
+    // escape non-printable characters so text editors don't complain about "corrupt/non-textural files"
+    uint8_t c = rmagic[idx];
+    if (isprint(c)) {
+        std::cout << c;
+    } else {
+        std::cout << fmt::format("\\x{:2x}", c);
+    }
   }
   std::cout << std::endl;
   // zin.read((char*)test, 8);
-  if (memcmp(test, MAGIC, sizeof(MAGIC)) != 0) {
+  if (memcmp(rmagic, MAGIC, sizeof(MAGIC)) != 0) {
     union {
       uint8_t *u8;
       uint64_t *u64;
     } data;
-    data.u8 = test;
+    data.u8 = rmagic;
     uint64_t rmag = *data.u64;
     data.u8 = (uint8_t *)MAGIC;
     std::cout << "BAD MAGIC " << rmag << " GOOD WOULD BE " << *data.u64
@@ -264,7 +272,7 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
       uint8_t *u8;
       uint64_t *u64;
     } data;
-    data.u8 = test;
+    data.u8 = rmagic;
     std::cout << "READ CORRECT MAGIC " << *data.u64 << std::endl;
   }
   uint16_t raw_version = 0;
@@ -272,7 +280,7 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
   stream_pos += sizeof(raw_version);
   aefdat_version version = static_cast<aefdat_version>(raw_version);
 
-  std::cout << "READ VERSION" <<raw_version << std::endl;
+  std::cout << "READ VERSION " <<raw_version << std::endl;
 
   if (version > CURRENT_VERSION || version < MINIMUM_VERSION) {
     const char *reason =
