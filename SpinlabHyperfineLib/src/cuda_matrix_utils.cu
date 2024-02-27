@@ -28,7 +28,7 @@ namespace aef {
         // device eigenvalues pointer --> note: this is real bec
         double *d_W;
         cuDoubleComplex* d_V;
-        int lwork = 0;
+        int lWork = 0;
         cuDoubleComplex* d_Work = nullptr; // also used as temproary
         // host eigenvalues --> need this because 
         std::vector<double> h_W;
@@ -58,15 +58,15 @@ namespace aef {
     }
 
     static inline void ensure_work_capacity(size_t num_elts) {
-        if (num_elts <= lwork) {
+        if (num_elts <= lWork) {
             return;
         }
         std::cout << "[aef::cuda_utils] need to reallocate work buffer, "
-            "old size was " << lwork * sizeof(cuDoubleComplex) << " bytes, new size will be "
+            "old size was " << lWork * sizeof(cuDoubleComplex) << " bytes, new size will be "
             << num_elts * sizeof(cuDoubleComplex) << " bytes" << std::endl;
         checkCudaErrors(cudaFree(d_Work));
         checkCudaErrors(cudaMalloc(reinterpret_cast<void**>(&d_Work), num_elts* sizeof(cuDoubleComplex)));
-        lwork = num_elts;
+        lWork = num_elts;
         std::cout << "[aef::cuda_utils] allocated new work space on gpu" << std::endl;
     }
 
@@ -166,9 +166,10 @@ namespace aef {
         // pre-allocate workspace: first query how large it needs to be, then allocate
         const auto jobz = CUSOLVER_EIG_MODE_VECTOR;
         const auto uplo = CUBLAS_FILL_MODE_UPPER;
-        checkCudaErrors(cusolverDnZheevd_bufferSize(cu_handle, jobz, uplo, n, d_A, n, d_W, &lwork));
+        checkCudaErrors(cusolverDnZheevd_bufferSize(cu_handle, jobz, uplo, n, d_A, n, d_W, &lWork));
         const size_t szWork = lwork * sizeof(cuDoubleComplex);
-        std::cout << "[Cuda matrix backend] zheev work size will be " << szWork << " bytes" << std::endl;
+        const size_t szWork = lWork * sizeof(cuDoubleComplex);
+        std::cout << "[Cuda matrix backend] zheev work size will be " << szWork << " bytes, " << lWork << " elements." << std::endl;
         szTotal += szWork;
         std::cout << "[Cuda matrix backend] Estimated total allocation size is " << szTotal << "bytes = " << szTotal / (1 << 20) << "MiB" << std::endl;
         checkCudaErrors(cudaMallocAsync(reinterpret_cast<void**>(&d_Work), lwork * sizeof(cuDoubleComplex), cu_stream));
@@ -257,19 +258,19 @@ namespace aef {
         int job_lwork = 0;
         checkCudaErrors(cusolverDnZheevd_bufferSize(cu_handle, jobz, uplo, rows, d_A, rows, d_W, &job_lwork));
         // reallocate if necessary
-        if (job_lwork > lwork) {
+        if (job_lwork > lWork) {
             std::cout << "[Cuda-based diagonalizer] need to reallocate zheev work space, "
-                "old size was " << lwork * sizeof(cuDoubleComplex) << " bytes, new size will be " 
+                "old size was " << lWork * sizeof(cuDoubleComplex) << " bytes, new size will be " 
                 << job_lwork * sizeof(cuDoubleComplex) << " bytes" << std::endl;
             checkCudaErrors(cudaFree(d_Work));
             checkCudaErrors(cudaMalloc(reinterpret_cast<void**>(&d_Work), job_lwork * sizeof(cuDoubleComplex)));
-            lwork = job_lwork;
+            lWork = job_lwork;
             std::cout << "[Cuda-based diagonalizer] allocated new work space on gpu" << std::endl;
         } else {
-            std::cout << "[Cuda-based diagonalizer] using pre-allocated workspace of " << lwork * sizeof(cuDoubleComplex) << " bytes." << std::endl;
+            std::cout << "[Cuda-based diagonalizer] using pre-allocated workspace of " << lWork * sizeof(cuDoubleComplex) << " bytes." << std::endl;
         }
         // call cusolvers ZHEEV, then copy data back to CPU ram
-        auto status = (cusolverDnZheevd(cu_handle, jobz, uplo, rows, d_A, rows, d_W, d_Work, lwork, d_info));
+        auto status = (cusolverDnZheevd(cu_handle, jobz, uplo, rows, d_A, rows, d_W, d_Work, lWork, d_info));
         std::cout << "[Cuda-based diagonalizer] queued zheev execution" << std::endl;
         checkCudaErrors(cudaMemcpyAsync(&info, d_info, sizeof(int), cudaMemcpyDeviceToHost, cu_stream));
         std::cout << "[Cuda-based diagonalizer] scheduled zheev info output to be copied back to host" << std::endl;
