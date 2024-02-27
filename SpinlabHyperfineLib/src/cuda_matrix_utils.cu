@@ -146,6 +146,9 @@ namespace aef {
             d_info = nullptr;
         }
 
+        if (d_U) {
+            checkCudaErrors(cudaFreeAsync(d_U, cu_stream));
+        }
         if (n == 0) {
             // don't bother allocating zero-sized arrays
             h_W.resize(0);
