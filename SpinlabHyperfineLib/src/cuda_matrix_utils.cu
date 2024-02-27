@@ -146,9 +146,11 @@ namespace aef {
             d_info = nullptr;
         }
 
+#ifdef NO_MATRIX_ALLOCATION_HACK
         if (d_U) {
             checkCudaErrors(cudaFreeAsync(d_U, cu_stream));
         }
+#endif
         if (n == 0) {
             // don't bother allocating zero-sized arrays
             h_W.resize(0);
@@ -157,7 +159,9 @@ namespace aef {
         }
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_V), szV, cu_stream));
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_A), szA, cu_stream));
+#ifdef NO_MATRIX_ALLOCATION_HACK
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_U), szA, cu_stream));
+#endif
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_W), szW, cu_stream));
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_info), sizeof(int), cu_stream));
 
@@ -167,13 +171,31 @@ namespace aef {
         const auto jobz = CUSOLVER_EIG_MODE_VECTOR;
         const auto uplo = CUBLAS_FILL_MODE_UPPER;
         checkCudaErrors(cusolverDnZheevd_bufferSize(cu_handle, jobz, uplo, n, d_A, n, d_W, &lWork));
-        const size_t szWork = lwork * sizeof(cuDoubleComplex);
+#ifdef NO_MATRIX_ALLOCATION_HACK
         const size_t szWork = lWork * sizeof(cuDoubleComplex);
         std::cout << "[Cuda matrix backend] zheev work size will be " << szWork << " bytes, " << lWork << " elements." << std::endl;
         szTotal += szWork;
+#else
+        // Matrix allocation hack: 
+        const size_t szWork = max(lWork * sizeof(cuDoubleComplex), 2 * szA);
+        const bool bOverride = (szWork > lWork * sizeof(cuDoubleComplex));
+        const char* strOverride = bOverride ? "overrided by matrix hack" : "not overrided by matrix hack";
+        std::cout << "[Cuda matrix backend] zheev work size will be " << szWork << " bytes, " << strOverride << ", " <<
+            szA << " bytes re-used for d_U." << std::endl;
+        if (bOverride) {
+            const int lWorkNew = (szWork + sizeof(cuDoubleComplex) - 1) / sizeof(cuDoubleComplex);
+            std::cout << "[Cuda matrix backend]" << "zheev minimum-required lWork was " << lWork << " elements, will now be " << lWorkNew << " elements" << std::endl;
+            lWork = lWorkNew;
+        } else {
+            std::cout << "[Cuda matrix backend] lWork is " << lWork << " elements" << std::endl;
+        }
+        szTotal += (szWork - szA);
+#endif
         std::cout << "[Cuda matrix backend] Estimated total allocation size is " << szTotal << "bytes = " << szTotal / (1 << 20) << "MiB" << std::endl;
-        checkCudaErrors(cudaMallocAsync(reinterpret_cast<void**>(&d_Work), lwork * sizeof(cuDoubleComplex), cu_stream));
-
+        checkCudaErrors(cudaMallocAsync(reinterpret_cast<void**>(&d_Work), szWork, cu_stream));
+#ifndef NO_MATRIX_ALLOCATION_HACK
+        d_U = d_Work + szA;
+#endif
         checkCudaErrors(cudaStreamSynchronize(cu_stream));
         saved_n = n;
         std::cout << "[Cuda matrix backend] Resizing to size " << n << " complete" << std::endl;
