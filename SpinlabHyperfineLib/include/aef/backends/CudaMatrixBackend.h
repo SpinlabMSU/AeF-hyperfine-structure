@@ -1,9 +1,44 @@
 #pragma once
 #include "aef/MatrixOpBackend.h"
 
+#include <cuda_runtime.h>
+#include <cublas_v2.h>
+
+#include <cusolverDn.h>
+
 namespace aef::matrix {
-    class EigenMatrixBackend : public IMatrixOpBackend {
+    class CudaMatrixBackend : public IMatrixOpBackend {
+        // has initialize been called
+        bool _init = false;
+        // selected device ID
+        int devID = -1;
+        // Cuda handles
+        cudaStream_t cu_stream;
+        cusolverDnHandle_t cu_handle;
+        cublasHandle_t hCublas;
+        cudaDeviceProp deviceProps;
+        // device matrix pointer --> used both for input hermitian matrix and for evec output
+        cuDoubleComplex* d_A; // main matrix ptr
+        cuDoubleComplex* d_U; // used for unitary
+        // device eigenvalues pointer --> note: this is real because CUDA outputs that way
+        double* d_W;
+        cuDoubleComplex* d_V;
+        int lWork = 0;
+        cuDoubleComplex* d_Work = nullptr; // also used as temproary
+        // host eigenvalues --> need this because 
+        std::vector<double> h_W;
+        // device info ptr
+        int* d_info = nullptr;
+
+        //
+        int saved_n = -1;
+
+        ResultCode ensureWorkCapacity(size_t nElements);
+
     public:
+        // Note: constructor does not 
+        CudaMatrixBackend();
+        ~CudaMatrixBackend();
         /// <summary>
         /// Initialize the backend with optional arguments, specified the same
         /// </summary>
@@ -75,6 +110,6 @@ namespace aef::matrix {
         /// <param name="evals"></param>
         /// <param name="evecs"></param>
         virtual ResultCode diagonalize(Eigen::MatrixXcd& mat, Eigen::VectorXcd& evals, Eigen::MatrixXcd& evecs);
-
     };
-};
+
+}

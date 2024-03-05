@@ -330,6 +330,9 @@
     <ClInclude Include="include\aef\backends\EigenMatrixBackend.h">
       <Filter>Header Files\aef\backends</Filter>
     </ClInclude>
+    <ClInclude Include="include\aef\backends\CudaMatrixBackend.h">
+      <Filter>Header Files\aef\backends</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp">
@@ -369,6 +372,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\backends\EigenMatrixBackend.cpp">
+      <Filter>Source Files\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backends\CudaMatrixBackend.cpp">
       <Filter>Source Files\backends</Filter>
     </ClCompile>
   </ItemGroup>
