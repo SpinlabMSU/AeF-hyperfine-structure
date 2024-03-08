@@ -1,3 +1,8 @@
+#define _SILENCE_ALL_CXX23_DEPRECATION_WARNINGS
+#define _AEF_WILL_USE_CUDA_HEADERS
+// not defining this causes a bunch of errors about cusparse using deprecated types to declare deprecated APIs
+// when using MSVC.  
+#define DISABLE_CUSPARSE_DEPRECATED
 #include "pch.h"
 #include "aef/backends/CudaMatrixBackend.h"
 
@@ -7,7 +12,15 @@
 using aef::matrix::ResultCode;
 
 
-aef::matrix::CudaMatrixBackend::CudaMatrixBackend() {
+aef::matrix::CudaMatrixBackend::CudaMatrixBackend():
+    deviceProps() {
+    cu_handle = nullptr;
+    cu_stream = nullptr;
+    hCublas = nullptr;
+    d_A = nullptr;
+    d_U = nullptr;
+    d_W = nullptr;
+    d_V = nullptr;
     _init = false;
     devID = -1;
 }
@@ -19,7 +32,7 @@ ResultCode aef::matrix::CudaMatrixBackend::init(int argc, char** argv) {
     if (_init) {
         return ResultCode::S_NOTHING_PERFORMED;
     }
-    devID = cuda::findCudaDevice(argc, argv);
+    devID = cuda::findCudaDevice(argc, const_cast<const char**>(argv));
     checkCudaErrors(cudaGetDeviceProperties(&deviceProps, devID));
     checkCudaErrors(cudaSetDevice(devID));
     checkCudaErrors(cusolverDnCreate(&cu_handle));
@@ -38,6 +51,9 @@ ResultCode aef::matrix::CudaMatrixBackend::init(int argc, char** argv) {
 }
 
 ResultCode aef::matrix::CudaMatrixBackend::ensureWorkCapacity(size_t num_elts) {
+    if (!_init) {
+        return ResultCode::IllegalState;
+    }
     if (num_elts <= lWork) {
         return ResultCode::S_NOTHING_PERFORMED;
     }
@@ -55,10 +71,34 @@ ResultCode aef::matrix::CudaMatrixBackend::shutdown() {
     if (!_init) {
         return ResultCode::S_NOTHING_PERFORMED;
     }
-    return ResultCode();
+
+    cudaStreamSynchronize(cu_stream);
+
+#define freePtr(d_X) if (d_X) { checkCudaErrors(cudaFreeAsync(d_X, cu_stream)); d_X = nullptr;}
+    freePtr(d_A);
+    freePtr(d_U);
+    freePtr(d_W);
+    freePtr(d_V);
+    freePtr(d_info);
+    freePtr(d_Work);
+#undef freePtr
+
+    checkCudaErrors(cudaStreamSynchronize(cu_stream));
+    checkCudaErrors(cusolverDnDestroy(cu_handle));
+    cu_handle = nullptr;
+    checkCudaErrors(cublasDestroy(hCublas));
+    hCublas = nullptr;
+    checkCudaErrors(cudaStreamDestroy(cu_stream));
+    cu_stream = nullptr;
+    checkCudaErrors(cudaDeviceReset());
+    _init = false;
+    return ResultCode::Success;
 }
 
 ResultCode aef::matrix::CudaMatrixBackend::set_max_size(int nMaxDim) {
+    if (!_init) {
+        return ResultCode::IllegalState;
+    }
     int n = nMaxDim;
     assert(n >= 0);
     if (n == saved_n) {
@@ -103,7 +143,7 @@ ResultCode aef::matrix::CudaMatrixBackend::set_max_size(int nMaxDim) {
         // don't bother allocating zero-sized arrays
         h_W.resize(0);
         saved_n = n;
-        return;
+        return ResultCode::Success;
     }
     CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_V), szV, cu_stream));
     CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_A), szA, cu_stream));
@@ -152,6 +192,9 @@ ResultCode aef::matrix::CudaMatrixBackend::set_max_size(int nMaxDim) {
 }
 
 ResultCode aef::matrix::CudaMatrixBackend::multiply(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd& out) {
+    if (!_init) {
+        return ResultCode::IllegalState;
+    }
     const size_t As_size = sizeof(cuDoubleComplex) * A.size();
     const int rows = A.rows();
 
@@ -171,6 +214,9 @@ ResultCode aef::matrix::CudaMatrixBackend::multiply(Eigen::MatrixXcd& A, Eigen::
 }
 
 ResultCode aef::matrix::CudaMatrixBackend::commutator(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd& out) {
+    if (!_init) {
+        return ResultCode::IllegalState;
+    }
     const size_t As_size = sizeof(cuDoubleComplex) * A.size();
     const int rows = A.rows();
 
@@ -192,6 +238,9 @@ ResultCode aef::matrix::CudaMatrixBackend::commutator(Eigen::MatrixXcd& A, Eigen
 }
 
 ResultCode aef::matrix::CudaMatrixBackend::group_action(Eigen::MatrixXcd& out, Eigen::MatrixXcd& U, Eigen::MatrixXcd& A) {
+    if (!_init) {
+        return ResultCode::IllegalState;
+    }
     const size_t As_size = sizeof(cuDoubleComplex) * A.size();
     const int rows = A.rows();
 
@@ -212,19 +261,73 @@ ResultCode aef::matrix::CudaMatrixBackend::group_action(Eigen::MatrixXcd& out, E
 }
 
 ResultCode aef::matrix::CudaMatrixBackend::expectation_value(dcomplex& out, Eigen::VectorXcd& v1, Eigen::MatrixXcd& A) {
-    return ResultCode::Unimplemented; // will want to use cublasZgbmv
+    if (!_init) {
+        return ResultCode::IllegalState;
+    }
+
+    if (v1.rows() != A.cols() || A.rows() != A.cols()) {
+        // can't multiply 
+        return ResultCode::InvalidArgument;
+    }
+
+    const size_t As_size = sizeof(cuDoubleComplex) * A.size();
+    const size_t vs_size = sizeof(cuDoubleComplex) * v1.size();
+    const int dim = A.rows();
+
+    constexpr auto nop = CUBLAS_OP_N;
+    constexpr auto oph = CUBLAS_OP_C;
+    constexpr cuDoubleComplex one = { 1.0, 0.0 };
+    constexpr cuDoubleComplex zero = { 0.0, 0.0 };
+    cuDoubleComplex result;
+
+    checkCudaErrors(cudaMemcpyAsync(d_A, A.data() , As_size, cudaMemcpyHostToDevice, cu_stream));
+    checkCudaErrors(cudaMemcpyAsync(d_V, v1.data(), vs_size, cudaMemcpyHostToDevice, cu_stream));
+    checkCudaErrors(cublasZgemv(hCublas, nop, dim, dim, &one, d_A, dim, d_V, 1, &zero, d_Work, 1));
+    checkCudaErrors(cublasZdotc(hCublas, dim, d_V, 1, d_Work, 1, &result));
+    checkCudaErrors(cudaStreamSynchronize(cu_stream));
+    out = { result.x, result.y };
+    return ResultCode::Success;
 }
 
 ResultCode aef::matrix::CudaMatrixBackend::matrix_element(dcomplex& out, Eigen::VectorXcd& v1, Eigen::MatrixXcd& A, Eigen::VectorXcd& v2) {
-    return ResultCode::Unimplemented;
+    if (!_init) {
+        return ResultCode::IllegalState;
+    }
+
+    if (v1.rows() != A.cols() || A.rows() != v2.rows()) {
+        // can't multiply 
+        return ResultCode::InvalidArgument;
+    }
+
+    const size_t As_size = sizeof(cuDoubleComplex) * A.size();
+    const size_t vs_size = sizeof(cuDoubleComplex) * v1.size();
+    const int dim = A.rows();
+
+    constexpr auto nop = CUBLAS_OP_N;
+    constexpr auto oph = CUBLAS_OP_C;
+    constexpr cuDoubleComplex one = { 1.0, 0.0 };
+    constexpr cuDoubleComplex zero = { 0.0, 0.0 };
+    cuDoubleComplex result;
+
+    checkCudaErrors(cudaMemcpyAsync(d_A, A.data(), As_size, cudaMemcpyHostToDevice, cu_stream));
+    checkCudaErrors(cudaMemcpyAsync(d_V, v1.data(), vs_size, cudaMemcpyHostToDevice, cu_stream));
+    checkCudaErrors(cudaMemcpyAsync(d_U, v2.data(), vs_size, cudaMemcpyHostToDevice, cu_stream));
+    checkCudaErrors(cublasZgemv(hCublas, nop, dim, dim, &one, d_A, dim, d_V, 1, &zero, d_Work, 1));
+    checkCudaErrors(cublasZdotc(hCublas, dim, d_U, 1, d_Work, 1, &result));
+    checkCudaErrors(cudaStreamSynchronize(cu_stream));
+    out = { result.x, result.y };
+    return ResultCode::Success;
 }
 
 ResultCode aef::matrix::CudaMatrixBackend::diagonalize(Eigen::MatrixXcd& mat, Eigen::VectorXcd& evals, Eigen::MatrixXcd& evecs) {
+    if (!_init) {
+        return ResultCode::IllegalState;
+    }
     const int rows = (int)mat.rows();
 
     if (rows <= 0) {
         // don't do work on a zero-sized matrix
-        return;
+        return ResultCode::S_NOTHING_PERFORMED;
     }
 
     std::cout << "[aef::matrix::CudaMatrixBackend] Diagonalize called" << std::endl;

@@ -6,15 +6,16 @@ using aef::matrix::ResultCode;
 // this is a really simple backend.  If only the rest were this simple 
 
 ResultCode aef::matrix::EigenMatrixBackend::init(int argc, char** argv) {
-    return ResultCode::Success;
+    return ResultCode::S_NOTHING_PERFORMED;
 }
 
 ResultCode aef::matrix::EigenMatrixBackend::shutdown() {
-    return ResultCode::Success;
+    return ResultCode::S_NOTHING_PERFORMED;
 }
 
 ResultCode aef::matrix::EigenMatrixBackend::set_max_size(int nMaxDim) {
-    return ResultCode::Success;
+    // there aren't any "device buffers" 
+    return ResultCode::S_NOTHING_PERFORMED;
 }
 
 ResultCode aef::matrix::EigenMatrixBackend::multiply(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd& out) {
