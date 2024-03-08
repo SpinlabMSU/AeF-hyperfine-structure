@@ -814,7 +814,8 @@ int cuda::gpuGetMaxGflopsDeviceId() {
         fprintf(stderr,
             "gpuGetMaxGflopsDeviceId() CUDA error:"
             " all devices have compute mode prohibited.\n");
-        exit(EXIT_FAILURE);
+        //exit(EXIT_FAILURE);
+        return -1;
     }
     std::cout << "Max perf device is " << max_perf_device << std::endl;
     return max_perf_device;
@@ -830,32 +831,30 @@ int cuda::findCudaDevice(int argc, const char** argv) {
 
         if (devID < 0) {
             printf("Invalid command line parameter\n ");
-            exit(EXIT_FAILURE);
+            //exit(EXIT_FAILURE);
+            return -1;
         } else {
             std::cout << "Picking device with ID " << devID << " per command line arg."
                 << std::endl;
             devID = gpuDeviceInit(devID);
-            if (devID < 0) {
-                printf("exiting...\n");
-                exit(EXIT_FAILURE);
+            if (devID > 0) {
+                return devID;
             }
         }
-    } else {
-        // Otherwise pick the device with highest Gflops/s
-        devID = gpuGetMaxGflopsDeviceId();
-        checkCudaErrors(cudaSetDevice(devID));
-        int major = 0, minor = 0;
-        checkCudaErrors(cudaDeviceGetAttribute(&major, cudaDevAttrComputeCapabilityMajor, devID));
-        checkCudaErrors(cudaDeviceGetAttribute(&minor, cudaDevAttrComputeCapabilityMinor, devID));
-        #ifdef __CUDACC__
-        printf("GPU Device %d: \"%s\" with compute capability %d.%d\n\n",
-            devID, _ConvertSMVer2ArchName(major, minor), major, minor);
-        #else
-        std::cout << std::format("GPU Device {}: \"{}\" with compute capability {}.{}\n", devID, 
-                                 _ConvertSMVer2ArchName(major, minor), major, minor) << std::endl;
-        #endif
     }
-
+    // Otherwise pick the device with highest Gflops/s
+    devID = gpuGetMaxGflopsDeviceId();
+    checkCudaErrors(cudaSetDevice(devID));
+    int major = 0, minor = 0;
+    checkCudaErrors(cudaDeviceGetAttribute(&major, cudaDevAttrComputeCapabilityMajor, devID));
+    checkCudaErrors(cudaDeviceGetAttribute(&minor, cudaDevAttrComputeCapabilityMinor, devID));
+    #ifdef __CUDACC__
+    printf("GPU Device %d: \"%s\" with compute capability %d.%d\n\n",
+        devID, _ConvertSMVer2ArchName(major, minor), major, minor);
+    #else
+    std::cout << std::format("GPU Device {}: \"{}\" with compute capability {}.{}\n", devID, 
+                                _ConvertSMVer2ArchName(major, minor), major, minor) << std::endl;
+    #endif
     return devID;
 }
 

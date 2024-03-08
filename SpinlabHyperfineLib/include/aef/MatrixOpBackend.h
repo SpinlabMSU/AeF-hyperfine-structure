@@ -116,7 +116,7 @@ namespace aef::matrix {
     /// <summary>
     /// Potential Backends -- right now only
     /// </summary>
-    enum class BackendTypes:int32_t {
+    enum class BackendType:int32_t {
         Invalid = 0,
         // default CPU-based backend
         EigenCPU = 1,

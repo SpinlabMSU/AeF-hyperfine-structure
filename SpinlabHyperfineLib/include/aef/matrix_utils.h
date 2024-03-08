@@ -28,6 +28,94 @@
 #include <complex>
 #include <numbers>
 #include <Eigen/Eigen>
+#include <aef/MatrixOpBackend.h>
+
+namespace aef::matrix {
+    ResultCode init(BackendType hint, int argc, char** argv);
+    IMatrixOpBackend *get_backend();
+    // always
+    IMatrixOpBackend *get_fallback_backend();
+
+    /// <summary>
+    /// Close out the backend
+    /// </summary>
+    /// <returns>Result code</returns>
+    ResultCode shutdown();
+
+    /// <summary>
+    /// Allocate enough space for 
+    /// </summary>
+    /// <param name="nMaxDim">Maximum matrix dimension</param>
+    /// <returns>Result code</returns>
+    ResultCode set_max_size(int nMaxDim) {
+        return get_backend()->set_max_size(nMaxDim);
+    }
+
+    /// <summary>
+    /// Multiplies two matricies
+    /// </summary>
+    /// <param name="A"></param>
+    /// <param name="B"></param>
+    /// <param name="out"></param>
+    /// <returns>Result code</returns>
+    ResultCode multiply(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd& out) {
+        return get_backend()->multiply(A, B, out);
+    }
+
+    /// <summary>
+    /// Computes the commutator [A, B]
+    /// </summary>
+    /// <param name="A"></param>
+    /// <param name="B"></param>
+    /// <param name="out"></param>
+    /// <returns></returns>
+    ResultCode commutator(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd& out) {
+        return get_backend()->commutator(A, B, out);
+    }
+
+    /// <summary>
+    /// Computes the "group action" UAU^{-1} of 
+    /// </summary>
+    /// <param name="U">A unitary matrix</param>
+    /// <param name="A">A general matrix</param>
+    /// <param name="out">The output matrix</param>
+    /// <returns>Result code</returns>
+    ResultCode group_action(Eigen::MatrixXcd& out, Eigen::MatrixXcd& U, Eigen::MatrixXcd& A) {
+        return get_backend()->group_action(out, U, A);
+    }
+    /// <summary>
+    /// Calculates the expectation value of operator A in state v1
+    /// </summary>
+    /// <param name="out">expectation value</param>
+    /// <param name="v1"></param>
+    /// <param name="A"></param>
+    /// <returns></returns>
+    ResultCode expectation_value(dcomplex& out, Eigen::VectorXcd& v1, Eigen::MatrixXcd& A) {
+        return get_backend()->expectation_value(out, v1, A);
+    }
+    /// <summary>
+    /// Calculates the matrix element <v
+    /// </summary>
+    /// <param name="out"></param>
+    /// <param name="v1"></param>
+    /// <param name="A"></param>
+    /// <param name="v2"></param>
+    /// <returns></returns>
+    ResultCode matrix_element(dcomplex& out, Eigen::VectorXcd& v1, Eigen::MatrixXcd& A, Eigen::VectorXcd& v2) {
+        return get_backend()->matrix_element(out, v1, A, v2);
+    }
+
+    /// <summary>
+    /// Diagonalizes complex Hermitian matricies (ZHEEV)
+    /// </summary>
+    /// <param name="mat">The matrix to diagonalize, must be hermitian, not overwiten</param>
+    /// <param name="evals"></param>
+    /// <param name="evecs"></param>
+    ResultCode diagonalize(Eigen::MatrixXcd& mat, Eigen::VectorXcd& evals, Eigen::MatrixXcd& evecs) {
+        return get_backend()->diagonalize(mat, evals, evecs);
+    }
+};
+
 
 namespace aef {
     /// <summary>

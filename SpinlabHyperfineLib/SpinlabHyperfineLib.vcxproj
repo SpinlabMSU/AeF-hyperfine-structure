@@ -329,6 +329,7 @@
     <ClCompile Include="src\j_basis_vec.cpp" />
     <ClCompile Include="src\LogRedirector.cpp" />
     <ClCompile Include="src\MatrixOpBackend.cpp" />
+    <ClCompile Include="src\matrix_utils.cpp" />
     <ClCompile Include="src\MolecularSystem.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>

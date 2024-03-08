@@ -33,6 +33,11 @@ ResultCode aef::matrix::CudaMatrixBackend::init(int argc, char** argv) {
         return ResultCode::S_NOTHING_PERFORMED;
     }
     devID = cuda::findCudaDevice(argc, const_cast<const char**>(argv));
+
+    if (devID < 0) {
+        return ResultCode::NotAvailable;
+    }
+
     checkCudaErrors(cudaGetDeviceProperties(&deviceProps, devID));
     checkCudaErrors(cudaSetDevice(devID));
     checkCudaErrors(cusolverDnCreate(&cu_handle));
