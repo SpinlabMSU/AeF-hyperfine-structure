@@ -47,7 +47,7 @@ namespace aef::matrix {
     /// </summary>
     /// <param name="nMaxDim">Maximum matrix dimension</param>
     /// <returns>Result code</returns>
-    ResultCode set_max_size(int nMaxDim) {
+    inline ResultCode set_max_size(int nMaxDim) {
         return get_backend()->set_max_size(nMaxDim);
     }
 
@@ -58,7 +58,7 @@ namespace aef::matrix {
     /// <param name="B"></param>
     /// <param name="out"></param>
     /// <returns>Result code</returns>
-    ResultCode multiply(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd& out) {
+    inline ResultCode multiply(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd& out) {
         return get_backend()->multiply(A, B, out);
     }
 
@@ -69,9 +69,20 @@ namespace aef::matrix {
     /// <param name="B"></param>
     /// <param name="out"></param>
     /// <returns></returns>
-    ResultCode commutator(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd& out) {
+    inline ResultCode commutator(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd& out) {
         return get_backend()->commutator(A, B, out);
     }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="out"></param>
+    /// <param name="A"></param>
+    /// <param name="B"></param>
+    /// <param name="workspace"></param>
+    /// <returns></returns>
+    ResultCode commutes(bool &out, Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd *workspace=nullptr, double prec=1e-8);
+    bool commutes(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd *workspace=nullptr, double prec = 1e-8);
 
     /// <summary>
     /// Computes the "group action" UAU^{-1} of 
@@ -80,7 +91,7 @@ namespace aef::matrix {
     /// <param name="A">A general matrix</param>
     /// <param name="out">The output matrix</param>
     /// <returns>Result code</returns>
-    ResultCode group_action(Eigen::MatrixXcd& out, Eigen::MatrixXcd& U, Eigen::MatrixXcd& A) {
+    inline ResultCode group_action(Eigen::MatrixXcd& out, Eigen::MatrixXcd& U, Eigen::MatrixXcd& A) {
         return get_backend()->group_action(out, U, A);
     }
     /// <summary>
@@ -90,7 +101,7 @@ namespace aef::matrix {
     /// <param name="v1"></param>
     /// <param name="A"></param>
     /// <returns></returns>
-    ResultCode expectation_value(dcomplex& out, Eigen::VectorXcd& v1, Eigen::MatrixXcd& A) {
+    inline ResultCode expectation_value(dcomplex& out, Eigen::VectorXcd& v1, Eigen::MatrixXcd& A) {
         return get_backend()->expectation_value(out, v1, A);
     }
     /// <summary>
@@ -101,7 +112,7 @@ namespace aef::matrix {
     /// <param name="A"></param>
     /// <param name="v2"></param>
     /// <returns></returns>
-    ResultCode matrix_element(dcomplex& out, Eigen::VectorXcd& v1, Eigen::MatrixXcd& A, Eigen::VectorXcd& v2) {
+    inline ResultCode matrix_element(dcomplex& out, Eigen::VectorXcd& v1, Eigen::MatrixXcd& A, Eigen::VectorXcd& v2) {
         return get_backend()->matrix_element(out, v1, A, v2);
     }
 
@@ -111,48 +122,13 @@ namespace aef::matrix {
     /// <param name="mat">The matrix to diagonalize, must be hermitian, not overwiten</param>
     /// <param name="evals"></param>
     /// <param name="evecs"></param>
-    ResultCode diagonalize(Eigen::MatrixXcd& mat, Eigen::VectorXcd& evals, Eigen::MatrixXcd& evecs) {
+    inline ResultCode diagonalize(Eigen::MatrixXcd& mat, Eigen::VectorXcd& evals, Eigen::MatrixXcd& evecs) {
         return get_backend()->diagonalize(mat, evals, evecs);
     }
 };
 
 
 namespace aef {
-    /// <summary>
-    /// Initializes cuda
-    /// </summary>
-    /// <param name="argc">Argument count</param>
-    /// <param name="argv">Argument list pointer</param>
-    /// <returns>True if initializing cuda succeded, false otherwise (note: as currently implemented, actually just crashes)</returns>
-    bool init_cuda(int argc, const char** argv);
-    /// <summary>
-    /// Shuts down cuda
-    /// </summary>
-    /// <returns></returns>
-    bool shutdown_cuda();
-    
-    bool is_cuda_initialized();
-
-    /// <summary>
-    /// Sets the size of the GPU-side CUDA buffers
-    /// </summary>
-    /// <param name="n"></param>
-    void cuda_resize(int n);
-
-    void log_dev_props_info(std::ostream& out);
-
-    dcomplex cuda_expectation_value(Eigen::VectorXcd& v1, Eigen::MatrixXcd& A, Eigen::MatrixXcd& v2);
-    dcomplex cuda_expectation_value(Eigen::VectorXcd& v1, Eigen::MatrixXcd& A);
-    void cuda_expectation_values(Eigen::MatrixXcd& U, Eigen::MatrixXcd& A, Eigen::MatrixXcd &out);
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="mat"></param>
-    /// <param name="evals"></param>
-    /// <param name="evecs"></param>
-    void diagonalize(Eigen::MatrixXcd& mat, Eigen::VectorXcd& evals, Eigen::MatrixXcd& evecs);
-
     /// <summary>
     /// Simultaneously diagonalizes matricies A and B under the following two
     /// assumptions:

@@ -36,6 +36,38 @@ namespace aef {
     typedef double spin;
     constexpr spin half = spin(0.5);
     typedef MSVC_ALIGN(16) std::complex<double> dcomplex ATTR_ALIGN(16);
+
+    /// <summary>
+    /// Result codes
+    /// A result code indicates success if it is non-negative
+    /// </summary>
+    enum class ResultCode : int32_t {
+        // Successful result codes
+        Success = 0, // non-detailed
+        S_NOTHING_PERFORMED,
+        NumSuccessfulCodes,
+        /// error result codes
+        OutOfMemory = -1,
+        Timeout = -2,
+        InvalidArgument = -3,
+        IllegalState = -4,
+        Unimplemented = -5,
+        InternalError = -6,
+        HardwareFailure = -7,
+        NotAvailable = -8,
+        _LastErrorCodeP1,
+        NumErrorCodes = OutOfMemory - (_LastErrorCodeP1 - 1) + 1,
+        NumCodes = NumSuccessfulCodes + NumErrorCodes,
+    };
+
+    inline bool succeeded(ResultCode c) {
+        return (static_cast<int32_t>(c)) > 0;
+    }
+
+    inline bool failed(ResultCode c) {
+        return !succeeded(c);
+    }
+
 }
 using aef::spin;
 using aef::dcomplex;

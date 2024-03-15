@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
 #ifndef DONT_USE_CUDA
     constexpr bool diag_use_cuda = true;
     std::cout << "Initializing CUDA" << std::endl;
-    aef::init_cuda(argc, (const char**)argv);
+    aef::matrix::init(aef::matrix::BackendType::Invalid, argc, argv);
     std::cout << "Successfully initialized CUDA" << std::endl;
 #else
     constexpr bool diag_use_cuda = false;
@@ -221,7 +221,7 @@ int main(int argc, char **argv) {
         std::cout << fmt::format(
             "Setting up CUDA device-side buffers with nRows={} after loading matrix elements",
             calc.nBasisElts) << std::endl;
-        aef::cuda_resize(calc.nBasisElts);
+        aef::matrix::set_max_size(calc.nBasisElts);
         std::cout << "Finished CUDA device-side buffer setup" << std::endl;
 #endif
 
@@ -251,7 +251,7 @@ int main(int argc, char **argv) {
 
     }
 
-    std::cout << "does H_tot commute with F_z? " << aef::commutes(calc.H_tot, calc.F_z) << std::endl;
+    std::cout << "does H_tot commute with F_z? " << aef::matrix::commutes(calc.H_tot, calc.F_z) << std::endl;
     std::cout << "does H_stk commute with F_z? " << aef::commutes(calc.H_stk, calc.F_z) << std::endl;
     std::cout << "does H_hfs commute with F_z? " << aef::commutes(calc.H_hfs, calc.F_z) << std::endl;
 

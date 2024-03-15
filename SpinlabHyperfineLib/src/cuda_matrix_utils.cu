@@ -2,7 +2,7 @@
 
 #define _SILENCE_ALL_CXX23_DEPRECATION_WARNINGS
 #define _AEF_WILL_USE_CUDA_HEADERS
-#include "aef/matrix_utils.h"
+#include "aef/cuda_matrix_utils.h"
 
 #include <cuda_runtime.h>
 #include <cublas_v2.h>

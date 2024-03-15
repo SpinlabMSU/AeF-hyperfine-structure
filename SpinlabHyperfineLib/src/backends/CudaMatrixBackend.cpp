@@ -339,7 +339,7 @@ ResultCode aef::matrix::CudaMatrixBackend::diagonalize(Eigen::MatrixXcd& mat, Ei
 
     if (rows > saved_n || saved_n <= 0) {
         std::cout << "[aef::matrix::CudaMatrixBackend] Automatically resizing from " << saved_n << " rows to " << rows << " rows." << std::endl;
-        cuda_resize(rows);
+        this->set_max_size(rows);
     }
 
     const size_t mat_size = sizeof(cuDoubleComplex) * mat.size();
