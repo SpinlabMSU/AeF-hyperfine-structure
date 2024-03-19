@@ -3,7 +3,7 @@
 #define _SILENCE_ALL_CXX23_DEPRECATION_WARNINGS
 #define _AEF_WILL_USE_CUDA_HEADERS
 #include "aef/matrix_utils.h"
-
+#include <algorithm>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
@@ -177,7 +177,7 @@ namespace aef {
         szTotal += szWork;
 #else
         // Matrix allocation hack: 
-        const size_t szWork = max(lWork * sizeof(cuDoubleComplex), 2 * szA);
+        const size_t szWork = std::max(lWork * sizeof(cuDoubleComplex), 2 * szA);
         const bool bOverride = (szWork > lWork * sizeof(cuDoubleComplex));
         const char* strOverride = bOverride ? "overrided by matrix hack" : "not overrided by matrix hack";
         std::cout << "[Cuda matrix backend] zheev work size will be " << szWork << " bytes, " << strOverride << ", " <<
