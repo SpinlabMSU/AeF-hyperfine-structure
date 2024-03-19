@@ -29,32 +29,36 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>Intel C++ Compiler 2023</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <EnableDPCppRuntimeEnvironment>true</EnableDPCppRuntimeEnvironment>
+    <UseInteloneMKL>Parallel</UseInteloneMKL>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>Intel C++ Compiler 2023</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <EnableDPCppRuntimeEnvironment>true</EnableDPCppRuntimeEnvironment>
+    <UseInteloneMKL>Parallel</UseInteloneMKL>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>Intel C++ Compiler 2023</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <EnableDPCppRuntimeEnvironment>true</EnableDPCppRuntimeEnvironment>
+    <UseInteloneMKL>Parallel</UseInteloneMKL>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>Intel C++ Compiler 2023</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <EnableDPCppRuntimeEnvironment>true</EnableDPCppRuntimeEnvironment>
+    <UseInteloneMKL>Parallel</UseInteloneMKL>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -78,18 +82,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(ProjectDir)include;$(SolutionDir)include;$(IncludePath)</IncludePath>
     <PublicIncludeDirectories>$(ProjectDir)include;$(PublicIncludeDirectories)</PublicIncludeDirectories>
+    <ExternalIncludePath>C:\Program Files %28x86%29\Intel\oneAPI\mkl\2023.0.0\include;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(ProjectDir)include;$(SolutionDir)include;$(IncludePath)</IncludePath>
     <PublicIncludeDirectories>$(ProjectDir)include;$(PublicIncludeDirectories)</PublicIncludeDirectories>
+    <ExternalIncludePath>C:\Program Files %28x86%29\Intel\oneAPI\mkl\2023.0.0\include;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(ProjectDir)include;$(SolutionDir)include;$(IncludePath)</IncludePath>
     <PublicIncludeDirectories>$(ProjectDir)include;$(PublicIncludeDirectories)</PublicIncludeDirectories>
+    <ExternalIncludePath>C:\Program Files %28x86%29\Intel\oneAPI\mkl\2023.0.0\include;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(ProjectDir)include;$(SolutionDir)include;$(IncludePath)</IncludePath>
     <PublicIncludeDirectories>$(ProjectDir)include;$(PublicIncludeDirectories)</PublicIncludeDirectories>
+    <ExternalIncludePath>C:\Program Files %28x86%29\Intel\oneAPI\mkl\2023.0.0\include;$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -103,6 +111,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <BuildStlModules>false</BuildStlModules>
       <OpenMPSupport>true</OpenMPSupport>
+      <UseMSVC>true</UseMSVC>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -128,6 +137,7 @@
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <BuildStlModules>false</BuildStlModules>
       <OpenMPSupport>true</OpenMPSupport>
+      <UseMSVC>true</UseMSVC>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -154,6 +164,7 @@
       <BuildStlModules>false</BuildStlModules>
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalIncludeDirectories>$(CudaToolkitIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <UseMSVC>true</UseMSVC>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -180,6 +191,7 @@
       <BuildStlModules>false</BuildStlModules>
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalIncludeDirectories>$(CudaToolkitIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <UseMSVC>true</UseMSVC>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -198,7 +210,9 @@
     <ClInclude Include="include\aef\aef.h" />
     <ClInclude Include="include\aef\aef_types.h" />
     <ClInclude Include="include\aef\aef_utils.h" />
+    <ClInclude Include="include\aef\backends\CudaMatrixBackend.h" />
     <ClInclude Include="include\aef\backends\EigenMatrixBackend.h" />
+    <ClInclude Include="include\aef\backends\OneMklMatrixBackend.h" />
     <ClInclude Include="include\aef\baf_constants.hpp" />
     <ClInclude Include="include\aef\debug_stream.h" />
     <ClInclude Include="include\aef\HyperfineCalculator.hpp" />
@@ -293,7 +307,23 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\aef_utils.cpp" />
+    <ClCompile Include="src\backends\CudaMatrixBackend.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\backends\EigenMatrixBackend.cpp" />
+    <ClCompile Include="src\backends\OneMklMatrixBackend.cpp">
+      <UseMSVC Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</UseMSVC>
+      <UseMSVC Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</UseMSVC>
+      <UseMSVC Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</UseMSVC>
+      <UseMSVC Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</UseMSVC>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\HyperfineCalculator.cpp" />
     <ClCompile Include="src\jf_basis_vec.cpp" />
     <ClCompile Include="src\j_basis_vec.cpp" />

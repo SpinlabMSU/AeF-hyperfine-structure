@@ -53,6 +53,11 @@ namespace aef {
         checkCudaErrors(cublasCreate(&hCublas));
         checkCudaErrors(cublasSetStream(hCublas, cu_stream));
         saved_n = -1;
+
+        int val;
+        checkCudaErrors(cudaDeviceGetAttribute(&val, cudaDevAttrMemoryPoolsSupported, devID));
+        std::cout << "Cuda attribute memory pool supported is " << val << " for device " << devID << std::endl;
+
         init = true;
         return true;
     }

@@ -2,8 +2,12 @@
 #include "aef/MatrixOpBackend.h"
 
 namespace aef::matrix {
-    class EigenMatrixBackend : public IMatrixOpBackend {
+    struct OneMKLdata;
+    class OneMklMatrixBackend : public IMatrixOpBackend {
+        OneMKLdata* ptr;
     public:
+        OneMklMatrixBackend();
+        ~OneMklMatrixBackend();
         /// <summary>
         /// Initialize the backend with optional arguments, specified the same
         /// </summary>
@@ -75,6 +79,5 @@ namespace aef::matrix {
         /// <param name="evals"></param>
         /// <param name="evecs"></param>
         virtual ResultCode diagonalize(Eigen::MatrixXcd& mat, Eigen::VectorXcd& evals, Eigen::MatrixXcd& evecs);
-
     };
 };
