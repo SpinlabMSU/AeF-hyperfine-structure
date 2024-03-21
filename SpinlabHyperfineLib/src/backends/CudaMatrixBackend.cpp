@@ -105,7 +105,7 @@ ResultCode aef::matrix::CudaMatrixBackend::set_max_size(int nMaxDim) {
         return ResultCode::S_NOTHING_PERFORMED;
     }
 
-    assert(init);
+    assert(_init);
 
     std::cout << "[Cuda matrix backend] Resizing from " << saved_n << " rows to " << n << " rows." << std::endl;
     const size_t szV = sizeof(cuDoubleComplex) * n;
