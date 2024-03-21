@@ -1,8 +1,24 @@
 #include "pch.h"
 #include "aef/backends/OneMklMatrixBackend.h"
-
-#ifdef _USE_ONEAPI
+#ifdef HAVE_MKL
 #include "oneapi/mkl.hpp"
+#else
+// just enough to compile for right now 
+namespace sycl{
+    void *gpu_selector(){
+        return nullptr;
+    }
+    struct device{
+        device(void *v){
+            (void)v;
+        }
+    };
+    struct queue{
+        queue(device& d){
+            (void)d;
+        }
+    };
+}
 #endif
 
 using aef::matrix::ResultCode;

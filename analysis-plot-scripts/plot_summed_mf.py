@@ -143,7 +143,7 @@ def plot_state(st, stnam, fig:plt.Figure=None, typ = 'mag', cmap='viridis', nmax
     line, = plt.plot(njf_sums, 'o')
     ax = plt.gca()
     plt.yscale('log')
-    ax.set_ylim(bottom=1e-12)
+    ax.set_ylim(bottom=1e-16)
     plt.title(f'Summed-$m_f$ j-basis state plot for state {stnam} of run {run.run}, E_z = {Ez} V/cm\n'
               + r'Plotting magnitude-squared of $\sum_{m_f}\left<n,j,f,m_f|E_{idx}\right>$')
     plt.ylabel('Summed probability')
