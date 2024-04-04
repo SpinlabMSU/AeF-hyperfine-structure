@@ -279,11 +279,11 @@ void output_state_info(std::ostream& output, HyperfineCalculator& calc
     Eigen::VectorXcd d10s;
     Eigen::VectorXcd d11s;
     Eigen::VectorXcd d1ts;
-    aef::matrix::group_action(calc.Vs, calc.d10, vals);
+    aef::matrix::group_action(vals, calc.Vs, calc.d10);
     d10s = vals.diagonal();
-    aef::matrix::group_action(calc.Vs, calc.d11, vals);
+    aef::matrix::group_action(vals, calc.Vs, calc.d11);
     d11s = vals.diagonal();
-    aef::matrix::group_action(calc.Vs, calc.d1t, vals);
+    aef::matrix::group_action(vals, calc.Vs, calc.d1t);
     d1ts = vals.diagonal();
 #endif
     for (size_t n = 0; n < calc.nBasisElts; n++) {
