@@ -38,9 +38,6 @@ namespace aef {
     typedef MSVC_ALIGN(16) std::complex<double> dcomplex ATTR_ALIGN(16);
 }
 using aef::spin;
-#ifndef _AEF_WILL_USE_CUDA_HEADERS
-using aef::half;
-#endif
 using aef::dcomplex;
 
 #endif

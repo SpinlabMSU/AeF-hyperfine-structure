@@ -3,7 +3,7 @@
 #define _SILENCE_ALL_CXX23_DEPRECATION_WARNINGS
 #define _AEF_WILL_USE_CUDA_HEADERS
 #include "aef/matrix_utils.h"
-
+#include <algorithm>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
 
@@ -28,7 +28,7 @@ namespace aef {
         // device eigenvalues pointer --> note: this is real bec
         double *d_W;
         cuDoubleComplex* d_V;
-        int lwork = 0;
+        int lWork = 0;
         cuDoubleComplex* d_Work = nullptr; // also used as temproary
         // host eigenvalues --> need this because 
         std::vector<double> h_W;
@@ -53,20 +53,25 @@ namespace aef {
         checkCudaErrors(cublasCreate(&hCublas));
         checkCudaErrors(cublasSetStream(hCublas, cu_stream));
         saved_n = -1;
+
+        int val;
+        checkCudaErrors(cudaDeviceGetAttribute(&val, cudaDevAttrMemoryPoolsSupported, devID));
+        std::cout << "Cuda attribute memory pool supported is " << val << " for device " << devID << std::endl;
+
         init = true;
         return true;
     }
 
     static inline void ensure_work_capacity(size_t num_elts) {
-        if (num_elts <= lwork) {
+        if (num_elts <= lWork) {
             return;
         }
         std::cout << "[aef::cuda_utils] need to reallocate work buffer, "
-            "old size was " << lwork * sizeof(cuDoubleComplex) << " bytes, new size will be "
+            "old size was " << lWork * sizeof(cuDoubleComplex) << " bytes, new size will be "
             << num_elts * sizeof(cuDoubleComplex) << " bytes" << std::endl;
         checkCudaErrors(cudaFree(d_Work));
         checkCudaErrors(cudaMalloc(reinterpret_cast<void**>(&d_Work), num_elts* sizeof(cuDoubleComplex)));
-        lwork = num_elts;
+        lWork = num_elts;
         std::cout << "[aef::cuda_utils] allocated new work space on gpu" << std::endl;
     }
 
@@ -119,10 +124,12 @@ namespace aef {
 
         assert(init);
 
-        std::cout << "[Cuda-based diagonalizer] Resizing from " << saved_n << " rows to " << n << " rows." << std::endl;
+        std::cout << "[Cuda matrix backend] Resizing from " << saved_n << " rows to " << n << " rows." << std::endl;
         const size_t szV = sizeof(cuDoubleComplex) * n;
         const size_t szA = sizeof(cuDoubleComplex) * n * n;
         const size_t szW = sizeof(double) * n;
+        size_t szTotal = szV + 2 * szA + szW;
+        std::cout << "[Cuda matrix backend] Estimated initial allocation size is " << szTotal << "bytes = " << szTotal / (1 << 20) << "MiB" << std::endl;
 
         if (d_A) {
             checkCudaErrors(cudaFreeAsync(d_A, cu_stream));
@@ -144,6 +151,11 @@ namespace aef {
             d_info = nullptr;
         }
 
+#ifdef NO_MATRIX_ALLOCATION_HACK
+        if (d_U) {
+            checkCudaErrors(cudaFreeAsync(d_U, cu_stream));
+        }
+#endif
         if (n == 0) {
             // don't bother allocating zero-sized arrays
             h_W.resize(0);
@@ -152,7 +164,9 @@ namespace aef {
         }
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_V), szV, cu_stream));
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_A), szA, cu_stream));
+#ifdef NO_MATRIX_ALLOCATION_HACK
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_U), szA, cu_stream));
+#endif
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_W), szW, cu_stream));
         CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_info), sizeof(int), cu_stream));
 
@@ -161,12 +175,35 @@ namespace aef {
         // pre-allocate workspace: first query how large it needs to be, then allocate
         const auto jobz = CUSOLVER_EIG_MODE_VECTOR;
         const auto uplo = CUBLAS_FILL_MODE_UPPER;
-        checkCudaErrors(cusolverDnZheevd_bufferSize(cu_handle, jobz, uplo, n, d_A, n, d_W, &lwork));
-        std::cout << "[Cuda-based diagonalizer] zheev work size will be " << lwork * sizeof(cuDoubleComplex) << " bytes" << std::endl;
-        checkCudaErrors(cudaMallocAsync(reinterpret_cast<void**>(&d_Work), lwork * sizeof(cuDoubleComplex), cu_stream));
-
+        checkCudaErrors(cusolverDnZheevd_bufferSize(cu_handle, jobz, uplo, n, d_A, n, d_W, &lWork));
+#ifdef NO_MATRIX_ALLOCATION_HACK
+        const size_t szWork = lWork * sizeof(cuDoubleComplex);
+        std::cout << "[Cuda matrix backend] zheev work size will be " << szWork << " bytes, " << lWork << " elements." << std::endl;
+        szTotal += szWork;
+#else
+        // Matrix allocation hack: 
+        const size_t szWork = std::max(lWork * sizeof(cuDoubleComplex), 2 * szA);
+        const bool bOverride = (szWork > lWork * sizeof(cuDoubleComplex));
+        const char* strOverride = bOverride ? "overrided by matrix hack" : "not overrided by matrix hack";
+        std::cout << "[Cuda matrix backend] zheev work size will be " << szWork << " bytes, " << strOverride << ", " <<
+            szA << " bytes re-used for d_U." << std::endl;
+        if (bOverride) {
+            const int lWorkNew = (szWork + sizeof(cuDoubleComplex) - 1) / sizeof(cuDoubleComplex);
+            std::cout << "[Cuda matrix backend]" << "zheev minimum-required lWork was " << lWork << " elements, will now be " << lWorkNew << " elements" << std::endl;
+            lWork = lWorkNew;
+        } else {
+            std::cout << "[Cuda matrix backend] lWork is " << lWork << " elements" << std::endl;
+        }
+        szTotal += (szWork - szA);
+#endif
+        std::cout << "[Cuda matrix backend] Estimated total allocation size is " << szTotal << "bytes = " << szTotal / (1 << 20) << "MiB" << std::endl;
+        checkCudaErrors(cudaMallocAsync(reinterpret_cast<void**>(&d_Work), szWork, cu_stream));
+#ifndef NO_MATRIX_ALLOCATION_HACK
+        d_U = d_Work + szA;
+#endif
         checkCudaErrors(cudaStreamSynchronize(cu_stream));
         saved_n = n;
+        std::cout << "[Cuda matrix backend] Resizing to size " << n << " complete" << std::endl;
     }
 
     void log_dev_props_info(std::ostream& out) {
@@ -248,19 +285,19 @@ namespace aef {
         int job_lwork = 0;
         checkCudaErrors(cusolverDnZheevd_bufferSize(cu_handle, jobz, uplo, rows, d_A, rows, d_W, &job_lwork));
         // reallocate if necessary
-        if (job_lwork > lwork) {
+        if (job_lwork > lWork) {
             std::cout << "[Cuda-based diagonalizer] need to reallocate zheev work space, "
-                "old size was " << lwork * sizeof(cuDoubleComplex) << " bytes, new size will be " 
+                "old size was " << lWork * sizeof(cuDoubleComplex) << " bytes, new size will be " 
                 << job_lwork * sizeof(cuDoubleComplex) << " bytes" << std::endl;
             checkCudaErrors(cudaFree(d_Work));
             checkCudaErrors(cudaMalloc(reinterpret_cast<void**>(&d_Work), job_lwork * sizeof(cuDoubleComplex)));
-            lwork = job_lwork;
+            lWork = job_lwork;
             std::cout << "[Cuda-based diagonalizer] allocated new work space on gpu" << std::endl;
         } else {
-            std::cout << "[Cuda-based diagonalizer] using pre-allocated workspace of " << lwork * sizeof(cuDoubleComplex) << " bytes." << std::endl;
+            std::cout << "[Cuda-based diagonalizer] using pre-allocated workspace of " << lWork * sizeof(cuDoubleComplex) << " bytes." << std::endl;
         }
         // call cusolvers ZHEEV, then copy data back to CPU ram
-        auto status = (cusolverDnZheevd(cu_handle, jobz, uplo, rows, d_A, rows, d_W, d_Work, lwork, d_info));
+        auto status = (cusolverDnZheevd(cu_handle, jobz, uplo, rows, d_A, rows, d_W, d_Work, lWork, d_info));
         std::cout << "[Cuda-based diagonalizer] queued zheev execution" << std::endl;
         checkCudaErrors(cudaMemcpyAsync(&info, d_info, sizeof(int), cudaMemcpyDeviceToHost, cu_stream));
         std::cout << "[Cuda-based diagonalizer] scheduled zheev info output to be copied back to host" << std::endl;

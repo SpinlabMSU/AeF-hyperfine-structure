@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-## plot_state_jbasis.py -- plots the probability of each j-basis ket in
-## a given state. 
+## plot_state_jbasis.py -- plots the summed probabilities of all of the basis kets
+## of a given n,j,f triplet
 # This file is part of the AeF-hyperfine-structure program. 
     
 # AeF-hyperfine-structure is free software: you can redistribute it and/or
@@ -55,7 +55,7 @@ if len(sys.argv) > 2:
         Ez = float(sys.argv[2])
 
 df = run.parse_state_coeffs(Ez)
-pltdir = os.path.join(coeffdir, f'{Ez}')
+pltdir = os.path.join(coeffdir, f'{Ez}', 'mf_sum')
 os.makedirs(pltdir, exist_ok=True)
 
 nBasisElts = (len(df.keys()) - 1) // 2
@@ -66,6 +66,7 @@ plot_nmax = 4
 if len(sys.argv) > 3:
     plot_nmax = int(sys.argv[3])
 
+plot_nmax = run.nmax
 no_text = False
 if len(sys.argv) > 4:
    no_text = sys.argv[4].lower().startswith('no_text') 
@@ -111,44 +112,74 @@ def read_state(df, idx):
     print(f'magsq of {idx} is {prob_tot} w/ dev {dev}, rel_dev {rel_dev}')
     return ket
 
+def make_njf_list(n_max:int):
+    njfs = []    
+    for n in range(n_max):
+        for j in (n - 0.5, n + 0.5):
+            if j < 0: continue
+            for f in (j - 0.5, j + 0.5):
+                if f < 0: continue
+                njfs.append((n, j, f))
+    return njfs
+
+njfs = make_njf_list(plot_nmax)
+n_njfs = len(njfs)
+
 def plot_state(st, stnam, fig:plt.Figure=None, typ = 'mag', cmap='viridis', nmax=4):
     if fig == None:
         fig = plt.figure(figsize=(19.2, 12.42))#11.0*19.2/17.0))#19.2, 16.8)) #fig = plt.gcf()
-    # turn argument into colormap
-    norm = colors.LogNorm(1e-19, 1)
-    cmap = mpl.colormaps.get_cmap(cmap)
-    def f_mag(ax:plt.Axes, hst:baf_state.HyperfineState, idx:int, x:float, y:float):
-        k = npla.norm(st[idx])**2
-        #if k == 0: k = 1e-38
-        # get color from map
-        color = cmap(norm(k))
-        print(idx, hst, k, norm(k))
-        if not no_text:
-            ax.annotate(f'{k:.2e}\n{idx}', (x, y - 0.3), ha='center', size=8)
-        ax.plot(x, y, 'o', color=color, markersize=12)
-        return 1
-    njs = 0
-    for n in range(nmax):
-        nl = triangular_state_plotter.nlevel(n)
-        nl.draw_boxes(plt.gca(), njs, f_mag, no_text)
-        prev_njs = njs
-        njs += 5 if (n > 0) else 3
-        #plt.hlines(-5, prev_njs, njs - 0.5, color='k', linestyle='-', label=f'n={n}')
-        dx = ((njs - 0.5) - (prev_njs)) / 2
-        x = prev_njs + 0.5
-        #plt.text(x + dx, -4.5, f'n={n}', ha='right', va='center')
-    plt.title(f'J-basis-ket state plot for state {stnam} of run {run.run}, E_z = {Ez} V/cm\n'
-              + r'Plotting magnitude-squared of $\left<n,j,f,m_f|E_{idx}\right>$')
-    plt.ylabel('m_f')
+    #
+    hst = baf_state.HyperfineState(n=0,j=0,f=0,m_f=0)
+    njf_sums = np.zeros(n_njfs)
+    labels = []
+    for idx in range(n_njfs):
+        hst.n, hst.j, hst.f = njfs[idx]
+        sum_prob = 0.0
+        for hst.m_f in np.arange(-hst.f, hst.f + 1, 1):
+            prob = np.absolute(st[hst.index()])**2
+            sum_prob += prob
+        njf_sums[idx] = sum_prob
+        labels.append(f"|n={hst.n},j={hst.j},f={hst.f}>")
+    line, = plt.plot(njf_sums, 'o')
+    ax = plt.gca()
+    plt.yscale('log')
+    ax.set_ylim(bottom=1e-16)
+    plt.title(f'Summed-$m_f$ j-basis state plot for state {stnam} of run {run.run}, E_z = {Ez} V/cm\n'
+              + r'Plotting magnitude-squared of $\sum_{m_f}\left<n,j,f,m_f|E_{idx}\right>$')
+    plt.ylabel('Summed probability')
     plt.xlabel('Arbitrary')
+    ### set up hover handler, based heavily on https://stackoverflow.com/a/47166787/9537054
+    annot = ax.annotate("", xy=(0,0), xytext=(-20,20),textcoords="offset points",
+                    bbox=dict(boxstyle="round", fc="w"),
+                    arrowprops=dict(arrowstyle="->"))
+    annot.set_visible(False)
+    # close over 
+    def motion_notify_handler(event):
+        is_vis = annot.get_visible()
+        if event.inaxes != ax:
+            return # not us
+        cont, det = line.contains(event)
+        if not cont:
+            if is_vis:
+                annot.set_visible(False)
+                fig.canvas.draw_idle()
+            return
+        ind = det['ind']
+        x, y = line.get_data()
+        annot.xy = (x[ind[0]], y[ind[0]])
+        text = "{}, {}".format(" ".join(list(map(str,ind))), 
+                           " ".join([labels[n] for n in ind]))
+        annot.set_text(text); annot.get_bbox_patch().set_alpha(0.4)
+        annot.set_visible(True); fig.canvas.draw_idle()
+    fig.canvas.mpl_connect('motion_notify_event', motion_notify_handler)
     print("state coeff 0: ", st[0], ' sq val: ', npla.norm(st[0])**2)
     print("state coeff 6: ", st[6], ' sq val: ', npla.norm(st[6])**2)
-    plt.colorbar(mplcm.ScalarMappable(norm=norm, cmap=cmap), ax=plt.gca())
-    onam = os.path.join(run.cdir, f'{Ez}', f'{stnam}.png')
+    #plt.colorbar(mplcm.ScalarMappable(norm=norm, cmap=cmap), ax=plt.gca())
+    onam = os.path.join(pltdir, f'{stnam}.png')
     plt.savefig(onam)#'state_j-basis-plot.png')
 
 if __name__ == '__main__':
-    print(f'Plotting states from run {run.run}')
+    print(f'Plotting sum over m_f of probability of states from run {run.run}')
 
     pz_f00 = read_state(df, 0)
     pz_f10 = read_state(df, 1)

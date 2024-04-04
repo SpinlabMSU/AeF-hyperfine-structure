@@ -114,7 +114,7 @@ class nlevel:
         height = m_f #(m_f + f) + self.base_offset(gidx)
         return (gidx, height)
 
-    def draw_boxes(self, ax:plt.Axes, ofs:float=0, func=None):
+    def draw_boxes(self, ax:plt.Axes, ofs:float=0, func=None, no_text=False):
         """
         Misnomer -- draws the states associated with this n level, including the "pans"
         """
@@ -129,7 +129,8 @@ class nlevel:
                 func(ax, st, idx, x, y)
             else: ax.plot(x, y, 'ro')
             #ax.annotate(f'|{st.n},{st.j}\n{st.f},{st.m_f}>', (x, y))
-            ax.annotate(f'|{st.f},{st.m_f}>', (x, y + 0.1), ha='center')
+            if not no_text:
+                ax.annotate(f'|{st.f},{st.m_f}>', (x, y + 0.1), ha='center')
             if st.m_f == -st.f:
                 draw_pan(ax, x - 0.45, x + 0.45, y - 0.5, 2*st.f+1, f'f={st.j}', color='m', linestyle='-')
                 ax.annotate(f'f={st.f}', (x, y + 2 * st.f + 1), ha='center')

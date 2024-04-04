@@ -34,6 +34,12 @@
     <Filter Include="Header Files\pcg">
       <UniqueIdentifier>{f102be0e-457f-4ee0-b95b-0d14bf73edfd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\backends">
+      <UniqueIdentifier>{7631df1f-c1c6-48e3-a1b1-2e5fbd2246c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\aef\backends">
+      <UniqueIdentifier>{84b98327-1899-45ac-bd7e-8508aca636b6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\aef\framework.h">
@@ -309,11 +315,29 @@
     <ClInclude Include="src\cusolver_utils.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\cusolver_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\cuda_utils.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\helper_string.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\LogRedirector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\MatrixOpBackend.h">
+      <Filter>Header Files\aef</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\backends\EigenMatrixBackend.h">
+      <Filter>Header Files\aef\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\backends\CudaMatrixBackend.h">
+      <Filter>Header Files\aef\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\backends\OneMklMatrixBackend.h">
+      <Filter>Header Files\aef\backends</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -346,6 +370,21 @@
     </ClCompile>
     <ClCompile Include="src\plaf_utils.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LogRedirector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MatrixOpBackend.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backends\EigenMatrixBackend.cpp">
+      <Filter>Source Files\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backends\CudaMatrixBackend.cpp">
+      <Filter>Source Files\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="src\backends\OneMklMatrixBackend.cpp">
+      <Filter>Source Files\backends</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

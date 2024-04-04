@@ -33,7 +33,9 @@ libs: libSpinlabHyperfine.a libSpinlabHyperfine.so
 
 SpinlabHyperfineLib/include/pch.h.gch: SpinlabHyperfineLib/include/pch.h
 	$(CXX) -o $@ -x c++-header $(CXXFLAGS) -c $< 
-LSPHF_OBJ:=$(patsubst %.cpp,%.o,$(wildcard SpinlabHyperfineLib/src/*.cpp)) $(patsubst %.cu,%.o,$(wildcard SpinlabHyperfineLib/src/*.cu))
+LSPHF_OBJ:=$(patsubst %.cpp,%.o,$(wildcard SpinlabHyperfineLib/src/*.cpp))\
+$(patsubst %.cu,%.o,$(wildcard SpinlabHyperfineLib/src/*.cu))\
+$(patsubst %.cpp,%.o,$(wildcard SpinlabHyperfineLib/src/backends/*.cpp))
 
 libSpinlabHyperfine.a: $(LSPHF_OBJ)
 	$(AR) rcs $@ $^
