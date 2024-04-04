@@ -252,8 +252,8 @@ int main(int argc, char **argv) {
     }
 
     std::cout << "does H_tot commute with F_z? " << aef::matrix::commutes(calc.H_tot, calc.F_z) << std::endl;
-    std::cout << "does H_stk commute with F_z? " << aef::commutes(calc.H_stk, calc.F_z) << std::endl;
-    std::cout << "does H_hfs commute with F_z? " << aef::commutes(calc.H_hfs, calc.F_z) << std::endl;
+    std::cout << "does H_stk commute with F_z? " << aef::matrix::commutes(calc.H_stk, calc.F_z) << std::endl;
+    std::cout << "does H_hfs commute with F_z? " << aef::matrix::commutes(calc.H_hfs, calc.F_z) << std::endl;
 
     // load succeded
     prev_time = log_time_at_point("[Low state dumper] Finished loading matrix elements.", start_time, prev_time);
