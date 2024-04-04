@@ -61,7 +61,7 @@ namespace aef {
     };
 
     inline bool succeeded(ResultCode c) {
-        return (static_cast<int32_t>(c)) > 0;
+        return (static_cast<int32_t>(c)) >= 0;
     }
 
     inline bool failed(ResultCode c) {

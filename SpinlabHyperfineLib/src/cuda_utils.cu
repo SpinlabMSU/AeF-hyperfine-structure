@@ -572,11 +572,15 @@ void cuda::__getLastCudaError(const char* errorMessage, const char* file,
     cudaError_t err = cudaGetLastError();
 
     if (cudaSuccess != err) {
+        std::cerr << file << "" << line << "): getLastCudaError() CUDA error : " << errorMessage << " : (" << 
+            static_cast<int>(err) << ") " << cudaGetErrorString(err) << "." << std::endl;
+        /*
         fprintf(stderr,
             "%s(%i) : getLastCudaError() CUDA error :"
             " %s : (%d) %s.\n",
             file, line, errorMessage, static_cast<int>(err),
             cudaGetErrorString(err));
+        */
         exit(EXIT_FAILURE);
     }
 }
@@ -586,11 +590,15 @@ void cuda::__printLastCudaError(const char* errorMessage, const char* file,
     cudaError_t err = cudaGetLastError();
 
     if (cudaSuccess != err) {
+        std::cerr << file << "" << line << "): getLastCudaError() CUDA error : " << errorMessage << " : (" <<
+            static_cast<int>(err) << ") " << cudaGetErrorString(err) << "." << std::endl;
+        /*
         fprintf(stderr,
             "%s(%i) : getLastCudaError() CUDA error :"
             " %s : (%d) %s.\n",
             file, line, errorMessage, static_cast<int>(err),
             cudaGetErrorString(err));
+            */
     }
 }
 #endif
@@ -830,7 +838,7 @@ int cuda::findCudaDevice(int argc, const char** argv) {
         devID = getCmdLineArgumentInt(argc, argv, "device=");
 
         if (devID < 0) {
-            printf("Invalid command line parameter\n ");
+            std::cout << "Invalid argument value " << devID << " passed to command line argument --device" << std::endl;//printf("Invalid command line parameter\n ");
             //exit(EXIT_FAILURE);
             return -1;
         } else {

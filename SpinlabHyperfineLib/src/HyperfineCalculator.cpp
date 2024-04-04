@@ -158,7 +158,6 @@ bool HyperfineCalculator::diagonalize_H(bool use_cuda) {
           // as our temporary here instead of making a new temporary matrix
           H_dev = H_tot + t * F_z;
           aef::matrix::diagonalize(H_dev, Es, Vs);
-          aef::matrix::diagonalize(H_dev, Es, Vs);
           aef::matrix::group_action(H_dev, Vs, H_tot);
           Es = H_dev.diagonal();
           H_dev.setZero();
