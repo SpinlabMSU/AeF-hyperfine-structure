@@ -62,16 +62,27 @@ time_point<system_clock> log_time_at_point(
     return curr_time;
 }
 
-/// <summary>
-/// Dumps a row from a given matrix.  This
-/// </summary>
-/// <param name="Vs">Matrix to</param>
-/// <param name="state"></param>
-/// <param name="out"></param>
-void dump_row(Eigen::MatrixXcd& Vs, int state, std::ostream& out) {
+// the number of states in a singlet-triplet group pair (f=0 and f=1)
+constexpr int num_singlet_triplet = 4;
+// +-X +-Y +-Z
+constexpr int num_orientations = 6;
+// the total number of states in the lowest lying (in energy) "bottom group" of states
+constexpr int bottom_group_size = num_singlet_triplet * num_orientations;
+
+// starting/base index of +Z oriented states
+constexpr int bidx_posz = 0;
+// starting/base index of -Z oriented states
+constexpr int bidx_negz = bottom_group_size - num_singlet_triplet;
+// start of +- XY oriented states -- don't know how to distinguish which is which at the present time
+constexpr int bidx_pmxy = num_singlet_triplet;
+
+void dump_state(HyperfineCalculator& calc, int state, std::ostream& out) {
     out << state;
-    for (int kdx = 0; kdx < Vs.cols(); kdx++) {
-        out << "," << std::real(Vs(state, kdx)) << "," << std::imag(Vs(state, kdx));
+    // BUGFIX: states are column vectors not row vectors
+    Eigen::VectorXcd state_vec = calc.Vs.col(state);
+    for (int kdx = 0; kdx < calc.nBasisElts; kdx++) {
+        dcomplex ampl = state_vec[kdx];
+        out << "," << std::real(ampl) << "," << std::imag(ampl);
     }
     out << std::endl;
 }
@@ -169,7 +180,11 @@ double expect_parity(HyperfineCalculator& calc, int32_t E_idx) {
 /// </summary>
 /// <param name="output">the stream to output to</param>
 /// <param name="calc"></param>
-void output_state_info(std::ostream& output, HyperfineCalculator& calc) {
+void output_state_info(std::ostream& output, HyperfineCalculator& calc
+#ifndef DONT_USE_CUDA
+    , Eigen::MatrixXcd& vals
+#endif
+) {
     output << "Index n, Energy (MHz), Re(<n|dx|n>), Re(<n|dy|n>), Re(<n|dz|n>), "
         "Im(<n|dx|n>), Im(<n|dy|n>), Im(<n|dz|n>), "
         "Re(<n|n|n>), Re(<n|j|n>), Re(<n|f|n>), Re(<n|m_f|n>),"
@@ -177,13 +192,29 @@ void output_state_info(std::ostream& output, HyperfineCalculator& calc) {
         "<n|(-1)^n|n>"
         << std::endl;
 
+#ifndef DONT_USE_CUDA
+    Eigen::VectorXcd d10s;
+    Eigen::VectorXcd d11s;
+    Eigen::VectorXcd d1ts;
+    aef::matrix::group_action(vals, calc.Vs, calc.d10);
+    d10s = vals.diagonal();
+    aef::matrix::group_action(vals, calc.Vs, calc.d11);
+    d11s = vals.diagonal();
+    aef::matrix::group_action(vals, calc.Vs, calc.d1t);
+    d1ts = vals.diagonal();
+#endif
     for (size_t n = 0; n < calc.nBasisElts; n++) {
+#ifdef DONT_USE_CUDA
         auto e_n = calc.Vs.col(n);
         // molecular dipole vector in spherical tensor form
         dcomplex d10 = expectation_value(e_n, calc.d10);
         dcomplex d11 = expectation_value(e_n, calc.d11);
         dcomplex d1t = expectation_value(e_n, calc.d1t);
-
+#else
+        dcomplex d10 = d10s(n);
+        dcomplex d11 = d11s(n);
+        dcomplex d1t = d1ts(n);
+#endif
         constexpr double inv_sqrt2 = std::numbers::sqrt2 / 2.0;
 
         // convert to cartesian
@@ -216,11 +247,21 @@ int main(int argc, char **argv) {
     std::chrono::time_point<std::chrono::system_clock> prev_time = start_time;
     dpath /= stime;
     fs::create_directories(dpath);
+
+    /// <summary>
+    /// This is the field strength (in V/cm) used to calculate H_stk.
+    /// DO NOT CHANGE THIS.
+    /// 50 kV/cm = 25170 MHz/D is a standardized value used across the AeF-hyperfine-structure codebase
+    /// </summary>
+    constexpr double calc_E_z_V_per_cm = 50 * 1000;
+
     /// <summary>
     /// 50 kV/cm = 25170 MHz/D is the field strength used to calculate H_stk.
     /// DO NOT CHANGE THIS.
     /// This is a standardized value used across the AeF-hyperfine-structure codebase
     /// </summary>
+    // note: can't substitute * 50 * 1000 with calc_E_z_V_per_cm because it rounds differently, giving
+    // 25170.000000000004 isntead of 25170.0, which messes up file names
     constexpr double calc_E_z = unit_conversion::MHz_D_per_V_cm * 50 * 1000;
 
     // parameter block
@@ -318,22 +359,51 @@ int main(int argc, char **argv) {
     std::cout << fmt::format("OpenMP/Eigen will use {} threads", num_physical_cores) << std::endl;
 #endif
 
+#ifndef DONT_USE_CUDA
+    constexpr bool diag_use_cuda = true;
+    std::cout << "Initializing matrix backend" << std::endl;
+    aef::ResultCode rc = aef::matrix::init(aef::matrix::BackendType::NvidiaCuda, argc, argv);
+    if (!aef::succeeded(rc)) {
+        std::cout << fmt::format("Initializing matrix backend failed with error {} = 0x{:x}", static_cast<int32_t>(rc), static_cast<uint32_t>(rc));
+    }
+    std::cout << "Successfully initialized CUDA" << std::endl;
+#else
+    constexpr bool diag_use_cuda = false;
+    aef::matrix::init(aef::matrix::BackendType::EigenCPU, argc, argv);
+#endif
 
-
-
+    std::cout << "Constructing HyperfineCalculator with nmax = " << param_nmax << std::endl;
+    std::cout << fmt::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({})",
+        param_nmax, calc_E_z, 0, "disabled") << std::endl;
     HyperfineCalculator calc(param_nmax, calc_E_z);
+    std::cout << "Finished making HyperfineCalculator with nmax = " << param_nmax << std::endl;
+#ifndef DONT_USE_CUDA
+    Eigen::MatrixXcd vals;
+    vals.resize(calc.nBasisElts, calc.nBasisElts);
+    vals.setZero();
+
+    std::cout << fmt::format(
+        "Setting up matrix backend device-side buffers with nRows={} after creating molecular system",
+        calc.nBasisElts) << std::endl;
+    aef::matrix::set_max_size(calc.nBasisElts);
+#endif
+
 
     prev_time = log_time_at_point("Starting matrix element calculations", start_time, prev_time);
     calc.calculate_matrix_elts();
-    calc.diagonalize_H();
-    if (param_nmax >= 20)
-        calc.save_matrix_elts(dpath / "matrix.dat");
+    //calc.diagonalize_H(diag_use_cuda);
 
     prev_time = log_time_at_point("Finished matrix elt calcs", start_time, prev_time);
-
+    
     // set H_tot = H_stk
     calc.H_tot = calc.H_stk;
-    calc.diagonalize_H();
+    calc.diagonalize_H(diag_use_cuda);
+    prev_time = log_time_at_point("Diagonalized Stark Potential", start_time, prev_time);
+
+    if (param_nmax >= 20) {
+        calc.save_matrix_elts(dpath / "matrix.dat");
+        prev_time = log_time_at_point("Saved hyprfinecalculator", start_time, prev_time);
+    }
 #if 0
     // diagonalize H_stk
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXcd> solver;
@@ -342,22 +412,59 @@ int main(int argc, char **argv) {
     calc.Vs = solver.eigenvectors();
 #endif
 
-    fs::path csvpath = odir / fmt::format("{}.csv", calc_E_z);
-    std::ofstream out(csvpath);
-    // write out header line
-    out << "Eidx";
-    for (int kdx = 0; kdx < calc.nBasisElts; kdx++) {
-        out << fmt::format(",Re(<j_{}|E_n>),Im(<j_{}|E_n>", kdx, kdx);
-    }
-    out << std::endl;
+    // output state coeffs
+    {
+        fs::path csvpath = odir / fmt::format("{}.csv", calc_E_z);
+        std::ofstream out(csvpath);
+        // write out header line
+        out << "Eidx";
+        for (int kdx = 0; kdx < calc.nBasisElts; kdx++) {
+            out << fmt::format(",Re(<j_{}|E_n>),Im(<j_{}|E_n>", kdx, kdx);
+        }
+        out << std::endl;
 
-    for (int Edx = 0; Edx < calc.nBasisElts; Edx++) {
-        dump_row(calc.Vs, Edx, out);
+        for (int Edx = 0; Edx < calc.nBasisElts; Edx++) {
+            dump_state(calc, Edx, out);
+        }
+        out.close();
     }
-    out.close();
-    std::ofstream oState(odir / fmt::format("state_ifo_{}.csv", calc_E_z));
-    output_state_info(oState, calc);
-    oState.close();
+    // output MDA info
+    {
+        std::ofstream oState(odir / fmt::format("state_ifo_{}.csv", calc_E_z));
+        output_state_info(oState, calc
+#ifndef DONT_USE_CUDA
+            , vals
+#endif
+        );
+        oState.close();
+    }
+
+    // Output low_state_dumper style files
+    {
+        fs::path sdir = odir / "state_coeffs";
+        fs::create_directories(sdir);
+        fs::path csvpath = sdir / fmt::format("{}.csv", calc_E_z_V_per_cm);
+        std::ofstream out(csvpath);
+        // write out header line
+        out << "Eidx";
+        for (int kdx = 0; kdx < calc.nBasisElts; kdx++) {
+            out << fmt::format(",Re(<j_{}|E_n>),Im(<j_{}|E_n>", kdx, kdx);
+        }
+        out << std::endl;
+        // dump +Z-oriented f=0/f=1 singlet-triplet
+        for (int idx = bidx_posz; idx < bidx_posz + num_singlet_triplet; idx++) {
+            dump_state(calc, idx, out);
+        }
+        // dump -Z-oriented f=0/f=1 singlet-triplet
+        for (int idx = bidx_negz; idx < bidx_negz + num_singlet_triplet; idx++) {
+            dump_state(calc, idx, out);
+        }
+
+        // dump "+-XY oriented" f=0/f=1 singlet-triplets (note: these mix --> not actually oriented)
+        for (int idx = bidx_pmxy; idx < bidx_pmxy + 4 * num_singlet_triplet; idx++) {
+            dump_state(calc, idx, out);
+        }
+    }
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
