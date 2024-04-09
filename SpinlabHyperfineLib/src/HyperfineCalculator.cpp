@@ -353,6 +353,7 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
       zin.read((char*)&(this->K), sizeof(this->K));
       this->enableDev = (K != 0);
       stream_pos += sizeof(this->E_z) + sizeof(this->K);
+      std::cout << "Read E_DEV_PARMS" << std::endl;
   }
 
   diagonalized = (flags & FLAG_DIAG);
@@ -362,6 +363,8 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
   Eigen::read_binary(zin, H_stk);
   Eigen::read_binary(zin, H_dev);
   Eigen::read_binary(zin, H_tot);
+
+  std::cout << "Read operator matricies" << std::endl;
 
   init = true;
 
