@@ -118,7 +118,9 @@ int main(int argc, char **argv) {
     std::string root_file_name = "matrix.root";
     fs::path path_mat_file(matrix_file_in_name);
     fs::path absPathMat = fs::absolute(path_mat_file);
-    std::string run_name = absPathMat.parent_path().filename().string();
+    fs::path run_path = absPathMat.parent_path();
+    std::string run_name = run_path.filename().string();
+    bool no_stark = false;
     
     cxxopts::Options options("operator-visualizer", "Program to prepare operator visualization ROOT files");
 
@@ -128,7 +130,8 @@ int main(int argc, char **argv) {
         ("d,enable_debug", "Enable debug mode", cxxopts::value<bool>()->default_value("false"))
         ("print_extras", "Print extra information", cxxopts::value<bool>()->default_value("true"))
         ("l,load", "Set file to load molecular system operators from", cxxopts::value<std::string>())
-        ("o,output", "Set output ROOT file.  Default is matrix.root", cxxopts::value<std::string>());
+        ("o,output", "Set output ROOT file.  Default is matrix.root", cxxopts::value<std::string>())
+        ("no_stark", "Remove stark potential from H_tot", cxxopts::value<bool>()->default_value("false"));
     auto result = options.parse(argc, argv);
 
     if (result.count("help")) {
@@ -140,8 +143,19 @@ int main(int argc, char **argv) {
         matrix_file_in_name = result["load"].as<std::string>();
     }
 
+    if (result.count("no_stark")) {
+        no_stark = result["no_stark"].as<bool>();
+    }
+
     HyperfineCalculator calc;
     calc.load_matrix_elts(matrix_file_in_name);
+
+    if (no_stark) {
+        calc.H_tot -= calc.H_stk;
+        calc.E_z = 0;
+    }
+
+
     TFile rfile(root_file_name.c_str(), "RECREATE");
     (void)generate_basis_ttree(calc);
     (void)generate_matrix_tree(calc, "H_tot", "total Hamiltonian", calc.H_tot);
@@ -158,6 +172,9 @@ int main(int argc, char **argv) {
     param_K->Write();
     auto* param_E_z = new TParameter<double>("E_z", calc.E_z);
     param_E_z->Write();
+    bool stark_only = fs::exists(run_path / "STARK_ONLY.txt");
+    auto* param_stark_only = new TParameter<bool>("stark_only", stark_only);
+    param_stark_only->Write();
     dir->WriteObject(&(run_name), "run");
     dir->Write();
     rfile.Flush();
