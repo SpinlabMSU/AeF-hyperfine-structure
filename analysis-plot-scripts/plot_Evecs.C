@@ -1,4 +1,4 @@
-﻿#include <string>
+#include <string>
 #include <TDirectory.h>
 #include <TTree.h>
 #include <TH2.h>
@@ -19,11 +19,11 @@ struct run_params {
     double E_z; // units: V/cm
     bool enableDev; // bool
     bool starkOnly;
-    std::string *run; // run name string
+    std::string* run; // run name string
 };
 
 
-run_params get_run_params(TFile &f) {
+run_params get_run_params(TFile& f) {
     TDirectory* dir = f.GetDirectory("parameters");
     if (!dir) {
         printf("Error directory parameters was null\n");
@@ -37,20 +37,21 @@ run_params get_run_params(TFile &f) {
     params.starkOnly = dir->Get<TParameter<bool>>("stark_only")->GetVal();
     //params.run = new std::string("Run <placeholder>");
     params.run = dir->Get<std::string>("run");
-    printf("nmax %f, K %f, E_z %f, enableDev %d, run %s\n, starkOnly %d", params.nmax, params.K, params.E_z, params.enableDev, params.run->c_str(), params.starkOnly);
+    printf("nmax %f, K %f, E_z %f, enableDev %d, run %s, starkOnly %d\n", params.nmax, params.K, params.E_z, params.enableDev, params.run->c_str(), params.starkOnly);
     return params;
 }
 
-void plot_Hamiltonian() {
+void plot_Evecs() {
     printf("aaaaa\n");
     TString fname("matrix.root");
     TFile file(fname, "READ");
     file.cd();
 
     auto H_tot = (TTree*)file.Get("H_tot");
+    auto U = (TTree*)file.Get("U");
     struct run_params params = get_run_params(file);
 
-    TFile *f2 = new TFile("out2.root", "RECREATE");
+    TFile* f2 = new TFile("out_evecs.root", "RECREATE");
     f2->cd();
     gStyle->SetOptStat(0);
     // alignment = 10 * horiz + vert
@@ -59,8 +60,35 @@ void plot_Hamiltonian() {
     gStyle->SetTitleAlign(23);
     printf("progress #\n");
     // plot ham
-    auto *canv = new TCanvas("c1", "ROOT TCanvas", 1920, 1080);
+    auto* canv = new TCanvas("c1", "ROOT TCanvas", 1920, 1080);
     canv->cd();
+
+    U->Draw("jdx:idx:mag>>hEvecs", "", "colz");
+    auto hEvecs = (TH2F*)gDirectory->Get("hEvecs");
+    hEvecs->SetXTitle("Energy Eigenvector index");
+    hEvecs->SetYTitle("J-Basis Ket Index");
+    hEvecs->SetTitle("Energy Eigenvector matrix in terms of J-basis vectors");
+    hEvecs->Draw("SAME");
+
+    TLatex l;
+    l.SetTextSize(0.025);
+    const char* endis = "";// params.enableDev ? "in-medium" : "in-vacuum";
+    if (params.enableDev) {
+        endis = "in-medium";
+    } else if (params.starkOnly) {
+        endis = "stark-only";
+    } else {
+        endis = "in-vacuum";
+    }
+    TString str = TString::Format("n_{max}=%f, %s, E_z=%f #frac{kV}{cm}, run %s", params.nmax, endis, params.E_z / 1000, params.run->c_str());
+    printf("String data is %s\n", str.Data());
+    l.DrawLatex(10, 6900, str.Data());
+    canv->Update();
+    canv->SaveAs("evec-plot.png");
+    canv->SaveAs("evec-plot.pdf");
+
+    return;
+#if 0
     H_tot->Draw("jdx:idx:mag>>hHamiltonian", "", "col");
     printf("progress # 1\n");
     auto hHamiltonian = (TH2F*)gDirectory->Get("hHamiltonian");
@@ -80,7 +108,7 @@ void plot_Hamiltonian() {
     } else {
         endis = "in-vacuum";
     }
-    TString str = TString::Format("n_{max}=%f, %s, E_z=%f #frac{kV}{cm}, run %s", params.nmax, endis, params.E_z/1000, params.run->c_str());
+    TString str = TString::Format("n_{max}=%f, %s, E_z=%f #frac{kV}{cm}, run %s", params.nmax, endis, params.E_z / 1000, params.run->c_str());
     printf("MF nmax %f, K %f, E_z %f, enableDev %d, run %s\n", params.nmax, params.K, params.E_z, params.enableDev, params.run->c_str());
     printf("String data is %s\n", str.Data());
     printf("progress # 3.5\n");
@@ -92,4 +120,5 @@ void plot_Hamiltonian() {
     canv->SaveAs("Hamiltonian-plot.pdf");
     canv->SaveAs("Hamiltonian-plot.png");
     eprintf("progress # 5\n");
+#endif
 }

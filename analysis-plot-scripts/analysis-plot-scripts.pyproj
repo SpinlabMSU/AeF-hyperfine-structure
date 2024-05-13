@@ -30,6 +30,7 @@
     </Compile>
     <Compile Include="draw_hamiltonian.py" />
     <Compile Include="plot_dev_spect.py" />
+    <Compile Include="plot_Evecs.C" />
     <Compile Include="plot_state_coeffs.py">
       <SubType>Code</SubType>
     </Compile>
