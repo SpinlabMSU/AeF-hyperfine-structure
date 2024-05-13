@@ -93,7 +93,7 @@ TTree *generate_matrix_tree(HyperfineCalculator &calc, const char *name, const c
     for (jdx = 0; jdx < nBasisElts; jdx++) {
         for (idx = 0; idx < nBasisElts; idx++) {
             val = op(idx, jdx);
-            mag = std::norm(val);
+            mag = std::abs(val); // note: norm --> mag squared
             phase = std::arg(val);
             // only fill
             if (mag > threshold) {
