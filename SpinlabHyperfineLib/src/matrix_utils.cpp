@@ -65,7 +65,7 @@ namespace aef::matrix {
         std::cout << "[aef::matrix] Unreachable hit, this should never happen." << std::endl;
         aef::unreachable();
     }
-    IMatrixOpBackend* aef::matrix::get_backend() {
+    IMatrixOpBackend* get_backend() {
         return backend;
     }
     IMatrixOpBackend* get_fallback_backend() {

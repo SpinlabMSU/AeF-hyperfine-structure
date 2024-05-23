@@ -35,6 +35,7 @@ rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-19-181
 
 if len(sys.argv) > 1:
     rundir = sys.argv[1]
+rundir = os.path.abspath(rundir)
 run = os.path.split(rundir)[1]
 
 starkpath = os.path.join(rundir, 'stark_spectrum.csv')
