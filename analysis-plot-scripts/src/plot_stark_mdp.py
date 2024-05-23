@@ -1,7 +1,5 @@
-
 #!/usr/bin/env python3
 ### plot molecular dipole z-component as a function of E-field
-
 
 # system imports
 import math
@@ -40,7 +38,7 @@ if len(sys.argv) > 2:
     use_zero_field = not (sys.argv[2].lower().startswith('n'))
     print(f"use_zero_field?: {use_zero_field}")
 
-top_dir = dirname
+top_dir = os.path.abspath(dirname)
 
 def static_vars(**kwargs):
     def decorate(func):

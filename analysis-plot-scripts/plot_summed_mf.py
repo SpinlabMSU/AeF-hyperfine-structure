@@ -62,11 +62,15 @@ nBasisElts = (len(df.keys()) - 1) // 2
 
 hsts = baf_state.make_hyperfine_states(run.nmax)
 
-plot_nmax = 4
-if len(sys.argv) > 3:
-    plot_nmax = int(sys.argv[3])
-
 plot_nmax = run.nmax
+do_auto = False
+if len(sys.argv) > 3:
+    try:
+        plot_nmax = int(sys.argv[3])
+    except:
+        if sys.argv[3].lower().startswith('auto'):
+            do_auto = True
+
 no_text = False
 if len(sys.argv) > 4:
    no_text = sys.argv[4].lower().startswith('no_text') 
@@ -132,6 +136,10 @@ def plot_state(st, stnam, fig:plt.Figure=None, typ = 'mag', cmap='viridis', nmax
     hst = baf_state.HyperfineState(n=0,j=0,f=0,m_f=0)
     njf_sums = np.zeros(n_njfs)
     labels = []
+    
+    lower_y = 1e-16
+    furthest_njf = 0
+
     for idx in range(n_njfs):
         hst.n, hst.j, hst.f = njfs[idx]
         sum_prob = 0.0
@@ -139,11 +147,18 @@ def plot_state(st, stnam, fig:plt.Figure=None, typ = 'mag', cmap='viridis', nmax
             prob = np.absolute(st[hst.index()])**2
             sum_prob += prob
         njf_sums[idx] = sum_prob
+        if sum_prob >= lower_y:
+            furthest_njf = idx
         labels.append(f"|n={hst.n},j={hst.j},f={hst.f}>")
     line, = plt.plot(njf_sums, 'o')
     ax = plt.gca()
+    if do_auto:
+        plt.xticks(np.arange(0, n_njfs + 1, 1))
     plt.yscale('log')
-    ax.set_ylim(bottom=1e-16)
+    ax.set_ylim(bottom=lower_y)
+    if do_auto:
+        plt.grid(visible=True, which='both')
+        ax.set_xlim(left=-0.1, right=(1.05 * furthest_njf))
     plt.title(f'Summed-$m_f$ j-basis state plot for state {stnam} of run {run.run}, E_z = {Ez} V/cm\n'
               + r'Plotting magnitude-squared of $\sum_{m_f}\left<n,j,f,m_f|E_{idx}\right>$')
     plt.ylabel('Summed probability')
@@ -203,5 +218,6 @@ if __name__ == '__main__':
     plot_state(nz_f10, 'nz_f10', fig, nmax=plot_nmax)
     plot_state(nz_f1t, 'nz_f1t', fig, nmax=plot_nmax)
     plot_state(nz_f11, 'nz_f11', fig, nmax=plot_nmax)
+    
     plt.show()
     

@@ -339,6 +339,9 @@
     <ClInclude Include="include\aef\backends\OneMklMatrixBackend.h">
       <Filter>Header Files\aef\backends</Filter>
     </ClInclude>
+    <ClInclude Include="include\aef\cuda_matrix_utils.h">
+      <Filter>Header Files\aef</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp">
@@ -385,6 +388,9 @@
     </ClCompile>
     <ClCompile Include="src\backends\OneMklMatrixBackend.cpp">
       <Filter>Source Files\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="src\matrix_utils.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -22,7 +22,7 @@
 
 #ifndef PCH_H
 #define PCH_H
-
+#define DISABLE_CUSPARSE_DEPRECATED
 // add headers that you want to pre-compile here
 #include "aef/framework.h"
 

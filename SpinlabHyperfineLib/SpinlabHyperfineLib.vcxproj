@@ -29,7 +29,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>Intel C++ Compiler 2023</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <EnableDPCppRuntimeEnvironment>true</EnableDPCppRuntimeEnvironment>
     <UseInteloneMKL>Parallel</UseInteloneMKL>
@@ -37,7 +37,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>Intel C++ Compiler 2023</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <EnableDPCppRuntimeEnvironment>true</EnableDPCppRuntimeEnvironment>
@@ -46,7 +46,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>Intel C++ Compiler 2023</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <EnableDPCppRuntimeEnvironment>true</EnableDPCppRuntimeEnvironment>
     <UseInteloneMKL>Parallel</UseInteloneMKL>
@@ -54,7 +54,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>Intel C++ Compiler 2023</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <EnableDPCppRuntimeEnvironment>true</EnableDPCppRuntimeEnvironment>
@@ -112,6 +112,8 @@
       <BuildStlModules>false</BuildStlModules>
       <OpenMPSupport>true</OpenMPSupport>
       <UseMSVC>true</UseMSVC>
+      <UseProcessorExtensions>HOST</UseProcessorExtensions>
+      <OpenMP>GenerateParallelCode</OpenMP>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -138,6 +140,8 @@
       <BuildStlModules>false</BuildStlModules>
       <OpenMPSupport>true</OpenMPSupport>
       <UseMSVC>true</UseMSVC>
+      <UseProcessorExtensions>HOST</UseProcessorExtensions>
+      <OpenMP>GenerateParallelCode</OpenMP>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -165,6 +169,8 @@
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalIncludeDirectories>$(CudaToolkitIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UseMSVC>true</UseMSVC>
+      <UseProcessorExtensions>HOST</UseProcessorExtensions>
+      <OpenMP>GenerateParallelCode</OpenMP>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -192,6 +198,8 @@
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalIncludeDirectories>$(CudaToolkitIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <UseMSVC>true</UseMSVC>
+      <UseProcessorExtensions>HOST</UseProcessorExtensions>
+      <OpenMP>GenerateParallelCode</OpenMP>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -214,6 +222,7 @@
     <ClInclude Include="include\aef\backends\EigenMatrixBackend.h" />
     <ClInclude Include="include\aef\backends\OneMklMatrixBackend.h" />
     <ClInclude Include="include\aef\baf_constants.hpp" />
+    <ClInclude Include="include\aef\cuda_matrix_utils.h" />
     <ClInclude Include="include\aef\debug_stream.h" />
     <ClInclude Include="include\aef\HyperfineCalculator.hpp" />
     <ClInclude Include="include\aef\jf_basis_vec.h" />
@@ -330,12 +339,17 @@
     <ClCompile Include="src\j_basis_vec.cpp" />
     <ClCompile Include="src\LogRedirector.cpp" />
     <ClCompile Include="src\MatrixOpBackend.cpp" />
+    <ClCompile Include="src\matrix_utils.cpp" />
     <ClCompile Include="src\MolecularSystem.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)include;%(AdditionalIncludeDirectories);$(_ZVcpkgCurrentInstalledDir)include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)include;%(AdditionalIncludeDirectories);$(_ZVcpkgCurrentInstalledDir)include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)include;%(AdditionalIncludeDirectories);$(_ZVcpkgCurrentInstalledDir)include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)include;%(AdditionalIncludeDirectories);$(_ZVcpkgCurrentInstalledDir)include</AdditionalIncludeDirectories>
     </ClCompile>
     <ClCompile Include="SpinlabHyperfineLib.cpp" />
     <ClCompile Include="src\plaf_utils.cpp" />

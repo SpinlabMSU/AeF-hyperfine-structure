@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-## plot_spectrum.py -- plots the spectrum of the hamiltonian as a function of
-## the externally-applied electric field. 
+## draw_hamiltonian.py -- draws 
 # This file is part of the AeF-hyperfine-structure program. 
     
 # AeF-hyperfine-structure is free software: you can redistribute it and/or
@@ -15,9 +14,9 @@
 
 # You should have received a copy of the GNU General Public License along with
 # AeF-hyperfine-structure. If not, see <https://www.gnu.org/licenses/>.
-# system imports
 import math
 import cmath
+from random import triangular
 import sys
 import os
 import os.path
@@ -25,33 +24,23 @@ import re
 #
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+import matplotlib.cm as mplcm
+import matplotlib.colors as colors
 import numpy.linalg as npla
 import pandas as pd
 import numba
 
+import aef_run
+import baf_state
 
-#rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-18-185338.4873197' #nodev
-rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-19-181153.8494779' #deven
-
+#rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-09-15-195553.6276441'
+rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-08-09-135429.5590762'
 if len(sys.argv) > 1:
     rundir = sys.argv[1]
 rundir = os.path.abspath(rundir)
-run = os.path.split(rundir)[1]
 
-starkpath = os.path.join(rundir, 'stark_spectrum.csv')
-df = pd.read_csv(starkpath)
+run = aef_run.aef_run(rundir)
+mat_file = os.path.join(run.path, 'matrix.dat')
 
-Ez = df.keys()[1]
-states = df.keys()[2:]
-
-# Including a legend isn't particularly useful past a certain number of states
-# since it runs off the edge of the plot and the colors repeat anyways
-use_legend = True
-if len(df[Ez]) > 15:
-    use_legend = False
-
-fig = plt.figure(figsize=(13.66, 9.00))
-plt.title(f"Energy Spectrum for run {run}")
-df.plot(Ez, states, ylabel = 'Energy (MHz)', ax=plt.gca(), legend = use_legend)
-plt.savefig(os.path.join(rundir, 'spectrum_plot.png'))
-plt.show()
+## attempt to read

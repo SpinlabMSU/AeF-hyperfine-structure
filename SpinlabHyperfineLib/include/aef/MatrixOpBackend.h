@@ -11,30 +11,7 @@
 #include <Eigen/Eigen>
 
 namespace aef::matrix {
-
-    /// <summary>
-    /// Result codes
-    /// A result code indicates success if it is non-negative
-    /// </summary>
-    enum class ResultCode : int32_t {
-        // Successful result codes
-        Success = 0, // non-detailed
-        S_NOTHING_PERFORMED,
-        NumSuccessfulCodes,
-        /// error result codes
-        OutOfMemory = -1,
-        Timeout = -2,
-        InvalidArgument = -3,
-        IllegalState = -4,
-        Unimplemented = -5,
-        InternalError = -6,
-        HardwareFailure = -7,
-        NotAvailable = -8,
-        _LastErrorCodeP1,
-        NumErrorCodes = OutOfMemory - (_LastErrorCodeP1 - 1) + 1,
-        NumCodes = NumSuccessfulCodes + NumErrorCodes,
-    };
-
+    using aef::ResultCode;
     /// <summary>
     /// Interface describing what operations must be implemented by a backend
     /// </summary>
@@ -116,7 +93,7 @@ namespace aef::matrix {
     /// <summary>
     /// Potential Backends -- right now only
     /// </summary>
-    enum class BackendTypes:int32_t {
+    enum class BackendType:int32_t {
         Invalid = 0,
         // default CPU-based backend
         EigenCPU = 1,

@@ -279,11 +279,11 @@ void output_state_info(std::ostream& output, HyperfineCalculator& calc
     Eigen::VectorXcd d10s;
     Eigen::VectorXcd d11s;
     Eigen::VectorXcd d1ts;
-    aef::cuda_expectation_values(calc.Vs, calc.d10, vals);
+    aef::matrix::group_action(vals, calc.Vs, calc.d10);
     d10s = vals.diagonal();
-    aef::cuda_expectation_values(calc.Vs, calc.d11, vals);
+    aef::matrix::group_action(vals, calc.Vs, calc.d11);
     d11s = vals.diagonal();
-    aef::cuda_expectation_values(calc.Vs, calc.d1t, vals);
+    aef::matrix::group_action(vals, calc.Vs, calc.d1t);
     d1ts = vals.diagonal();
 #endif
     for (size_t n = 0; n < calc.nBasisElts; n++) {
@@ -458,7 +458,7 @@ int main(int argc, char **argv) {
 #endif
 
     init_rng();
-
+#ifdef _OLD_CUDA
 #ifndef DONT_USE_CUDA
     constexpr bool diag_use_cuda = true;
     std::cout << "Initializing CUDA" << std::endl;
@@ -467,7 +467,17 @@ int main(int argc, char **argv) {
 #else
     constexpr bool diag_use_cuda = false;
 #endif
-
+#else
+#ifndef DONT_USE_CUDA
+    constexpr bool diag_use_cuda = true;
+    std::cout << "Initializing matrix backend" << std::endl;
+    aef::matrix::init(aef::matrix::BackendType::NvidiaCuda, argc, argv);
+    std::cout << "Successfully initialized CUDA" << std::endl;
+#else
+    constexpr bool diag_use_cuda = false;
+    aef::matrix::init(aef::matrix::BackendType::EigenCPU, argc, argv);
+#endif
+#endif
     j_basis_vec v(1, .5, 0, 0);
     double E_rot = std::real(v.H_rot());
     dcomplex H_hfs = v.H_hfs(v);
@@ -500,17 +510,25 @@ int main(int argc, char **argv) {
         std::cout << fmt::format(
             "Setting up CUDA device-side buffers with nRows={} after loading matrix elements",
             calc.nBasisElts) << std::endl;
-        aef::cuda_resize(calc.nBasisElts);
+        aef::matrix::set_max_size(calc.nBasisElts);
         std::cout << "Finished CUDA device-side buffer setup" << std::endl;
 #endif
     } else {
         // not loading from file --> calculate
 #ifndef DONT_USE_CUDA
+#ifdef _OLD_CUDA
         std::cout << fmt::format(
             "Setting up CUDA device-side buffers with nRows={} before matrix element calculations",
             calc.nBasisElts) << std::endl;
         aef::cuda_resize(calc.nBasisElts);
         std::cout << "Finished CUDA device-side buffer setup" << std::endl;
+#else
+        std::cout << fmt::format(
+            "Setting up backend device-side buffers with nRows={} before matrix element calculations",
+            calc.nBasisElts) << std::endl;
+        aef::matrix::set_max_size(calc.nBasisElts);
+        std::cout << "Finished backend device-side buffer setup" << std::endl;
+#endif
 #endif
         prev_time = log_time_at_point("Starting matrix element calculations", start_time, prev_time);
         calc.calculate_matrix_elts();
@@ -624,10 +642,17 @@ int main(int argc, char **argv) {
     // directory to put devonshire info
     auto devpath = dpath / "devonshire_info";
     fs::create_directories(devpath);
+#ifdef _OLD_CUDA
     std::cout << "does H_tot commute with d10? " << aef::commutes(calc.H_tot, calc.d10) << std::endl;
     std::cout << "does H_tot commute with d11? " << aef::commutes(calc.H_tot, calc.d11) << std::endl;
     std::cout << "does H_tot commute with d1t? " << aef::commutes(calc.H_tot, calc.d1t) << std::endl;
     std::cout << std::endl;
+#else
+    std::cout << "does H_tot commute with d10? " << aef::matrix::commutes(calc.H_tot, calc.d10, &vals) << std::endl;
+    std::cout << "does H_tot commute with d11? " << aef::matrix::commutes(calc.H_tot, calc.d11, &vals) << std::endl;
+    std::cout << "does H_tot commute with d1t? " << aef::matrix::commutes(calc.H_tot, calc.d1t, &vals) << std::endl;
+    std::cout << std::endl;
+#endif
 
     std::cout << "Is d10  all zero " << calc.d10.isZero(1E-6) << std::endl;
     std::cout << "Is d11  all zero " << calc.d11.isZero(1E-6) << std::endl;

@@ -110,13 +110,13 @@ bool HyperfineCalculator::diagonalize_H(bool use_cuda) {
   Vs.setZero();
   Es.setZero();
 
-  if (use_cuda && !aef::is_cuda_initialized()) {
+  if (use_cuda && !aef::matrix::get_backend()) {
       std::cout << "[HyperfineCalculator] CUDA not initialized but CUDA-based diagonalization called!!" << std::endl;
       std::cout << "[HyperfineCalculator] Converting to Eigen-based diagonalization!!" << std::endl;
       DebugBreak();
       use_cuda = false;
   }
-
+#ifdef _OLD_CUDA
   if (use_cuda) {
       aef::cuda_resize(nBasisElts);
       if (enableDev) {
@@ -140,6 +140,31 @@ bool HyperfineCalculator::diagonalize_H(bool use_cuda) {
       }
       diagonalized = true;
       return true;
+#else
+  if (use_cuda) {
+      aef::matrix::set_max_size(nBasisElts);
+      if (enableDev) {
+          aef::matrix::diagonalize(H_tot, Es, Vs);
+      } else {
+          // Free-space: m_f is a good quantum number, want to simultaneously
+          // diagonalize H_tot and F_z This is done using the method given in
+          // https://math.stackexchange.com/a/4388322 and proven in
+          // https://math.stackexchange.com/a/3951339.  However, I'm omitting the
+          // randomization portion because it shouldn't be necessary (if there's some
+          // small mixing of the m_f it doesn't really matter, and in practice they
+          // don't mix.
+          constexpr dcomplex t = 100.0; // +15i;
+          // naughty hack: H_dev doesn't actually contain anything when enableDev == false, so we can use it
+          // as our temporary here instead of making a new temporary matrix
+          H_dev = H_tot + t * F_z;
+          aef::matrix::diagonalize(H_dev, Es, Vs);
+          aef::matrix::group_action(H_dev, Vs, H_tot);
+          Es = H_dev.diagonal();
+          H_dev.setZero();
+      }
+      diagonalized = true;
+      return true;
+#endif
   } else {
       Eigen::SelfAdjointEigenSolver<Eigen::MatrixXcd> solver;
       if (enableDev) {
@@ -328,6 +353,7 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
       zin.read((char*)&(this->K), sizeof(this->K));
       this->enableDev = (K != 0);
       stream_pos += sizeof(this->E_z) + sizeof(this->K);
+      std::cout << "Read E_DEV_PARMS" << std::endl;
   }
 
   diagonalized = (flags & FLAG_DIAG);
@@ -337,6 +363,8 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
   Eigen::read_binary(zin, H_stk);
   Eigen::read_binary(zin, H_dev);
   Eigen::read_binary(zin, H_tot);
+
+  std::cout << "Read operator matricies" << std::endl;
 
   init = true;
 

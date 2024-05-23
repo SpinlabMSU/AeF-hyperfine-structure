@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "cusolver_utils.h"
 namespace cuda {
     // Returns cudaDataType value as defined in library_types.h for the string containing type name

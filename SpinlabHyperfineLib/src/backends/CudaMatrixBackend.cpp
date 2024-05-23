@@ -32,7 +32,16 @@ ResultCode aef::matrix::CudaMatrixBackend::init(int argc, char** argv) {
     if (_init) {
         return ResultCode::S_NOTHING_PERFORMED;
     }
+    std::cout << "[aef::matrix::cuda] Attempting to initialize" << std::endl;
     devID = cuda::findCudaDevice(argc, const_cast<const char**>(argv));
+
+    if (devID < 0) {
+        std::cout << "[aef::matrix::cuda] No Cuda devices found" << std::endl;
+        return ResultCode::NotAvailable;
+    }
+
+    std::cout << "[aef::matrix::cuda] Selected Cuda device with ID " << devID << std::endl;
+
     checkCudaErrors(cudaGetDeviceProperties(&deviceProps, devID));
     checkCudaErrors(cudaSetDevice(devID));
     checkCudaErrors(cusolverDnCreate(&cu_handle));
@@ -57,13 +66,13 @@ ResultCode aef::matrix::CudaMatrixBackend::ensureWorkCapacity(size_t num_elts) {
     if (num_elts <= lWork) {
         return ResultCode::S_NOTHING_PERFORMED;
     }
-    std::cout << "[aef::cuda_utils] need to reallocate work buffer, "
+    std::cout << "[aef::matrix::cuda] need to reallocate work buffer, "
         "old size was " << lWork * sizeof(cuDoubleComplex) << " bytes, new size will be "
         << num_elts * sizeof(cuDoubleComplex) << " bytes" << std::endl;
     checkCudaErrors(cudaFree(d_Work));
     checkCudaErrors(cudaMalloc(reinterpret_cast<void**>(&d_Work), num_elts * sizeof(cuDoubleComplex)));
     lWork = num_elts;
-    std::cout << "[aef::cuda_utils] allocated new work space on gpu" << std::endl;
+    std::cout << "[aef::matrix::cuda] allocated new work space on gpu" << std::endl;
     return ResultCode::Success;
 }
 
@@ -107,12 +116,12 @@ ResultCode aef::matrix::CudaMatrixBackend::set_max_size(int nMaxDim) {
 
     assert(_init);
 
-    std::cout << "[Cuda matrix backend] Resizing from " << saved_n << " rows to " << n << " rows." << std::endl;
+    std::cout << "[aef::matrix::cuda] Resizing from " << saved_n << " rows to " << n << " rows." << std::endl;
     const size_t szV = sizeof(cuDoubleComplex) * n;
     const size_t szA = sizeof(cuDoubleComplex) * n * n;
     const size_t szW = sizeof(double) * n;
     size_t szTotal = szV + 2 * szA + szW;
-    std::cout << "[Cuda matrix backend] Estimated initial allocation size is " << szTotal << "bytes = " << szTotal / (1 << 20) << "MiB" << std::endl;
+    std::cout << "[aef::matrix::cuda] Estimated initial allocation size is " << szTotal << "bytes = " << szTotal / (1 << 20) << "MiB" << std::endl;
 
     if (d_A) {
         checkCudaErrors(cudaFreeAsync(d_A, cu_stream));
@@ -161,32 +170,32 @@ ResultCode aef::matrix::CudaMatrixBackend::set_max_size(int nMaxDim) {
     checkCudaErrors(cusolverDnZheevd_bufferSize(cu_handle, jobz, uplo, n, d_A, n, d_W, &lWork));
 #ifdef NO_MATRIX_ALLOCATION_HACK
     const size_t szWork = lWork * sizeof(cuDoubleComplex);
-    std::cout << "[Cuda matrix backend] zheev work size will be " << szWork << " bytes, " << lWork << " elements." << std::endl;
+    std::cout << "[aef::matrix::cuda] zheev work size will be " << szWork << " bytes, " << lWork << " elements." << std::endl;
     szTotal += szWork;
 #else
     // Matrix allocation hack: 
     const size_t szWork = std::max(lWork * sizeof(cuDoubleComplex), 2 * szA);
     const bool bOverride = (szWork > lWork * sizeof(cuDoubleComplex));
     const char* strOverride = bOverride ? "overrided by matrix hack" : "not overrided by matrix hack";
-    std::cout << "[Cuda matrix backend] zheev work size will be " << szWork << " bytes, " << strOverride << ", " <<
+    std::cout << "[aef::matrix::cuda] zheev work size will be " << szWork << " bytes, " << strOverride << ", " <<
         szA << " bytes re-used for d_U." << std::endl;
     if (bOverride) {
         const int lWorkNew = (szWork + sizeof(cuDoubleComplex) - 1) / sizeof(cuDoubleComplex);
-        std::cout << "[Cuda matrix backend]" << "zheev minimum-required lWork was " << lWork << " elements, will now be " << lWorkNew << " elements" << std::endl;
+        std::cout << "[aef::matrix::cuda]" << "zheev minimum-required lWork was " << lWork << " elements, will now be " << lWorkNew << " elements" << std::endl;
         lWork = lWorkNew;
     } else {
-        std::cout << "[Cuda matrix backend] lWork is " << lWork << " elements" << std::endl;
+        std::cout << "[aef::matrix::cuda] lWork is " << lWork << " elements" << std::endl;
     }
     szTotal += (szWork - szA);
 #endif
-    std::cout << "[Cuda matrix backend] Estimated total allocation size is " << szTotal << "bytes = " << szTotal / (1 << 20) << "MiB" << std::endl;
+    std::cout << "[aef::matrix::cuda] Estimated total allocation size is " << szTotal << "bytes = " << szTotal / (1 << 20) << "MiB" << std::endl;
     checkCudaErrors(cudaMallocAsync(reinterpret_cast<void**>(&d_Work), szWork, cu_stream));
 #ifndef NO_MATRIX_ALLOCATION_HACK
-    d_U = d_Work + szA;
+    d_U = d_Work + szA / sizeof(cuDoubleComplex);
 #endif
     checkCudaErrors(cudaStreamSynchronize(cu_stream));
     saved_n = n;
-    std::cout << "[Cuda matrix backend] Resizing to size " << n << " complete" << std::endl;
+    std::cout << "[aef::matrix::cuda] Resizing to size " << n << " complete" << std::endl;
     
     return ResultCode::Success;
 }
@@ -334,7 +343,7 @@ ResultCode aef::matrix::CudaMatrixBackend::diagonalize(Eigen::MatrixXcd& mat, Ei
 
     if (rows > saved_n || saved_n <= 0) {
         std::cout << "[aef::matrix::CudaMatrixBackend] Automatically resizing from " << saved_n << " rows to " << rows << " rows." << std::endl;
-        cuda_resize(rows);
+        this->set_max_size(rows);
     }
 
     const size_t mat_size = sizeof(cuDoubleComplex) * mat.size();
