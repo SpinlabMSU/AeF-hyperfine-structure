@@ -18,6 +18,9 @@ else
 endif
 $(info $$BUG_FLAGS is [${BUG_FLAGS}])
 INCLUDES:=-I./include -I./SpinlabHyperfineLib/include
+ROOT_CFLAGS:=$(shell root-config --cflags | sed 's/-std=.* //g') # note: want a more recent C++ version than root requires
+ROOT_LDFLAGS:=$(shell root-config --ldflags)
+ROOT_LDLIBS:=$(shell root-config --glibs)
 CXX_VSN:=-std=gnu++23 -fmodules-ts -fopenmp
 CXXFLAGS:=$(INCLUDES) $(CXX_VSN) -O4 -fPIC -flto $(BUG_FLAGS) -g -march=native -D_GNU_SOURCE
 NCXXFLAGS:=$(INCLUDES) -std=gnu++20 -O4 -fPIC -flto $(BUG_FLAGS) -g -march=native
@@ -27,7 +30,7 @@ CUDA_LIBS:=-lcusolver -lcublas -lcublasLt -lcuda -lcudart_static
 LDLIBS:=-l:./libSpinlabHyperfine.a -lgsl -lgslcblas $(CUDA_LIBS) -lz -lm
 
 .PHONY: all clean libs AeF-hyperfine-structure.inl
-all: libs aef_hyperfine_structure low_state_dumper stark_diagonalizer nodev_aef_hf deven_aef_hf
+all: libs aef_hyperfine_structure low_state_dumper stark_diagonalizer nodev_aef_hf deven_aef_hf operatorVisualizer
 libs: libSpinlabHyperfine.a libSpinlabHyperfine.so
 
 
@@ -66,6 +69,10 @@ low_state_dumper: LowStateDumper/LowStateDumper.o libSpinlabHyperfine.so
 	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $< $(LDLIBS)
 stark_diagonalizer: StarkDiagonalizer/StarkDiagonalizer.o libSpinlabHyperfine.so AeF-hyperfine-structure.inl
 	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $< $(LDLIBS)
+
+operatorVisualizer: operator_visualizer/operator_visualizer.cpp libSpinlabHyperfine.so AeF-hyperfine-structure.inl
+	$(CXX) -o $@ $(CXXFLAGS) $(ROOT_CFLAGS) -Ioperator_visualizer/include $(LDFLAGS) $(ROOT_LDFLAGS) \
+	$< $(ROOT_LDLIBS) $(LDLIBS)
 
 clean:
 	$(RM) aef_hyperfine_structure AeF-hyperfine-structure.inl $(LSPHF_OBJ) \

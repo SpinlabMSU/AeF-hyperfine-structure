@@ -17,6 +17,7 @@
 /stark_diagonalizer
 /deven_cpu_hf
 /nodev_cpu_hf
+/operatorVisualizer
 /core*
 /*.pdf
 # User-specific files
