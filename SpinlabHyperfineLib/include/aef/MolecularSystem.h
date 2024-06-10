@@ -35,8 +35,16 @@ namespace aef {
     /// </summary>
     class MolecularSystem {
         spin nmax;
+        
+
+
         std::vector<jf_basis_vec> basis;
         std::unordered_map<std::string, Eigen::MatrixXcd*> operators;
+
+        struct parameters {
+            
+        };
+
 
     public:
         MolecularSystem();

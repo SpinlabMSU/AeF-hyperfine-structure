@@ -37,6 +37,8 @@ namespace unit_conversion {
 
     constexpr double MHz_per_Kelvin = constants::k_B / constants::h * 1E-6;
 
+
+    constexpr double MHz_per_inv_cm = constants::c * 1E-6 * 100;
 }; // namespace unit_conversion
 
 #endif //_UNITS_HPP
