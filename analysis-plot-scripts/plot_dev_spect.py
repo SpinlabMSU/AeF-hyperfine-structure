@@ -175,19 +175,19 @@ if do_extras:
     plt.close(fig)
 
 ### Make equivalent to PRA fig 3
-props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+props = dict(boxstyle='round,pad=0.2', facecolor='wheat', alpha=0.5)
 x_pix = 698
 y_pix = 1025
 fig,ax = plt.subplots(4, 1, figsize=(x_pix / 100.0, y_pix / 100.0), sharex = True, sharey = False)
 # part a
 gca = plt.subplot(4, 1, 1)
 gca.tick_params(axis='both', which='both', direction='inout')
-textstr = f'Bottom Group Stark Shift'
+textstr = f'Stark Shift of Lowest-energy group of states'
 color = []
 for i in range(4): color.append('b')
 for i in range(16): color.append('g')
 for i in range(4): color.append('r')
-gca.text(0.05, 0.15, textstr, transform=gca.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+gca.text(0.015, 0.12, textstr, transform=gca.transAxes, fontsize=14, verticalalignment='top', bbox=props)
 #df.plot(Ez[:24], states[:24], ylabel = 'Energy (MHz)', ax=plt.gca(), legend = False)
 plt.ylabel('Energy (GHz)')
 #plt.plot(df[Ez][1:], df[states[:24]][1:] / 1000)
@@ -204,8 +204,8 @@ plt.annotate('$-\hat{Z}$', xy=(Ez_mid, En0s[mid_idx - 1]/1000), xycoords='data',
 # part b
 gca = plt.subplot(4, 1, 2)
 gca.tick_params(axis='both', which='both', direction='inout')
-textstr = f'Hyperfine shift of f=1 above f=0 for +Z part of the bottom group'
-gca.text(0.05, 0.15, textstr, transform=gca.transAxes, fontsize=12, verticalalignment='top', bbox=props)
+textstr = f'Hyperfine shift of f=1 above f=0 for +Z part of the lowest-energy group'
+gca.text(0.01, 0.15, textstr, transform=gca.transAxes, fontsize=12, verticalalignment='top', bbox=props)
 plt.ylabel('[Energy (f=1) - Energy (f=0)] (MHz)')
 plt.plot(df[Ez][1:], (En1s-En0s)[1:], label='$f=1,m_f=0$')
 plt.annotate('$f=1,m_f=0$', xy=(Ez_mid, (En1s-En0s)[mid_idx - 1]), xycoords='data', xytext=(1.5, 5.5), color='k', textcoords='offset points')
@@ -245,6 +245,7 @@ plt.legend()
 
 fig.suptitle(f"N=0, F=0,1 Stark shift for run {run}", y=0.999)
 plt.subplots_adjust(bottom=0.05, right=0.990, top=0.97, left = 0.114, hspace = 0.0)
+plt.xlabel("Externally-Applied Electric field Strength (V/cm)")
 
 plt.savefig(os.path.join(rundir, 'pra_aspect_deven.png'))
 plt.show()
