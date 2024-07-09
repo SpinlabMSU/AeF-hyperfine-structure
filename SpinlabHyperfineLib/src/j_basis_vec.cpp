@@ -266,6 +266,62 @@ dcomplex j_basis_vec::H_dev(j_basis_vec other, double K) {
     return prf * f3f * f3n * f6j;
 }
 
+dcomplex j_basis_vec::I_dot_ina(j_basis_vec other){
+    const spin np = other.n;
+    const spin jp = other.j;
+    const spin fp = other.f;
+    const spin m_fp = other.m_f;
+    // WARNING: I am NOT at all confident that either of these implementations are correct
+
+#ifdef USE_VECTOR_FORM
+    // this was dervived under the assumption that \vec{I}\cdot\vec{d} is a vector since \vec{d} = \hat{z} = --> 
+    // --> = \vec{I}_z = \mathrm{T}^{1}_{q=1} (i.e. like the stark effect)
+    // I don't think this form is correct because 1) \vec{d} doesn't describe a backgr
+    // this appears to explicitly violate rotational symmetry by mixing f and m_f 
+    dcomplex prf = parity(1 - m_f) * xi(n, np) * xi(j, jp) * xi(f, fp) * constexpr_sqrt(9.0 / 2.0);
+    dcomplex f3f = w3j(f, 1, fp, -m_f, 0, m_fp) - w3j(f, 1, fp, -m_f, 1, m_fp) - w3j(f, 1, fp, -m_f, -1, m_fp);
+    dcomplex f3nj = w3j(n, 1, np, 0, 0, 0) * w6j(j, 1, jp, np, half, n);
+    dcomplex f9j = w9j(jp, half, fp, 1, 1, 1, j, half, f);
+
+    return prf * f3f * f3nj * f9j;
+#else
+    // todo check to see if this would be correct under the assumption that \vec{I}\cdot\vec{d} is scalar
+    if (f != fp || m_f != m_fp) {
+        return 0;
+    }
+    constexpr spin i = half;
+    constexpr spin s = half;
+    dcomplex prf = constexpr_sqrt(3.0 / 2.0) * sqrt(2*f + 1) * xi_prime(n, np) * xi_prime(j, jp);
+    dcomplex phase = parity(f - m_f + jp + i + f + jp + n + 1 + j);
+    dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
+    dcomplex f6j = w6j(jp, i, f, i, j, 1) * w6j(j, 1, jp, np, s, n);
+    return prf * phase * f3j * f6j;
+#endif
+}
+
+dcomplex j_basis_vec::S_dot_ina(j_basis_vec other){
+    const spin np = other.n;
+    const spin jp = other.j;
+    const spin fp = other.f;
+    const spin m_fp = other.m_f;
+
+    constexpr spin i = half;
+    constexpr spin s = half;
+    
+    // this should be a scalar operator
+    if (f != fp || m_f != m_fp) {
+        return 0;
+    }
+
+    // 
+    dcomplex prf = 0; // TODO
+    dcomplex phase = 0;
+    dcomplex f3j = 0;
+    dcomplex f6j = 0;
+    
+    return prf * phase * f3j * f6j;
+}
+
 std::string j_basis_vec::ket_string() {
     return fmt::format("|n={}, j={}, f={}, m_f={}>", n, j, f, m_f);
 }
