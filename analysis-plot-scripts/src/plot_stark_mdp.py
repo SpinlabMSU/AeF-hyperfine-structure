@@ -150,9 +150,9 @@ status_txt = f"enabled, K={dev_K}" if dev_en else "disabled"
 run = os.path.split(top_dir)[1]
 title_text = f"Molecular Dipole-Axis Z vs Externally applied Electric Field (with Devonshire {status_txt})\nrun {run}"
 plt.title(title_text)
-plt.xlabel('Externally applied electric field (V/cm)')
+plt.xlabel('Externally applied electric field (kV/cm)')
 plt.ylabel('Molecular Dipole-Axis z component (unitless)')
-plt.plot(Ez, Dz, 'ro')
+plt.plot(Ez / 1000, Dz, 'ro')
 if use_zero_field:
     plt.savefig(os.path.join(top_dir, 'mdz_stark_plot.png'))
 else:

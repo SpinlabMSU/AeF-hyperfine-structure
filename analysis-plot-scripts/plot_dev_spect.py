@@ -47,7 +47,7 @@ print(Ez)
 print(states)
 Ezs = df[Ez]
 mid_idx = len(Ezs) // 2
-Ez_mid = Ezs[mid_idx]
+Ez_mid = Ezs[mid_idx] / 1000
 
 do_extras = False
 # Including a legend isn't particularly useful past a certain number of states
@@ -188,14 +188,15 @@ for i in range(4): color.append('b')
 for i in range(16): color.append('g')
 for i in range(4): color.append('r')
 gca.text(0.015, 0.12, textstr, transform=gca.transAxes, fontsize=14, verticalalignment='top', bbox=props)
+Ezs_kV = np.array(df[Ez]) / 1000.0
 #df.plot(Ez[:24], states[:24], ylabel = 'Energy (MHz)', ax=plt.gca(), legend = False)
 plt.ylabel('Energy (GHz)')
 #plt.plot(df[Ez][1:], df[states[:24]][1:] / 1000)
-plt.plot(df[Ez], Ep0s/1000, color='b')
+plt.plot(Ezs_kV, Ep0s/1000, color='b')
 plt.annotate('$+\hat{Z}$', xy=(Ez_mid, Ep0s[mid_idx - 1]/1000), xycoords='data', xytext=(1.5, 1.5), color='b', textcoords='offset points')
-plt.plot(df[Ez], Em0s/1000, color='g')
+plt.plot(Ezs_kV, Em0s/1000, color='g')
 plt.annotate('$+\hat{X},-\hat{X},+\hat{Y},-\hat{Y}$', xy=(Ez_mid, Em0s[mid_idx - 1]/1000), xycoords='data', xytext=(1.5, 2.5), color='g', textcoords='offset points')
-plt.plot(df[Ez], En0s/1000, color='r')
+plt.plot(Ezs_kV, En0s/1000, color='r')
 plt.annotate('$-\hat{Z}$', xy=(Ez_mid, En0s[mid_idx - 1]/1000), xycoords='data', xytext=(1.5, 5.5), color='r', textcoords='offset points')
 
 #for i,j in enumerate(gca.lines):
@@ -207,11 +208,11 @@ gca.tick_params(axis='both', which='both', direction='inout')
 textstr = f'Hyperfine shift of f=1 above f=0 for +Z part of the lowest-energy group'
 gca.text(0.01, 0.15, textstr, transform=gca.transAxes, fontsize=12, verticalalignment='top', bbox=props)
 plt.ylabel('[Energy (f=1) - Energy (f=0)] (MHz)')
-plt.plot(df[Ez][1:], (En1s-En0s)[1:], label='$f=1,m_f=0$')
+plt.plot(Ezs_kV[1:], (En1s-En0s)[1:], label='$f=1,m_f=0$')
 plt.annotate('$f=1,m_f=0$', xy=(Ez_mid, (En1s-En0s)[mid_idx - 1]), xycoords='data', xytext=(1.5, 5.5), color='k', textcoords='offset points')
-plt.plot(df[Ez][1:], (En2s-En0s)[1:], label='$f=1,m_f=1$')
+plt.plot(Ezs_kV[1:], (En2s-En0s)[1:], label='$f=1,m_f=1$')
 plt.annotate('$f=1,m_f=\\pm1$', xy=(Ez_mid, (En2s-En0s)[mid_idx - 1]), xycoords='data', xytext=(1.5, -9.5), color='k', textcoords='offset points')
-plt.plot(df[Ez][1:], (En3s-En0s)[1:], label='$f=1,m_f=-1$')
+plt.plot(Ezs_kV[1:], (En3s-En0s)[1:], label='$f=1,m_f=-1$')
 #plt.legend()
 gca.set_ylim([60, 68])
 
@@ -223,9 +224,9 @@ plt.ylabel('[E(f=1)-E(f=0)-$\Delta_{10}(0)$] (kHz)')
 gca.text(0.05, 0.15, textstr, transform=gca.transAxes, fontsize=14, verticalalignment='top', bbox=props)
 pz_avg = ((Ep2s-Ep0s-delta_10_pmf1) + (Ep3s-Ep0s-delta_10_pmft)) / 2.0
 nz_avg = ((En2s-En0s-delta_10_nmf1) + (En3s-En0s-delta_10_nmft)) / 2.0
-plt.plot(df[Ez][1:], pz_avg[1:]*1000, 'b-', label='+Z')
+plt.plot(Ezs_kV[1:], pz_avg[1:]*1000, 'b-', label='+Z')
 plt.annotate('+Z', xy=(Ez_mid, pz_avg[mid_idx - 1] * 1000), xycoords='data', xytext=(1.5, 5.5), color='b', textcoords='offset points')
-plt.plot(df[Ez][1:], nz_avg[1:]*1000, 'r-', label='-Z')
+plt.plot(Ezs_kV[1:], nz_avg[1:]*1000, 'r-', label='-Z')
 plt.annotate('-Z', xy=(Ez_mid, nz_avg[mid_idx - 1] * 1000), xycoords='data', xytext=(1.5, 1.5), color='r', textcoords='offset points')
 plt.legend()
 
@@ -237,15 +238,15 @@ plt.ylabel('[E(f=1)-E(f=0)-$\Delta_{10}(0)$] (kHz)')
 gca.text(0.05, 0.15, textstr, transform=gca.transAxes, fontsize=14, verticalalignment='top', bbox=props)
 pz = (Ep1s-Ep0s-dn0)
 nz = (En1s-En0s-dp0)
-plt.plot(df[Ez][1:], pz[1:]*1000, 'b-', label='+Z')
+plt.plot(Ezs_kV[1:], pz[1:]*1000, 'b-', label='+Z')
 plt.annotate('+Z', xy=(Ez_mid, pz[mid_idx - 1] * 1000), xycoords='data', xytext=(1.5, 1.5), color='b', textcoords='offset points')
-plt.plot(df[Ez][1:], nz[1:]*1000, 'r-', label='-Z')
+plt.plot(Ezs_kV[1:], nz[1:]*1000, 'r-', label='-Z')
 plt.annotate('-Z', xy=(Ez_mid, nz[mid_idx - 1] * 1000), xycoords='data', xytext=(1.5, 5.5), color='r', textcoords='offset points')
 plt.legend()
 
 fig.suptitle(f"N=0, F=0,1 Stark shift for run {run}", y=0.999)
 plt.subplots_adjust(bottom=0.05, right=0.990, top=0.97, left = 0.114, hspace = 0.0)
-plt.xlabel("Externally-Applied Electric field Strength (V/cm)")
+plt.xlabel("Externally-Applied Electric field Strength (kV/cm)")
 
 plt.savefig(os.path.join(rundir, 'pra_aspect_deven.png'))
 plt.show()
