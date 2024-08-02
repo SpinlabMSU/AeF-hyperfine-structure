@@ -230,7 +230,12 @@
     <ClInclude Include="include\aef\MatrixOpBackend.h" />
     <ClInclude Include="include\aef\matrix_utils.h" />
     <ClInclude Include="include\aef\MolecularSystem.h" />
+    <ClInclude Include="include\aef\operators\basis_ket.h" />
+    <ClInclude Include="include\aef\operators\IOperator.h" />
+    <ClInclude Include="include\aef\operators\PerturbationFramework.h" />
     <ClInclude Include="include\aef\plaf_utils.hpp" />
+    <ClInclude Include="include\aef\quantum.h" />
+    <ClInclude Include="include\aef\quantum\matrix.h" />
     <ClInclude Include="include\aef\raf_constants.h" />
     <ClInclude Include="include\aef\teestream.hpp" />
     <ClInclude Include="include\aef\xiffstream.h" />
@@ -341,6 +346,8 @@
     <ClCompile Include="src\MatrixOpBackend.cpp" />
     <ClCompile Include="src\matrix_utils.cpp" />
     <ClCompile Include="src\MolecularSystem.cpp" />
+    <ClCompile Include="src\operators\IOperator.cpp" />
+    <ClCompile Include="src\operators\PerturbationFramework.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -353,6 +360,7 @@
     </ClCompile>
     <ClCompile Include="SpinlabHyperfineLib.cpp" />
     <ClCompile Include="src\plaf_utils.cpp" />
+    <ClCompile Include="src\quantum.cpp" />
     <ClCompile Include="src\teestream.cpp" />
     <ClCompile Include="src\xiffstream.cpp" />
   </ItemGroup>

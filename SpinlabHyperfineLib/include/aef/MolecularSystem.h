@@ -45,10 +45,12 @@ namespace aef {
             
         };
 
-
     public:
-        MolecularSystem();
+        MolecularSystem(spin nmax_ = 0.0, double E_z = 1.0, double K = 0.0);
         ~MolecularSystem();
+
+        void set_nmax(spin nmax_);
+
 
         bool load(std::istream& in);
         bool save(std::ostream& out);

@@ -18,8 +18,18 @@
 #include "aef/MolecularSystem.h"
 
 namespace aef {
-    MolecularSystem::MolecularSystem() {
+    MolecularSystem::MolecularSystem(spin nmax_ = 0.0, double E_z = 1.0, double K = 0.0):
+        nmax(nmax_)
+    {
+    }
+    void MolecularSystem::set_nmax(spin nmax_) {
     }
     MolecularSystem::~MolecularSystem() {
+    }
+    bool MolecularSystem::load(std::istream& in) {
+        return false;
+    }
+    bool MolecularSystem::save(std::ostream& out) {
+        return false;
     }
 };

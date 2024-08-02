@@ -33,34 +33,15 @@
 #include <numeric>
 #include <cxxopts.hpp>
 #include <fmt.hpp>
+#include <aef/quantum.h>
 
 namespace fs = std::filesystem;
 using namespace std::chrono;
+using aef::log_time_at_point;
+using namespace aef::quantum;
 
 #include "../AeF-hyperfine-structure.inl"
 
-time_point<system_clock> log_time_at_point(
-    const char* desc,
-    time_point<system_clock>& start,
-    time_point<system_clock>& prev) {
-    using namespace std::chrono;
-    time_point<system_clock> curr_time = system_clock::now();
-    std::string stime = fmt::format("{0:%F}-{0:%H%M}{0:%S}", curr_time);
-    using d_seconds = duration<double>;
-    // get seconds elapsed since start_time
-    auto st_diff = curr_time - start;
-    double st_sec_count = d_seconds(st_diff).count();
-    // calculate seconds elapsed since prev_time
-    auto pv_diff = curr_time - prev;
-    double pv_sec_count = d_seconds(pv_diff).count();
-
-    std::string lstr = fmt::format(
-        "{}: have taken {} seconds since last, {} seconds since start (current time is {})", desc,
-        pv_sec_count, st_sec_count, stime);
-    std::cout << lstr << std::endl;
-    *(std::addressof(prev)) = curr_time;
-    return curr_time;
-}
 
 // the number of states in a singlet-triplet group pair (f=0 and f=1)
 constexpr int num_singlet_triplet = 4;
@@ -85,92 +66,6 @@ void dump_state(HyperfineCalculator& calc, int state, std::ostream& out) {
         out << "," << std::real(ampl) << "," << std::imag(ampl);
     }
     out << std::endl;
-}
-
-/// <summary>
-/// Performs the quantum q*(q+1) squaring for angular momenta
-/// </summary>
-/// <param name="q"> q </param>
-/// <returns>q*(q+1)</returns>
-template <class T> T qsq(T q) {
-    return q * (q + (T)1);
-}
-
-
-/// <summary>
-/// Inverts the quantum q*(q+1) squaring for angular momenta
-/// </summary>
-/// <param name="expect_qsq">the expectation value of &lt;q(q+1)&gt; </param>
-/// <returns>the effective expectation of q</returns>
-template <class T> T invert_qsq(T expect_qsq) {
-    return (std::sqrt(4 * expect_qsq + 1.0) - 1.0) / 2.0;
-}
-
-/// <summary>
-/// Calculates the expectation values of the basis operators.  The squared
-/// </summary>
-/// <param name="calc">HyperfineCalculator: contains operator matrix elements
-/// and states</param> <param name="E_idx">the index of Energy level to
-/// calculate with</param> <returns></returns>
-j_basis_vec expectation_values_jsq(HyperfineCalculator& calc, int32_t E_idx) {
-    //
-    Eigen::VectorXcd state_vec = calc.Vs.col(E_idx);
-    j_basis_vec out;
-#ifdef _WIN32
-    SecureZeroMemory((void*)&out, sizeof(j_basis_vec));
-#else
-    //explicit_bzero((void*)&out, sizeof(j_basis_vec));
-    memset((void*)&out, 0, sizeof(j_basis_vec));
-#endif
-    double prob_tot = 0;
-    for (int32_t kidx = 0; kidx < calc.nBasisElts; kidx++) {
-        const double prob = std::norm(state_vec[kidx]);
-
-        if (prob < std::numeric_limits<double>::epsilon()) {
-            continue;
-        }
-
-        prob_tot += prob;
-        j_basis_vec bs_ket = calc.basis[kidx];
-        // note that angular momenta
-        out.n += prob * bs_ket.n * (bs_ket.n + 1);
-        out.j += prob * bs_ket.j * (bs_ket.j + 1);
-        out.f += prob * bs_ket.f * (bs_ket.f + 1);
-        out.m_f += prob * bs_ket.m_f;
-    }
-
-    if (prob_tot > (1 + std::numeric_limits<double>::epsilon() * 100000)) {
-        DebugBreak();
-    }
-
-    out.n = invert_qsq(out.n / prob_tot);
-    out.j = invert_qsq(out.j / prob_tot);
-    out.f = invert_qsq(out.f / prob_tot);
-    out.m_f /= prob_tot;
-
-    return out;
-}
-
-double expect_parity(HyperfineCalculator& calc, int32_t E_idx) {
-    double ex_parity = 0.0;
-    double prob_tot = 0.0;
-    Eigen::VectorXcd state_vec = calc.Vs.col(E_idx);
-    for (int32_t kidx = 0; kidx < calc.nBasisElts; kidx++) {
-        const double prob = std::norm(state_vec[kidx]);
-
-        if (prob < std::numeric_limits<double>::epsilon()) {
-            continue;
-        }
-
-        prob_tot += prob;
-        j_basis_vec bs_ket = calc.basis[kidx];
-        ex_parity += prob * std::pow(-1, bs_ket.n);
-    }
-
-    if (prob_tot > (1 + std::numeric_limits<double>::epsilon() * 100000)) {
-        DebugBreak();
-    }
-    return ex_parity / prob_tot;
 }
 
 /// <summary>

@@ -72,23 +72,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(Projectdir)include;$(IncludePath)</IncludePath>
-    <ExternalIncludePath>C:\root_v6.26.10\include;$(ExternalIncludePath)</ExternalIncludePath>
-    <LibraryPath>C:\root_v6.26.10\lib;$(LibraryPath)</LibraryPath>
+    <ExternalIncludePath>C:\root_v6.32.02\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>C:\root_v6.32.02\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(Projectdir)include;$(IncludePath)</IncludePath>
-    <ExternalIncludePath>C:\root_v6.26.10\include;$(ExternalIncludePath)</ExternalIncludePath>
-    <LibraryPath>C:\root_v6.26.10\lib;$(LibraryPath)</LibraryPath>
+    <ExternalIncludePath>C:\root_v6.32.02\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>C:\root_v6.32.02\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(Projectdir)include;$(IncludePath)</IncludePath>
-    <ExternalIncludePath>C:\root_v6.26.10\include;$(ExternalIncludePath)</ExternalIncludePath>
-    <LibraryPath>C:\root_v6.26.10\lib;$(LibraryPath)</LibraryPath>
+    <ExternalIncludePath>C:\root_v6.32.02\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>C:\root_v6.32.02\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(Projectdir)include;$(IncludePath)</IncludePath>
-    <ExternalIncludePath>C:\root_v6.26.10\include;$(ExternalIncludePath)</ExternalIncludePath>
-    <LibraryPath>C:\root_v6.26.10\lib;$(LibraryPath)</LibraryPath>
+    <ExternalIncludePath>C:\root_v6.32.02\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>C:\root_v6.32.02\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
