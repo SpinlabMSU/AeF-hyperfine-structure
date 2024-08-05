@@ -37,4 +37,4 @@ namespace aef::quantum {
 };
 
 
-#endif /_AEF_QUANTUM_H
+#endif //_AEF_QUANTUM_H

@@ -18,7 +18,7 @@
 #include "aef/MolecularSystem.h"
 
 namespace aef {
-    MolecularSystem::MolecularSystem(spin nmax_ = 0.0, double E_z = 1.0, double K = 0.0):
+    MolecularSystem::MolecularSystem(spin nmax_, double E_z, double K):
         nmax(nmax_)
     {
     }
