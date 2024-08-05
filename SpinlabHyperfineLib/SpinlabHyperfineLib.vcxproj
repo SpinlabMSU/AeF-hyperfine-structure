@@ -348,6 +348,10 @@
     <ClCompile Include="src\MolecularSystem.cpp" />
     <ClCompile Include="src\operators\IOperator.cpp" />
     <ClCompile Include="src\operators\PerturbationFramework.cpp" />
+    <ClCompile Include="src\operators\eEDMOperator.cpp" />
+    <ClCompile Include="src\operators\NSMOperator.cpp" />
+    <ClCompile Include="src\operators\StarkOperator.cpp" />
+    <ClCompile Include="src\operators\ZeemanOperator.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

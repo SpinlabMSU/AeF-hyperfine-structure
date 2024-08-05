@@ -357,6 +357,18 @@
     <ClInclude Include="include\aef\operators\PerturbationFramework.h">
       <Filter>Header Files\aef\operators</Filter>
     </ClInclude>
+    <ClInclude Include="include\aef\operators\eEDMOperator.h">
+      <Filter>Header Files\aef\operators</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\operators\NSMOperator.h">
+      <Filter>Header Files\aef\operators</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\operators\StarkOperator.h">
+      <Filter>Header Files\aef\operators</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\operators\ZeemanOperator.h">
+      <Filter>Header Files\aef\operators</Filter>
+    </ClInclude>
     <ClInclude Include="include\aef\quantum\matrix.h">
       <Filter>Header Files\aef\quantum</Filter>
     </ClInclude>

@@ -1,5 +1,5 @@
 /*
-    aef/operators/basis_ket.h -- contains the basis_ket concept
+    aef/operators/StarkOperator.h -- contains various utility functions
 
     This file is part of the AeF-hyperfine-structure program.
 
@@ -16,23 +16,25 @@
     You should have received a copy of the GNU General Public License along with
     AeF-hyperfine-structure. If not, see <https://www.gnu.org/licenses/>.
 */
-#ifndef _AEF_OPERATORS_BASIS_KET_H
-#define _AEF_OPERATORS_BASIS_KET_H 1
+
+#ifndef _AEF_OPERATOR_STARKOPERATOR_H
+#define _AEF_OPERATOR_STARKOPERATOR_H 1
 #pragma once
-#include <aef/aef_types.h>
-#include <type_traits>
+
+#include <aef/aef.h>
+#include "IOperator.h"
 namespace aef::operators {
-    /// <summary>
-    /// The IBasisKet
-    /// </summary>
-    template <typename T, typename integer>
-    concept IBasisKet = requires(T v, integer idx) {
-        // "integer" needs to actually be an integer type
-        std::integral <integer>;
-        // need way of converting basis ket to integer
-        {v.index()} -> std::same_as<integer>;
-        // need to be able to conver 
-        {T::from_index(idx)} -> std::same_as<T>;
-    };
-}
-#endif //_AEF_OPERATORS_BASIS_KET_H
+    class StarkOperator:IOperator<aef::j_basis_vec> {
+    public:
+        StarkOperator();
+        ~StarkOperator();
+
+        using basis_ket = aef::j_basis_vec;
+        virtual dcomplex matrixElement(basis_ket k1, basis_ket k2);
+        virtual void fillMatrix(Eigen::SparseMatrix<dcomplex> &matrix);
+        virtual void fillMatrix(Eigen::MatrixXcd& matrix);
+    
+        virtual OperatorInfo getInfo();
+    }
+};
+#endif //_AEF_OPERATOR_STARKOPERATOR_H
