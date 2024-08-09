@@ -137,6 +137,43 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
     return retval;
 }
 
+std::array<dcomplex, 3> aef::j_basis_vec::molec_edm(j_basis_vec other) {
+    const spin np = other.n;
+    const spin jp = other.j;
+    const spin fp = other.f;
+    const spin m_fp = other.m_f;
+
+    dcomplex xi_factors = xi(f, fp) * xi(j, jp) * xi(n, np);
+    dcomplex threej_n = w3j(n, 1, np, 0, 0, 0);
+    dcomplex sixj_factors = w6j(f, 1, fp, jp, half, j) * w6j(j, 1, jp, np, half, n);
+    dcomplex phase = -parity(1 - m_f); // add extra negative sign to account for negative in Stark 
+
+    using hfs_constants::mu_e;
+    using namespace std::complex_literals;
+
+    // technically this isn't the "true" reduced matrix element from the Wigner-Eckhart theorem
+    // since it is 
+    dcomplex reduced_mat_elt = mu_e * xi_factors * threej_n * sixj_factors * phase;
+
+    double we_factor_t = w3j(f, 1, fp, -m_f, -1, m_f);
+    double we_factor_0 = w3j(f, 1, fp, -m_f, 0, m_f);
+    double we_factor_1 = w3j(f, 1, fp, -m_f, 1, m_f);
+
+    // spherical tensor operator form
+    dcomplex mue_t = we_factor_t * reduced_mat_elt;
+    dcomplex mue_0 = we_factor_0 * reduced_mat_elt;
+    dcomplex mue_1 = we_factor_1 * reduced_mat_elt;
+
+    constexpr double inv_sqrt2 = 1 / std::numbers::sqrt2;
+
+    // cartesian form
+    dcomplex mue_x = (mue_t - mue_1) * inv_sqrt2;
+    dcomplex mue_y = (mue_t + mue_1) * 1i * inv_sqrt2;
+    dcomplex mue_z = mue_0;
+
+    return std::array<dcomplex, 3>({mue_x, mue_y, mue_z});
+}
+
 dcomplex j_basis_vec::H_hfs(j_basis_vec other) {
     return H_hfs_scalar(other) + H_hfs_tensor(other);
 }

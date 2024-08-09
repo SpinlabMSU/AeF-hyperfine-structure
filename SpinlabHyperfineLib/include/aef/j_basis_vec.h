@@ -209,6 +209,15 @@ namespace aef {
         /// <param name="other"></param>
         /// <returns></returns>
         dcomplex H_hfs_tensor(j_basis_vec other);
+        static constexpr double mu = baf_constants::mu_e;
+
+        /// <summary>
+        /// Evaluate the three components of the molecular
+        /// </summary>
+        /// <param name="other"></param>
+        /// <param name="E_mag"></param>
+        /// <returns></returns>
+        std::array<dcomplex, 3> molec_edm(j_basis_vec other);
     };
 };
 using aef::j_basis_vec;

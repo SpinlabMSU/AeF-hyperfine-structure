@@ -28,7 +28,8 @@ namespace aef::operators {
     enum class Direction {
             X,
             Y,
-            Z
+            Z,
+            INVALID
     };
     inline const char* dirString(Direction dir) {
         if (dir == Direction::X) return "X";
@@ -41,9 +42,17 @@ namespace aef::operators {
         OperatorInfo info;
         double E;
         Direction dir;
-
+        union {
+            std::array<double, 3> E_vec;
+            struct {
+                double E_x;
+                double E_y;
+                double E_z;
+            };
+        };
     public:
         StarkOperator(double E_, Direction dir_);
+        StarkOperator(std::array<double, 3> E_vec_);
         ~StarkOperator();
 
         using basis_ket = aef::j_basis_vec;
