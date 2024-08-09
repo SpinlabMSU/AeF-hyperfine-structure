@@ -172,6 +172,24 @@ namespace aef {
         dcomplex H_dev(j_basis_vec other, double K);
 
         /// <summary>
+        /// Evaluates the dot product of the electron spin with the internuclear axis.
+        /// The "electron EDM"-like CP-violating energy shift is proportional to this operator.
+        /// Note that "electron EDM"-like includes unpolarized CP-violating nucleus-electron interactions.
+        /// </summary>
+        /// <param name="other">The other state</param>
+        /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
+        dcomplex S_dot_ina(j_basis_vec other);
+
+        /// <summary>
+        /// Evaluates the dot product of the nuclear spin with the internuclear axis.
+        /// The CP-violating "NSM"-like energy shift induced by 19F is proportional to this operator.
+        /// Note that "NSM"-like includes spin-polarized CP-violating nucleus-electron interactions.
+        /// </summary>
+        /// <param name="other">The other state</param>
+        /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
+        dcomplex I_dot_ina(j_basis_vec other);
+
+        /// <summary>
         /// Descibes this state as a ket
         /// </summary>
         /// <returns>A string</returns>

@@ -303,6 +303,48 @@ dcomplex j_basis_vec::H_dev(j_basis_vec other, double K) {
     return prf * f3f * f3n * f6j;
 }
 
+dcomplex j_basis_vec::I_dot_ina(j_basis_vec other){
+    const spin np = other.n;
+    const spin jp = other.j;
+    const spin fp = other.f;
+    const spin m_fp = other.m_f;
+    // \vec{I}\cdot\vec{d} is a scalar, 
+    if (f != fp || m_f != m_fp) {
+        return 0;
+    }
+    constexpr spin i = half;
+    constexpr spin s = half;
+    dcomplex prf = constexpr_sqrt(3.0 / 2.0) * sqrt(2*f + 1) * xi_prime(n, np) * xi_prime(j, jp);
+    dcomplex phase = parity(f - m_f + jp + i + f + jp + n + 1 + j);
+    dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
+    dcomplex f6j = w6j(jp, i, f, i, j, 1) * w6j(j, 1, jp, np, s, n);
+    return prf * phase * f3j * f6j;
+}
+
+dcomplex j_basis_vec::S_dot_ina(j_basis_vec other){
+    const spin np = other.n;
+    const spin jp = other.j;
+    const spin fp = other.f;
+    const spin m_fp = other.m_f;
+
+    constexpr spin i = half;
+    constexpr spin s = half;
+    constexpr spin ip = half;
+    constexpr spin sp = half;
+    
+    // \vec{S}\cdot\vec{d} is a scalar operator and conserves j
+    if (f != fp || m_f != m_fp || j != jp) {
+        return 0;
+    }
+    
+    dcomplex prf = constexpr_sqrt(s*(s+1)*(2s+1)) * xi(n, np) * xi(j, jp) * xi(f, fp) / sqrt(2*jp+1);
+    dcomplex phase = parity(1 - m_f);
+    dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
+    dcomplex f6j = w6j(f, 1, fp, jp, i, j) * w6j(n, sp, j, s, n, 1);
+    
+    return prf * phase * f3j * f6j;
+}
+
 std::string j_basis_vec::ket_string() {
     return fmt::format("|n={}, j={}, f={}, m_f={}>", n, j, f, m_f);
 }
