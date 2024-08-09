@@ -271,21 +271,7 @@ dcomplex j_basis_vec::I_dot_ina(j_basis_vec other){
     const spin jp = other.j;
     const spin fp = other.f;
     const spin m_fp = other.m_f;
-    // WARNING: I am NOT at all confident that either of these implementations are correct
-
-#ifdef USE_VECTOR_FORM
-    // this was dervived under the assumption that \vec{I}\cdot\vec{d} is a vector since \vec{d} = \hat{z} = --> 
-    // --> = \vec{I}_z = \mathrm{T}^{1}_{q=1} (i.e. like the stark effect)
-    // I don't think this form is correct because 1) \vec{d} doesn't describe a backgr
-    // this appears to explicitly violate rotational symmetry by mixing f and m_f 
-    dcomplex prf = parity(1 - m_f) * xi(n, np) * xi(j, jp) * xi(f, fp) * constexpr_sqrt(9.0 / 2.0);
-    dcomplex f3f = w3j(f, 1, fp, -m_f, 0, m_fp) - w3j(f, 1, fp, -m_f, 1, m_fp) - w3j(f, 1, fp, -m_f, -1, m_fp);
-    dcomplex f3nj = w3j(n, 1, np, 0, 0, 0) * w6j(j, 1, jp, np, half, n);
-    dcomplex f9j = w9j(jp, half, fp, 1, 1, 1, j, half, f);
-
-    return prf * f3f * f3nj * f9j;
-#else
-    // todo check to see if this would be correct under the assumption that \vec{I}\cdot\vec{d} is scalar
+    // \vec{I}\cdot\vec{d} is a scalar, 
     if (f != fp || m_f != m_fp) {
         return 0;
     }
@@ -296,7 +282,6 @@ dcomplex j_basis_vec::I_dot_ina(j_basis_vec other){
     dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
     dcomplex f6j = w6j(jp, i, f, i, j, 1) * w6j(j, 1, jp, np, s, n);
     return prf * phase * f3j * f6j;
-#endif
 }
 
 dcomplex j_basis_vec::S_dot_ina(j_basis_vec other){
@@ -307,17 +292,18 @@ dcomplex j_basis_vec::S_dot_ina(j_basis_vec other){
 
     constexpr spin i = half;
     constexpr spin s = half;
+    constexpr spin ip = half;
+    constexpr spin sp = half;
     
-    // this should be a scalar operator
-    if (f != fp || m_f != m_fp) {
+    // \vec{S}\cdot\vec{d} is a scalar operator and conserves j
+    if (f != fp || m_f != m_fp || j != jp) {
         return 0;
     }
-
-    // 
-    dcomplex prf = 0; // TODO
-    dcomplex phase = 0;
-    dcomplex f3j = 0;
-    dcomplex f6j = 0;
+    
+    dcomplex prf = constexpr_sqrt(s*(s+1)*(2s+1)) * xi(n, np) * xi(j, jp) * xi(f, fp) / sqrt(2*jp+1);
+    dcomplex phase = parity(1 - m_f);
+    dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
+    dcomplex f6j = w6j(f, 1, fp, jp, i, j) * w6j(n, sp, j, s, n, 1);
     
     return prf * phase * f3j * f6j;
 }
