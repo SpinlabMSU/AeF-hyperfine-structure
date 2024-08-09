@@ -24,17 +24,34 @@
 #include <aef/aef.h>
 #include "IOperator.h"
 namespace aef::operators {
-    class StarkOperator:IOperator<aef::j_basis_vec> {
+
+    enum class Direction {
+            X,
+            Y,
+            Z
+    };
+    inline const char* dirString(Direction dir) {
+        if (dir == Direction::X) return "X";
+        if (dir == Direction::Y) return "Y";
+        if (dir == Direction::Z) return "Z";
+        else return "Invalid Direction";
+    }
+    class StarkOperator :IOperator<aef::j_basis_vec> {
+
+        OperatorInfo info;
+        double E;
+        Direction dir;
+
     public:
-        StarkOperator();
+        StarkOperator(double E_, Direction dir_);
         ~StarkOperator();
 
         using basis_ket = aef::j_basis_vec;
         virtual dcomplex matrixElement(basis_ket k1, basis_ket k2);
-        virtual void fillMatrix(Eigen::SparseMatrix<dcomplex> &matrix);
+        virtual void fillMatrix(Eigen::SparseMatrix<dcomplex>& matrix);
         virtual void fillMatrix(Eigen::MatrixXcd& matrix);
-    
-        virtual OperatorInfo getInfo();
-    }
+
+        virtual OperatorInfo* getInfo();
+    };
 };
 #endif //_AEF_OPERATOR_STARKOPERATOR_H

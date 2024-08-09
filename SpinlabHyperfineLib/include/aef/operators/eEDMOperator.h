@@ -24,18 +24,18 @@
 #include <aef/aef.h>
 #include "IOperator.h"
 namespace aef::operators {
-    class eEDMOperator:IOperator<aef::j_basis_vec> {
-        
+    class eEDMOperator :IOperator<aef::j_basis_vec> {
+        OperatorInfo info;
     public:
         eEDMOperator();
         ~eEDMOperator();
 
         using basis_ket = aef::j_basis_vec;
         virtual dcomplex matrixElement(basis_ket k1, basis_ket k2);
-        virtual void fillMatrix(Eigen::SparseMatrix<dcomplex> &matrix);
+        virtual void fillMatrix(Eigen::SparseMatrix<dcomplex>& matrix);
         virtual void fillMatrix(Eigen::MatrixXcd& matrix);
-    
-        virtual OperatorInfo getInfo();
-    }
+
+        virtual OperatorInfo *getInfo();
+    };
 };
 #endif //_AEF_OPERATOR_STARKOPERATOR_H

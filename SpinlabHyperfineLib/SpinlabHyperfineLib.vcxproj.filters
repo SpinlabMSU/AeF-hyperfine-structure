@@ -357,6 +357,12 @@
     <ClInclude Include="include\aef\operators\PerturbationFramework.h">
       <Filter>Header Files\aef\operators</Filter>
     </ClInclude>
+    <ClInclude Include="include\aef\quantum\matrix.h">
+      <Filter>Header Files\aef\quantum</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\quantum.h">
+      <Filter>Header Files\aef</Filter>
+    </ClInclude>
     <ClInclude Include="include\aef\operators\eEDMOperator.h">
       <Filter>Header Files\aef\operators</Filter>
     </ClInclude>
@@ -368,12 +374,6 @@
     </ClInclude>
     <ClInclude Include="include\aef\operators\ZeemanOperator.h">
       <Filter>Header Files\aef\operators</Filter>
-    </ClInclude>
-    <ClInclude Include="include\aef\quantum\matrix.h">
-      <Filter>Header Files\aef\quantum</Filter>
-    </ClInclude>
-    <ClInclude Include="include\aef\quantum.h">
-      <Filter>Header Files\aef</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -436,6 +436,18 @@
     </ClCompile>
     <ClCompile Include="src\quantum.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\operators\eEDMOperator.cpp">
+      <Filter>Source Files\operators</Filter>
+    </ClCompile>
+    <ClCompile Include="src\operators\NSMOperator.cpp">
+      <Filter>Source Files\operators</Filter>
+    </ClCompile>
+    <ClCompile Include="src\operators\StarkOperator.cpp">
+      <Filter>Source Files\operators</Filter>
+    </ClCompile>
+    <ClCompile Include="src\operators\ZeemanOperator.cpp">
+      <Filter>Source Files\operators</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

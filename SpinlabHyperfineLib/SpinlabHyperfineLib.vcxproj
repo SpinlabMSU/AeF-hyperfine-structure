@@ -231,8 +231,12 @@
     <ClInclude Include="include\aef\matrix_utils.h" />
     <ClInclude Include="include\aef\MolecularSystem.h" />
     <ClInclude Include="include\aef\operators\basis_ket.h" />
+    <ClInclude Include="include\aef\operators\eEDMOperator.h" />
     <ClInclude Include="include\aef\operators\IOperator.h" />
+    <ClInclude Include="include\aef\operators\NSMOperator.h" />
     <ClInclude Include="include\aef\operators\PerturbationFramework.h" />
+    <ClInclude Include="include\aef\operators\StarkOperator.h" />
+    <ClInclude Include="include\aef\operators\ZeemanOperator.h" />
     <ClInclude Include="include\aef\plaf_utils.hpp" />
     <ClInclude Include="include\aef\quantum.h" />
     <ClInclude Include="include\aef\quantum\matrix.h" />

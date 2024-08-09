@@ -26,8 +26,10 @@
 namespace aef::operators {
 
     struct OperatorInfo {
-        char* name;
+        std::string name;
+        std::string description;
         uint32_t is_hermitian : 1;
+        uint32_t is_potential : 1;
     };
 
     /// <summary>
@@ -35,12 +37,14 @@ namespace aef::operators {
     /// </summary>
     /// <typeparam name="basis_ket">The Basis Ket type</typeparam>
     template <IBasisKet<int> basis_ket> class IOperator {
+    public:
         virtual dcomplex matrixElement(basis_ket k1, basis_ket k2) = 0;
         virtual void fillMatrix(Eigen::SparseMatrix<dcomplex> &matrix) = 0;
         virtual void fillMatrix(Eigen::MatrixXcd& matrix) = 0;
     
-        virtual OperatorInfo getInfo() = 0;
+        virtual OperatorInfo *getInfo() = 0;
 
+        IOperator() {}
         //
         // as a -
         virtual ~IOperator() {}
