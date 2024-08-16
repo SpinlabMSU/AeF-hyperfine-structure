@@ -8,7 +8,7 @@ aef::operators::eEDMOperator::eEDMOperator() {
 aef::operators::eEDMOperator::~eEDMOperator() {}
 
 dcomplex aef::operators::eEDMOperator::matrixElement(basis_ket k1, basis_ket k2) {
-    return dcomplex();
+    return k1.S_dot_ina(k2);
 }
 
 void aef::operators::eEDMOperator::fillMatrix(Eigen::SparseMatrix<dcomplex>& matrix) {}
@@ -22,7 +22,7 @@ void aef::operators::eEDMOperator::fillMatrix(Eigen::MatrixXcd& matrix) {
             dcomplex elt = 0;
             using namespace std::complex_literals;
             constexpr double inv_sqrt2 = std::numbers::sqrt2 / 2.0;
-            matrix(i, j) = 0;//TODO implement
+            matrix(i, j) = ki.S_dot_ina(kj);//TODO implement
         }
     }
 }

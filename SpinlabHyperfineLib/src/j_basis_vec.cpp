@@ -337,7 +337,7 @@ dcomplex j_basis_vec::S_dot_ina(j_basis_vec other){
         return 0;
     }
     
-    dcomplex prf = constexpr_sqrt(s*(s+1)*(2s+1)) * xi(n, np) * xi(j, jp) * xi(f, fp) / sqrt(2*jp+1);
+    dcomplex prf = constexpr_sqrt(s*(s+1)*(2*s+1)) * xi(n, np) * xi(j, jp) * xi(f, fp) / sqrt(2*jp+1);
     dcomplex phase = parity(1 - m_f);
     dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
     dcomplex f6j = w6j(f, 1, fp, jp, i, j) * w6j(n, sp, j, s, n, 1);

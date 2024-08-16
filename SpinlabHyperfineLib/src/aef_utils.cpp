@@ -130,3 +130,13 @@ time_point<system_clock> aef::log_time_at_point(const char* desc, time_point<sys
     *(std::addressof(prev)) = curr_time;
     return curr_time;
 }
+namespace fs = std::filesystem;
+
+bool aef::is_aef_run_path(fs::path in) {
+    bool has_log = fs::is_regular_file(in / "");
+    return false;
+}
+
+fs::path aef::get_aef_run_path(fs::path in) {
+    return in;
+}

@@ -227,7 +227,6 @@ namespace aef {
         /// <param name="other"></param>
         /// <returns></returns>
         dcomplex H_hfs_tensor(j_basis_vec other);
-        static constexpr double mu = baf_constants::mu_e;
 
         /// <summary>
         /// Evaluate the three components of the molecular

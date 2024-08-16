@@ -98,11 +98,14 @@ constexpr double q_mag(spin q) {
     }
 }
 #include <chrono>
+#include <filesystem>
 namespace aef {
     std::chrono::time_point<std::chrono::system_clock> log_time_at_point(
         const char* desc,
         std::chrono::time_point<std::chrono::system_clock>& start,
         std::chrono::time_point<std::chrono::system_clock>& prev);
+    bool is_aef_run_path(std::filesystem::path in);
+    std::filesystem::path get_aef_run_path(std::filesystem::path in);
 };
 #ifndef NO_MEMOIZE
 template <typename R, typename... Args>

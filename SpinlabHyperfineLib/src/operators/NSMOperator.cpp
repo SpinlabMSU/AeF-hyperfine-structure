@@ -11,11 +11,10 @@ aef::operators::NSMOperator::NSMOperator() {
 }
 
 aef::operators::NSMOperator::~NSMOperator() {
-    memset(((void*)this), 0, sizeof(*this));
 }
 
 dcomplex aef::operators::NSMOperator::matrixElement(basis_ket k1, basis_ket k2) {
-    return 0;
+    return k1.I_dot_ina(k2);
 }
 
 void aef::operators::NSMOperator::fillMatrix(Eigen::SparseMatrix<dcomplex>& matrix) {
@@ -28,7 +27,7 @@ void aef::operators::NSMOperator::fillMatrix(Eigen::MatrixXcd& matrix) {
         for (int i = 0; i < matrix.rows(); i++) {
             basis_ket ki = basis_ket::from_index(i);
             // TODO implement NSM on light nucleus
-            matrix(i, j) = 0;
+            matrix(i, j) = ki.I_dot_ina(kj);
         }
     }
 }

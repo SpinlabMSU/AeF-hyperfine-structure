@@ -26,18 +26,18 @@
 namespace aef::operators{
     class PerturbationFramework {
         using basis_vec = aef::j_basis_vec;
-        using system = HyperfineCalculator;
+        using System = HyperfineCalculator;
 
-        system* sys;
-        std::unordered_map<std::string, IOperator<basis_vec>> opMap;
+        System* sys;
+        std::unordered_map<std::string, IOperator<basis_vec>*> opMap;
         std::unordered_map<std::string, Eigen::MatrixXcd*> opMatMap;
         void* pImpl;
     // eventual interface
     public:
-        PerturbationFramework(system *sys_);
+        PerturbationFramework(System *sys_);
         ~PerturbationFramework();
-        system* get_system();
-        void set_basis_system(system* calc);
+        System* get_system();
+        void set_basis_system(System* calc);
 
         IOperator<basis_vec>* getOperator(std::string& id);
         bool hasOperator(std::string& id) {
