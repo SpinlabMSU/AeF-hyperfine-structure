@@ -31,23 +31,48 @@ run = aef_run.aef_run(rundir)
 csvs = run.list_ifo_csvs()
 
 
+
 arr_Ez = []
 arr_Dz = []
 
 use_zero_field = True
 if len(sys.argv) > 2:
     use_zero_field = not (sys.argv[2].lower().startswith('n'))
-    print(f"use_zero_field?: {use_zero_field}")
+    print(f"use_zero_field?: {use_zero_field} {sys.argv[2]}")
 
 # Perform abs value operation?
 doabs = True
 if len(sys.argv) > 3:
     doabs = not (sys.argv[3].lower().startswith('n'))
+    print(f"doabs?: {doabs} {sys.argv[3]}")
 
 # custom plot format
 pltfmt = 'ro'
 if len(sys.argv) > 4:
     pltfmt = sys.argv[4]
+    print (f"pltfmt: {sys.argv[4]}")
+nowait = False
+if len(sys.argv) > 5:
+    nowait = not (sys.argv[5].lower().startswith('n'))
+    print(f"nowait?: {nowait}")
+plotdir = rundir
+incl_run_in_name = False
+if len(sys.argv) > 6:
+    plotdir = sys.argv[6]
+    incl_run_in_name = True
+    if not os.path.exists(plotdir):
+        print(f"plot directory {plotdir} doesn't exist, creating")
+        os.makedirs(plotdir)
+        if not os.path.exists(plotdir) or not os.path.isdir(plotdir):
+            print(f"was not able to create plot directory {plotdir}, aborting")
+            exit(253)
+    elif not os.path.isdir(plotdir):
+        print(f"Error plot \"directory\" {plotdir} exists but is not a directory")
+        exit(254)
+    else:
+        print(f"Processing plot directory {plotdir}")
+print(plotdir)
+#exit(0)
 def static_vars(**kwargs):
     def decorate(func):
         for k in kwargs:
@@ -111,10 +136,13 @@ for entry in os.listdir(dirname):
 print(arr_Ez)
 print(arr_Dz)
 
+def g(name):
+    return name if not incl_run_in_name else run.run + "_" + name
+
 midx = np.argmin(arr_Dz)
 print(f"Minimum orientation {arr_Dz[midx]} at electric field {arr_Ez[midx]} index {midx}")
 
-Ez = np.array(arr_Ez)
+Ez = np.array(arr_Ez) / 1000
 Dz = np.array(arr_Dz)
 
 fig = plt.figure(figsize=(19.2, 10.8))#13.66, 7.68))
@@ -122,11 +150,17 @@ fig = plt.figure(figsize=(19.2, 10.8))#13.66, 7.68))
 status_txt = f"In-Matrix, K={dev_K/MHz_per_K}" if dev_en else "In-Vacuum"
 title_text = f"Degree of Molecular Orientation along the externally-applied electric field vs Externally applied electric field strength, {status_txt}"#(with Devonshire {status_txt})\nrun {run.run}"
 plt.title(title_text)
-plt.xlabel('Externally applied electric field (V/cm)')
+plt.xlabel('Externally applied electric field (kV/cm)')
 plt.ylabel('Degree of Molecular Orientation (unitless, 0 to 1)')
 plt.plot(Ez, Dz, pltfmt)
+if incl_run_in_name:
+    gca = plt.gca()
+    props = dict(boxstyle='round,pad=0.2', facecolor='wheat', alpha=0.5)
+    textstr = f"nmax={run.nmax} max_E_z={run.max_E_z}, type={'Embedded In-Medium (Devonshire Model)' if run.dev_en else 'In-Gas-Phase'}"
+    plt.gca().text(0.3, 0.12, textstr, transform=gca.transAxes, fontsize=14, verticalalignment='top', bbox=props)
 if use_zero_field:
-    plt.savefig(os.path.join(rundir, 'orientation_vs_Ez_plot.png'), bbox_inches="tight")
+    plt.savefig(os.path.join(plotdir, g('orientation_vs_Ez_plot.png')), bbox_inches="tight")
 else:
-    plt.savefig(os.path.join(rundir, 'orientation_vs_Ez_plot_no_zero_field.png'), bbox_inches="tight")
-plt.show()
+    plt.savefig(os.path.join(plotdir, g('orientation_vs_Ez_plot_no_zero_field.png')), bbox_inches="tight")
+if not nowait:
+    plt.show()

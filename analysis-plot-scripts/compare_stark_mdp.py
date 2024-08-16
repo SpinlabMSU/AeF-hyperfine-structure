@@ -194,10 +194,10 @@ else:
 fig = plt.figure(figsize=(13.66, 7.68))
 title_text = f"Molecular Dipole-Axis Z vs Externally applied Electric Field\nrun_deven {run_deven}, run_nodev {run_nodev}"
 plt.title(title_text)
-plt.xlabel('Externally applied electric field (V/cm)')
+plt.xlabel('Externally applied electric field (kV/cm)')
 plt.ylabel('Molecular Dipole-Axis z component (unitless)')
-plt.plot(Ez_en, Dz_en, 'ro', label=f"Devonshire enabled, K={dev_K_en}")
-plt.plot(Ez_no, Dz_no, 'bo', label=f"Devonshire disabled")
+plt.plot(Ez_en / 1000, Dz_en, 'ro', label=f"Devonshire enabled, K={dev_K_en}")
+plt.plot(Ez_no / 1000, Dz_no, 'bo', label=f"Devonshire disabled")
 plt.legend()
 plt.savefig(os.path.join(outdir, 'mdz_stark_plot.png'))
 plt.show()

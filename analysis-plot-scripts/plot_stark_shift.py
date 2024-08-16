@@ -28,6 +28,8 @@ import matplotlib.pyplot as plt
 import numpy.linalg as npla
 import pandas as pd
 import numba
+import scipy.stats as scistat
+import scipy.optimize as spopt
 
 
 rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-19-181153.8494779'
@@ -62,6 +64,31 @@ key_dEf1t = ' dE_f1t'
 key_dEf10 = ' dE_f10'
 key_dEf11 = ' dE_f11'
 
+df[key_E] /= 1000
+Ezs = df[key_E]
+dE_gnds = df[key_dEgnd]
+dE_f1ts = df[key_dEf1t]
+dE_f10s = df[key_dEf10]
+dE_f11s = df[key_dEf11]
+mid_idx = len(Ezs) // 2
+Ez_mid = Ezs[mid_idx]
+
+
+## make linear fit
+Ez_uhalf = Ezs[mid_idx:]
+Eg_uhalf = dE_gnds[mid_idx:]
+lresult = scistat.linregress(Ez_uhalf, Eg_uhalf)
+
+def line(Ez):
+    m = lresult.slope
+    b = lresult.intercept
+    return m * Ez + b
+
+## make quadratic fit
+
+
+Ezs_line = Ezs[mid_idx // 2:]
+dE_gnd_linears = line(Ezs_line)
 
 props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 
@@ -71,16 +98,22 @@ gca = plt.subplot(2, 1, 1)
 gca.tick_params(axis='both', which='both', direction='inout')
 textstr = f'Ground State Stark Shift'
 gca.text(0.05, 0.1, textstr, transform=gca.transAxes, fontsize=14, verticalalignment='top', bbox=props)
-df.plot(key_E, [key_dEgnd,], ax=gca, ylabel='Energy (MHz)')
+plt.plot(Ezs, dE_gnds / 1000, 'b-')
+plt.plot(Ezs_line, dE_gnd_linears / 1000, 'r--')
+plt.ylabel("Stark Shift (GHz)")
+#df.plot(key_E, [key_dEgnd,], ax=gca, ylabel='Energy (MHz)')
 # Ground-relative shift
 gca = plt.subplot(2, 1, 2)
 gca.tick_params(axis='both', which='both', direction='inout')
 textstr = f'F=1 Ground-relative Stark shift'
 gca.text(0.05, 0.1, textstr, transform=gca.transAxes, fontsize=14, verticalalignment='top', bbox=props)
-df.plot(key_E, [key_dEf1t, key_dEf10, key_dEf11], ylabel='Energy (MHz)', ax=gca)
+df.plot(key_E, [key_dEf1t, key_dEf10, key_dEf11], ylabel='Energy above f=0 ground state (MHz)', ax=gca)
+plt.xlabel("Externally-applied electric field strength (kV/cm)")
+plt.annotate('$m_f=\pm1$', xy=(Ez_mid, dE_f11s[mid_idx - 1]), xycoords='data', xytext=(1.5, -6.5), color='g', textcoords='offset points')
+plt.annotate('$m_f=0$', xy=(Ez_mid, dE_f10s[mid_idx - 1]), xycoords='data', xytext=(1.5, 1.5), color='orange', textcoords='offset points')
 #
 fig.suptitle(f"N=0, F=0,1 Stark shift for run {run}", y=0.999)
-plt.subplots_adjust(bottom=0.05, right=0.998, top=0.97, left = 0.114, hspace = 0.0)
+plt.subplots_adjust(bottom=0.05, right=0.95, top=0.97, left = 0.114, hspace = 0.0)
 # 
-plt.savefig(os.path.join(rundir, out_fname))
+plt.savefig(os.path.join(rundir, out_fname), bbox_inches="tight")
 plt.show()

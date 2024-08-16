@@ -47,8 +47,8 @@ if len(sys.argv) < 3:
     #rundir_nodev = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-17-232644.7464130'
     rundir_nodev = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-18-185338.4873197'
 else:
-    rundir_deven = sys.argv[1]
-    rundir_nodev = sys.argv[2]
+    rundir_deven = os.path.abspath(sys.argv[1])
+    rundir_nodev = os.path.abspath(sys.argv[2])
 
 doabs = True
 if len(sys.argv) > 3:
@@ -204,14 +204,16 @@ def f(x): return x
 if doabs:
     f = abs
 
-fig = plt.figure(figsize=(19.2, 10.8))#3.66, 7.68))
+#fig = plt.figure(figsize=(19.5, 11.06))#3.66, 7.68))
+fig = plt.figure(figsize=(19.2, 10.8))
 title_text = f"Degree of Molecular Orientation along the externally-applied electric field vs Externally-applied electric field strength"#"\nrun_deven {run_deven}, run_nodev {run_nodev}"
 plt.title(title_text)
-plt.xlabel('Externally applied electric field strength (V/cm)')
+plt.xlabel('Externally applied electric field strength (kV/cm)')
 plt.ylabel('Degree of Molecular Orientation (unitless, 0 to 1)')
-plt.plot(Ez_en, f(Dz_en), 'ro', label=f"In-medium, K={dev_K_en / MHz_per_K} Kelvin")
-plt.plot(Ez_no, f(Dz_no), 'bo', label=f"In-vacuum")
+plt.plot(Ez_no / 1000, f(Dz_no), 'bo', label=f"Gas Phase")
+plt.plot(Ez_en / 1000, f(Dz_en), 'ro', label=f"Embedded In Solid")
+plt.tight_layout()
 plt.legend()
 #plt.subplots_adjust(top=0.9, bottom=0, right=1, left=0)
-plt.savefig(os.path.join(outdir, 'mdz_stark_plot.png'), bbox_inches='tight')
+plt.savefig(os.path.join(outdir, 'mdz_stark_plot.png'))#, bbox_inches='tight')
 plt.show()
