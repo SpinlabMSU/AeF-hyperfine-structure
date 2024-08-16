@@ -164,7 +164,7 @@ class aef_run(object):
         return self.state_info_dir
 
     def get_state_ifo_Ez(self, Ez, *args, **kwargs):
-        csvpath = os.path.join(self.get_state_ifo_dir(), f'info_Ez_{E_z}.csv')
+        csvpath = os.path.join(self.get_state_ifo_dir(), f'info_Ez_{Ez}.csv')
         return pd.read_csv(csvpath, *args, **kwargs)
 
     def list_ifo_csvs(self):
