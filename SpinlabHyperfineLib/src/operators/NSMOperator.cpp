@@ -2,8 +2,8 @@
 #include <aef/operators/NSMOperator.h>
 
 aef::operators::NSMOperator::NSMOperator() {
-    info.name = std::string("NSM");
-    info.description = std::string("Nuclear Schiff Moment Operator");
+    info.name = std::string("NSM_angdep");
+    info.description = std::string("Light-nucleus Nuclear Schiff Moment Angular-Dependence Operator");
     info.is_hermitian = 1;
     info.is_potential = 1;
 

@@ -235,6 +235,7 @@
     <ClInclude Include="include\aef\operators\eEDMOperator.h" />
     <ClInclude Include="include\aef\operators\IOperator.h" />
     <ClInclude Include="include\aef\operators\NSMOperator.h" />
+    <ClInclude Include="include\aef\operators\operators.h" />
     <ClInclude Include="include\aef\operators\PerturbationFramework.h" />
     <ClInclude Include="include\aef\operators\StarkOperator.h" />
     <ClInclude Include="include\aef\operators\ZeemanOperator.h" />

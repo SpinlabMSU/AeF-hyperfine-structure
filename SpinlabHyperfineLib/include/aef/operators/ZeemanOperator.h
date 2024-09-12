@@ -25,10 +25,20 @@
 #include "IOperator.h"
 
 namespace aef::operators {
-    class ZeemanOperator :IOperator<aef::j_basis_vec> {
-
+    class ZeemanOperator : public IOperator<aef::j_basis_vec> {
+        OperatorInfo info;
+        double B;
+        union {
+            std::array<double, 3> B_vec;
+            struct {
+                double B_x;
+                double B_y;
+                double B_z;
+            };
+        };
     public:
-        ZeemanOperator();
+        ZeemanOperator(double B=1.0);
+        ZeemanOperator(std::array<double, 3> dir);
         ~ZeemanOperator();
 
         using basis_ket = aef::j_basis_vec;

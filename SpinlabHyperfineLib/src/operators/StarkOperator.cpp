@@ -28,20 +28,44 @@ aef::operators::StarkOperator::~StarkOperator() {
 
 dcomplex aef::operators::StarkOperator::matrixElement(basis_ket ki, basis_ket kj) {
     std::array<dcomplex, 3> stk = ki.molec_edm(kj);
-    return E_x * stk[0] + E_y * stk[1] + E_z * stk[2];
+    return -(E_x * stk[0] + E_y * stk[1] + E_z * stk[2]);
 }
 
 void aef::operators::StarkOperator::fillMatrix(Eigen::SparseMatrix<dcomplex>& matrix) {
+    
+    constexpr double eps = 1e-8;
+    constexpr double eps_sq = eps * eps;
+    
+    Eigen::Index num_significant = 0;
+
+    // j first because column-major 
+    for (Eigen::Index j = 0; j < matrix.cols(); j++) {
+        basis_ket kj = basis_ket::from_index(j);
+        for (Eigen::Index i = 0; i < matrix.rows(); i++) {
+            basis_ket ki = basis_ket::from_index(i);
+            std::array<dcomplex, 3> stk = ki.molec_edm(kj);
+            // V_stk = - \vec{\mu} \cdot \vec{E}
+            dcomplex mat_elt = -(E_x * stk[0] + E_y * stk[1] + E_z * stk[2]);
+
+            if (std::norm(mat_elt) > eps_sq) {
+                // fill matrix
+                matrix.coeffRef(i, j) = mat_elt;
+                num_significant++;
+            }
+
+        }
+    }
 }
 
 void aef::operators::StarkOperator::fillMatrix(Eigen::MatrixXcd& matrix) {
-    // j first because 
-    for (int j = 0; j < matrix.cols(); j++) {
+    // j first because column-major 
+    for (Eigen::Index j = 0; j < matrix.cols(); j++) {
         basis_ket kj = basis_ket::from_index(j);
-        for (int i = 0; i < matrix.rows(); i++) {
+        for (Eigen::Index i = 0; i < matrix.rows(); i++) {
             basis_ket ki = basis_ket::from_index(i);
             std::array<dcomplex, 3> stk = ki.molec_edm(kj);
-            matrix(i, j) = E_x * stk[0] + E_y * stk[1] + E_z * stk[2];
+            // V_stk = - \vec{\mu} \cdot \vec{E}
+            matrix(i, j) = -(E_x * stk[0] + E_y * stk[1] + E_z * stk[2]);
         }
     }
 }

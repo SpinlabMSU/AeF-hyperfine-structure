@@ -37,7 +37,7 @@ namespace aef::operators {
         if (dir == Direction::Z) return "Z";
         else return "Invalid Direction";
     }
-    class StarkOperator :IOperator<aef::j_basis_vec> {
+    class StarkOperator : public IOperator<aef::j_basis_vec> {
 
         OperatorInfo info;
         double E;

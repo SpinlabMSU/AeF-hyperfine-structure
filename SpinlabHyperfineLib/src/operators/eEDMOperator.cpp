@@ -3,6 +3,10 @@
 
 aef::operators::eEDMOperator::eEDMOperator() {
     // TODO
+    info.name = "eEDM_angdep";
+    info.description = "electron EDM angular-dependence operator";
+    info.is_hermitian = true;
+    info.is_potential = true;
 }
 
 aef::operators::eEDMOperator::~eEDMOperator() {}

@@ -1,5 +1,6 @@
 /*
-    aef/operators/NSMOperator.h -- contains IOperator implementation for NSMs
+    aef/operators/operators.h -- includes the other headers that are part of the
+    quantum operator subsystem
 
     This file is part of the AeF-hyperfine-structure program.
 
@@ -16,28 +17,14 @@
     You should have received a copy of the GNU General Public License along with
     AeF-hyperfine-structure. If not, see <https://www.gnu.org/licenses/>.
 */
-
-#ifndef _AEF_OPERATOR_NSMOPERATOR_H
-#define _AEF_OPERATOR_NSMOPERATOR_H 1
 #pragma once
-
-#include <aef/aef.h>
-#include "IOperator.h"
-
-namespace aef::operators {
-    class NSMOperator : public IOperator<aef::j_basis_vec> {
-        OperatorInfo info;
-    public:
-        NSMOperator();
-        ~NSMOperator();
-
-        using basis_ket = aef::j_basis_vec;
-        virtual dcomplex matrixElement(basis_ket k1, basis_ket k2);
-        virtual void fillMatrix(Eigen::SparseMatrix<dcomplex>& matrix);
-        virtual void fillMatrix(Eigen::MatrixXcd& matrix);
-
-        virtual OperatorInfo *getInfo();
-    };
-};
-
-#endif //_AEF_OPERATOR_NSMOPERATOR_H
+#ifndef _AEF_OPERATORS_OPERATORS_H
+#define _AEF_OPERATORS_OPERATORS_H 1
+#include <aef/operators/basis_ket.h>
+#include <aef/operators/IOperator.h>
+#include <aef/operators/PerturbationFramework.h>
+#include <aef/operators/eEDMOperator.h>
+#include <aef/operators/NSMOperator.h>
+#include <aef/operators/StarkOperator.h>
+#include <aef/operators/ZeemanOperator.h>
+#endif //_AEF_OPERATORS_OPERATORS_H
