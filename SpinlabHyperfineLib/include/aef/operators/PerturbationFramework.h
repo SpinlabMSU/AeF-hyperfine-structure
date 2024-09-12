@@ -39,18 +39,18 @@ namespace aef::operators{
         System* get_system();
         void set_basis_system(System* calc);
 
-        IOperator<basis_vec>* getOperator(std::string& id);
-        bool hasOperator(std::string& id) {
+        IOperator<basis_vec>* getOperator(const std::string& id);
+        bool hasOperator(const std::string& id) {
             return nullptr != getOperator(id);
         }
-        void addOperator(IOperator<basis_vec>* op, std::string &id);
+        void addOperator(const std::string &id, IOperator<basis_vec>* op);
 
         /// <summary>
         /// Perform
         /// </summary>
         void evaluate(void);
 
-        Eigen::MatrixXcd* getOperatorMatrix(std::string& id);
+        Eigen::MatrixXcd* getOperatorMatrix(const std::string& id);
     
         /// <summary>
         /// Gets the matrix element
@@ -58,14 +58,14 @@ namespace aef::operators{
         /// <param name="eidx1"></param>
         /// <param name="eidx2"></param>
         /// <returns></returns>
-        dcomplex get_matrix_element(std::string &id, int eidx1, int eidx2);
+        dcomplex get_matrix_element(const std::string &id, int eidx1, int eidx2);
         /// <summary>
         /// Return the expectation value    
         /// </summary>
         /// <param name="id"></param>
         /// <param name="eidx1"></param>
         /// <returns></returns>
-        dcomplex expectation_value(std::string &id, int eidx1);
+        dcomplex expectation_value(const std::string &id, int eidx1);
 
         /// <summary>
         /// Calculate the leading order change
@@ -75,7 +75,7 @@ namespace aef::operators{
         /// <param name="id"></param>
         /// <param name="output"></param>
         /// <param name="workspace"></param>
-        aef::ResultCode delta_E_lo(std::string &id, Eigen::VectorXcd &output, Eigen::MatrixXcd *workspace=nullptr);
+        aef::ResultCode delta_E_lo(const std::string &id, Eigen::VectorXcd &output, Eigen::MatrixXcd *workspace=nullptr);
     };
 }
 #endif //_AEF_OPERATORS_PERTURBATIONFRAMEWORK_H

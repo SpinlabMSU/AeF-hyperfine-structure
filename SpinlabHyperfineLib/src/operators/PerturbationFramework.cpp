@@ -31,11 +31,11 @@ void aef::operators::PerturbationFramework::set_basis_system(System* calc) {
         sys = calc;
 }
 
-IOperator<basis_vec>* aef::operators::PerturbationFramework::getOperator(std::string& id) {
+IOperator<basis_vec>* aef::operators::PerturbationFramework::getOperator(const std::string& id) {
     return opMap[id];
 }
 
-void aef::operators::PerturbationFramework::addOperator(IOperator<basis_vec>* op, std::string& id) {
+void aef::operators::PerturbationFramework::addOperator(const std::string& id, IOperator<basis_vec>* op) {
     opMap.emplace(id, op);
 }
 
@@ -48,23 +48,27 @@ void aef::operators::PerturbationFramework::evaluate(void) {
     }
 }
 
-Eigen::MatrixXcd* aef::operators::PerturbationFramework::getOperatorMatrix(std::string& id) {
+Eigen::MatrixXcd* aef::operators::PerturbationFramework::getOperatorMatrix(const std::string& id) {
     return opMatMap[id];
 }
 
-dcomplex aef::operators::PerturbationFramework::get_matrix_element(std::string& id, int eidx1, int eidx2) {
-    auto state1 = sys->Vs.col(eidx1);
-    auto state2 = sys->Vs.col(eidx2);
+dcomplex aef::operators::PerturbationFramework::get_matrix_element(const std::string& id, int eidx1, int eidx2) {
+    Eigen::VectorXcd state1 = sys->Vs.col(eidx1);
+    Eigen::VectorXcd state2 = sys->Vs.col(eidx2);
     Eigen::MatrixXcd *op = getOperatorMatrix(id);
-    return (state1.adjoint() * *op * state2);
+
+    dcomplex out;
+    aef::matrix::matrix_element(out, state1, *op, state2);
+    //return (state1.adjoint() * *op * state2);
+    return out;
 }
 
-dcomplex aef::operators::PerturbationFramework::expectation_value(std::string& id, int eidx1) {
+dcomplex aef::operators::PerturbationFramework::expectation_value(const std::string& id, int eidx1) {
     auto state1 = sys->Vs.col(eidx1);
     return (state1.adjoint() * *getOperatorMatrix(id) * state1);
 }
 
-aef::ResultCode aef::operators::PerturbationFramework::delta_E_lo(std::string& id, Eigen::VectorXcd& output, Eigen::MatrixXcd *workspace) {
+aef::ResultCode aef::operators::PerturbationFramework::delta_E_lo(const std::string& id, Eigen::VectorXcd& output, Eigen::MatrixXcd *workspace) {
     bool internal_workspace = !workspace;
     if (internal_workspace) {
         workspace = new Eigen::MatrixXcd;
