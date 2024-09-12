@@ -174,6 +174,60 @@ std::array<dcomplex, 3> aef::j_basis_vec::molec_edm(j_basis_vec other) {
     return std::array<dcomplex, 3>({mue_x, mue_y, mue_z});
 }
 
+std::array<dcomplex, 3> aef::j_basis_vec::molec_mdm(j_basis_vec other) {
+    const spin np = other.n;
+    const spin jp = other.j;
+    const spin fp = other.f;
+    const spin m_fp = other.m_f;
+
+    using namespace hfs_constants;
+    using namespace std::complex_literals;
+
+    double we_factor_t = w3j(f, 1, fp, -m_f, -1, m_f);
+    double we_factor_0 = w3j(f, 1, fp, -m_f, 0, m_f);
+    double we_factor_1 = w3j(f, 1, fp, -m_f, 1, m_f);
+    // there are multiple possible contributions to the molecular mdm
+    // including one from the electron magnetic moment, a magnetic moment induced by molecular rotation,
+    // and the nuclear magnetic moment
+    
+    // electron mag moment
+    dcomplex parity_S = parity(f - m_f);
+    dcomplex prf_S = xi(j, jp) * xi(f, fp);
+    dcomplex w3j_S = 0;
+    dcomplex w6j_S = 1;
+    dcomplex rme_S = g_S * mu_B * parity_S * prf_S * w3j_S * w6j_S;
+
+    // nuclear magnetic moment
+    dcomplex parity_I = parity(f - m_f);
+    dcomplex prf_I = xi(j, jp) * xi(f, fp);
+    dcomplex w3j_I = 0;
+    dcomplex w6j_I = 1;
+    dcomplex rme_I = parity_I * prf_I * w3j_I * w6j_I;
+
+    // rotational magnetic moment
+    dcomplex parity_N = parity(f - m_f);
+    dcomplex prf_N = xi(j, jp) * xi(f, fp);
+    dcomplex w3j_N = 0;
+    dcomplex w6j_N = 1;
+    dcomplex rme_N = mu_B * parity_S * prf_S * w3j_S * w6j_S;
+
+    // full reduced matrix element is the sum of the three contributions
+    dcomplex reduced_mat_elt = rme_S + rme_I + rme_N;
+    // spherical tensor operator form
+    dcomplex mub_t = we_factor_t * reduced_mat_elt;
+    dcomplex mub_0 = we_factor_0 * reduced_mat_elt;
+    dcomplex mub_1 = we_factor_1 * reduced_mat_elt;
+
+    constexpr double inv_sqrt2 = 1 / std::numbers::sqrt2;
+
+    // cartesian form
+    dcomplex mub_x = (mub_t - mub_1) * inv_sqrt2;
+    dcomplex mub_y = (mub_t + mub_1) * 1i * inv_sqrt2;
+    dcomplex mub_z = mub_0;
+
+    return std::array<dcomplex, 3>({mub_x, mub_y, mub_z});
+}
+
 dcomplex j_basis_vec::H_hfs(j_basis_vec other) {
     return H_hfs_scalar(other) + H_hfs_tensor(other);
 }

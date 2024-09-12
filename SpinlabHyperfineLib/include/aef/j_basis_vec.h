@@ -229,12 +229,20 @@ namespace aef {
         dcomplex H_hfs_tensor(j_basis_vec other);
 
         /// <summary>
-        /// Evaluate the three components of the molecular
+        /// Evaluates the three cartesian matrix elements of the molecular electric dipole moment operator
+        /// between two j-basis states "this" and "other" as &lt;this| \vec{\mu_{E,mol}} |other&gt;
+        /// </summary>
+        /// <param name="other">the "other</param>
+        /// <returns>&lt;this| \vec{\mu_{E,mol}} |other&gt;</returns>
+        std::array<dcomplex, 3> molec_edm(j_basis_vec other);
+
+        /// <summary>
+        /// Evaluates the three cartesian matrix elements of the molecular magnetic dipole moment operator
+        /// between two j-basis states "this" and "other" as &lt;this| \vec{\mu_{B,mol}} |other&gt;
         /// </summary>
         /// <param name="other"></param>
-        /// <param name="E_mag"></param>
-        /// <returns></returns>
-        std::array<dcomplex, 3> molec_edm(j_basis_vec other);
+        /// <returns>&lt;this| \vec{\mu_{B,mol}} |other&gt;</returns>
+        std::array<dcomplex, 3> molec_mdm(j_basis_vec other);
     };
 };
 using aef::j_basis_vec;
