@@ -35,6 +35,8 @@
 #include <cxxopts.hpp>
 #include <aef/quantum.h>
 #include <aef/aef_run.h>
+#include <aef/operators/operators.h>
+
 
 using namespace std::chrono;
 namespace fs = std::filesystem;
@@ -152,6 +154,21 @@ int main(int argc, char **argv) {
     std::cout << fmt::format("OpenMP/Eigen will use {} threads", num_physical_cores) << std::endl;
 #endif
 
+#ifndef DONT_USE_CUDA
+    constexpr bool diag_use_cuda = true;
+    std::cout << "Initializing matrix backend" << std::endl;
+    aef::ResultCode rc = aef::matrix::init(aef::matrix::BackendType::NvidiaCuda, argc, argv);
+    if (!aef::succeeded(rc)) {
+        std::cout << fmt::format("Initializing matrix backend failed with error {} = 0x{:x}", static_cast<int32_t>(rc), static_cast<uint32_t>(rc));
+    }
+    std::cout << "Successfully initialized CUDA" << std::endl;
+#else
+    constexpr bool diag_use_cuda = false;
+    aef::matrix::init(aef::matrix::BackendType::EigenCPU, argc, argv);
+#endif
+
+
+
     init_rng();
 
     aef::aef_run run(dpath);
@@ -162,8 +179,40 @@ int main(int argc, char **argv) {
     if (!succ) {
         // TODO error
         std::cerr << fmt::format("[Perturbation Analyzer] Loading matrix file {} from run {} failed!",
-            run.get_matrix_path(), run.get)
+            run.get_matrix_path(), run.get_run_name());
     }
+
+#ifndef DONT_USE_CUDA
+    Eigen::MatrixXcd vals;
+    vals.resize(calc.nBasisElts, calc.nBasisElts);
+    vals.setZero();
+
+    std::cout << fmt::format(
+        "Setting up matrix backend device-side buffers with nRows={} after creating molecular system",
+        calc.nBasisElts) << std::endl;
+    aef::matrix::set_max_size(calc.nBasisElts);
+#endif
+
+    aef::ResultCode rc = aef::ResultCode::Success;
+
+    // make bigmatrix
+    aef::operators::PerturbationFramework pfw(&calc);
+    pfw.addOperator("eEDM", new aef::operators::eEDMOperator());
+    pfw.addOperator("NSM", new aef::operators::NSMOperator());
+    pfw.addOperator("StarkZ", new aef::operators::StarkOperator({0.0,0.0,1.0}));
+    pfw.addOperator("ZeemanZ", new aef::operators::ZeemanOperator({0, 0, 1.0}));
+
+    pfw.evaluate();
+
+    Eigen::VectorXcd es;
+    rc = pfw.delta_E_lo("eEDM", es);
+
+    if (!aef::succeeded(rc)) {
+        // error
+    }
+
+    std::cout << fmt::format("Energy vector {}", es) << std::endl;
+
 }
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
 // Debug program: F5 or Debug > Start Debugging menu
