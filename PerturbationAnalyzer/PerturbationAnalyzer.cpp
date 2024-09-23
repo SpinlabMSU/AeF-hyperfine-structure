@@ -117,13 +117,16 @@ int main(int argc, char **argv) {
     if (result.count("E_min")) {
         min_E_z = result["E_min"].as<double>();
     }
-    
+
+    if (!load_from_file) {
+        std::clog << "[PerturbationAnalyzer] Error: must load from file" << std::endl;
+    }
     fs::path runpath = aef::get_aef_run_path(fs::absolute(loadname));
     dpath = runpath / "ptfw";
     fs::create_directories(dpath);
 
     // create info log
-    std::ofstream oLog(dpath / "out.log", std::ios::trunc | std::ios::out);
+    std::ofstream oLog(dpath / "perturbation_analyzer_out.log", std::ios::trunc | std::ios::out);
     aef::LogRedirector lredir(oLog, enable_debug_log, true);
     // info lines
     {
@@ -171,15 +174,18 @@ int main(int argc, char **argv) {
 
     init_rng();
 
-    aef::aef_run run(dpath);
+    aef::aef_run run(runpath);
 
     HyperfineCalculator calc;
     bool succ = calc.load_matrix_elts(run.get_matrix_path());
 
     if (!succ) {
         // TODO error
+        std::string str_pth = run.get_matrix_path().generic_string();
         std::cerr << fmt::format("[Perturbation Analyzer] Loading matrix file {} from run {} failed!",
-            run.get_matrix_path(), run.get_run_name());
+            str_pth, run.get_run_name()) << std::endl;
+        std::abort();
+        aef::unreachable();
     }
 
 #ifndef DONT_USE_CUDA
@@ -193,7 +199,7 @@ int main(int argc, char **argv) {
     aef::matrix::set_max_size(calc.nBasisElts);
 #endif
 
-    aef::ResultCode rc = aef::ResultCode::Success;
+    rc = aef::ResultCode::Success;
 
     // make bigmatrix
     aef::operators::PerturbationFramework pfw(&calc);
@@ -204,15 +210,35 @@ int main(int argc, char **argv) {
 
     pfw.evaluate();
 
-    Eigen::VectorXcd es;
-    rc = pfw.delta_E_lo("eEDM", es);
-
+    Eigen::VectorXcd dEs_eEDM; // delta E vector from eEDM-like operator
+    rc = pfw.delta_E_lo("eEDM", dEs_eEDM);
     if (!aef::succeeded(rc)) {
         // error
+        std::clog << fmt::format("delta E eEDM calc failed {}", (int)rc);
+    }
+    Eigen::VectorXcd dEs_f_nsm; // delta E vector from Fluorine-19 nuclear schiff moment-like operator
+    rc = pfw.delta_E_lo("NSM", dEs_f_nsm);
+    if (!aef::succeeded(rc)) {
+        // error
+        std::clog << fmt::format("delta E light NSM calc failed {}", (int)rc);
+    }
+    std::cout << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)" << std::endl;
+    for (int idx = 0; idx < calc.nBasisElts; idx++) {
+        std::cout << fmt::format("{}\t{}\t{}", idx, dEs_eEDM(idx), dEs_f_nsm(idx)) << std::endl;
     }
 
-    std::cout << fmt::format("Energy vector {}", es) << std::endl;
-
+    std::ofstream out(dpath / "cpv_energies.tsv");
+    out << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tImaginary Part of dE_EDM (MHz)"
+        "\tImaginary Part of dE_19F_NSM(MHz)" << std::endl;
+    for (int idx = 0; idx < calc.nBasisElts; idx++) {
+        dcomplex dE_EDM = dEs_eEDM(idx);
+        dcomplex dE_f_NSM = dEs_f_nsm(idx);
+        out << fmt::format("{}\t{}\t{}\t{}\t{}", idx, std::real(dE_EDM), std::real(dE_f_NSM), std::imag(dE_EDM),
+            std::imag(dE_f_NSM)) << std::endl;
+    }
+    out.close();
+//    std::cout << fmt::format("Energy vector {}", es) << std::endl;
+    aef::matrix::shutdown();
 }
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
 // Debug program: F5 or Debug > Start Debugging menu

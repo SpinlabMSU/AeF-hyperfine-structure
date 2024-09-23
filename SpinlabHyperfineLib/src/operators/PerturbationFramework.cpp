@@ -42,9 +42,14 @@ void aef::operators::PerturbationFramework::addOperator(const std::string& id, I
 void aef::operators::PerturbationFramework::evaluate(void) {
     const Eigen::Index nBasisElts = sys->nBasisElts;
     for (auto &[id, op] : opMap) {
+        Eigen::MatrixXcd* opMat;
         if (!opMatMap.contains(id)) {
-            Eigen::MatrixXcd* opMat = new Eigen::MatrixXcd(nBasisElts, nBasisElts);
+            opMat = new Eigen::MatrixXcd(nBasisElts, nBasisElts);
+            opMatMap.emplace(id, opMat);
+        } else {
+            opMat = opMatMap[id];
         }
+        op->fillMatrix(*opMat);
     }
 }
 
