@@ -202,41 +202,72 @@ int main(int argc, char **argv) {
     rc = aef::ResultCode::Success;
 
     // make bigmatrix
+    prev_time = log_time_at_point("Creating perturbation theory framework", start_time, prev_time);
     aef::operators::PerturbationFramework pfw(&calc);
+    prev_time = log_time_at_point("Constructing eEDM-like operator", start_time, prev_time);
     pfw.addOperator("eEDM", new aef::operators::eEDMOperator());
+    prev_time = log_time_at_point("Constructing 19F NSM-like operator", start_time, prev_time);
     pfw.addOperator("NSM", new aef::operators::NSMOperator());
+    prev_time = log_time_at_point("Constructing Z-axis Stark operator", start_time, prev_time);
     pfw.addOperator("StarkZ", new aef::operators::StarkOperator({0.0,0.0,1.0}));
+    prev_time = log_time_at_point("Constructing Z-xis Zeeman operator", start_time, prev_time);
     pfw.addOperator("ZeemanZ", new aef::operators::ZeemanOperator({0, 0, 1.0}));
 
+    prev_time = log_time_at_point("Evaluating operators", start_time, prev_time);
     pfw.evaluate();
+    prev_time = log_time_at_point("Finished evaluating operators", start_time, prev_time);
 
-    Eigen::VectorXcd dEs_eEDM; // delta E vector from eEDM-like operator
+    /// Start delta
+    prev_time = log_time_at_point("Starting perturbative energy shift calculations", start_time, prev_time);
+    // delta E vector from eEDM-like operator
+    Eigen::VectorXcd dEs_eEDM;
+    prev_time = log_time_at_point("1st ord PT eEDM start", start_time, prev_time);
     rc = pfw.delta_E_lo("eEDM", dEs_eEDM);
     if (!aef::succeeded(rc)) {
         // error
-        std::clog << fmt::format("delta E eEDM calc failed {}", (int)rc);
+        std::clog << fmt::format("delta-E eEDM calc failed {}", (int)rc);
     }
-    Eigen::VectorXcd dEs_f_nsm; // delta E vector from Fluorine-19 nuclear schiff moment-like operator
+    prev_time = log_time_at_point("1st ord PT eEDM done", start_time, prev_time);
+
+    // delta E vector from Fluorine-19 nuclear schiff moment-like operator
+    prev_time = log_time_at_point("1st ord PT NSM start", start_time, prev_time);
+    Eigen::VectorXcd dEs_f_nsm; 
     rc = pfw.delta_E_lo("NSM", dEs_f_nsm);
     if (!aef::succeeded(rc)) {
         // error
-        std::clog << fmt::format("delta E light NSM calc failed {}", (int)rc);
+        std::clog << fmt::format("delta-E light NSM calc failed {}", (int)rc);
     }
-    std::cout << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)" << std::endl;
+    prev_time = log_time_at_point("1st ord PT NSM done", start_time, prev_time);
+
+    // delta-E vector from Z-axis Zeeman shift
+    prev_time = log_time_at_point("1st ord PT ZeemanZ start", start_time, prev_time);
+    Eigen::VectorXcd dEs_zeez;
+    rc = pfw.delta_E_lo("ZeemanZ", dEs_zeez);
+    if (!aef::succeeded(rc)) {
+        // error
+        std::clog << fmt::format("delta-E Z-axis Zeeman calc failed {}", (int)rc);
+    }
+    prev_time = log_time_at_point("1st ord PT ZeemanZ done", start_time, prev_time);
+    prev_time = log_time_at_point("Perturbative energy shift calculations complete", start_time, prev_time);
+
+    // file output
+    std::cout << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tDelta E Zeeman Z (MHz)" << std::endl;
     for (int idx = 0; idx < calc.nBasisElts; idx++) {
-        std::cout << fmt::format("{}\t{}\t{}", idx, dEs_eEDM(idx), dEs_f_nsm(idx)) << std::endl;
+        std::cout << fmt::format("{}\t{}\t{}", idx, dEs_eEDM(idx), dEs_f_nsm(idx), dEs_zeez(idx)) << std::endl;
     }
 
     std::ofstream out(dpath / "cpv_energies.tsv");
-    out << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tImaginary Part of dE_EDM (MHz)"
-        "\tImaginary Part of dE_19F_NSM(MHz)" << std::endl;
+    out << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tDelta E Z-axis Zeeman (MHz)"
+        "\tImaginary Part of dE_EDM(MHz)\tImaginary Part of dE_19F_NSM(MHz)\tImagninary Part of dE_ZeeZ (MHz)" << std::endl;
     for (int idx = 0; idx < calc.nBasisElts; idx++) {
         dcomplex dE_EDM = dEs_eEDM(idx);
         dcomplex dE_f_NSM = dEs_f_nsm(idx);
-        out << fmt::format("{}\t{}\t{}\t{}\t{}", idx, std::real(dE_EDM), std::real(dE_f_NSM), std::imag(dE_EDM),
-            std::imag(dE_f_NSM)) << std::endl;
+        dcomplex dE_zeez = dEs_zeez(idx);
+        out << fmt::format("{}\t{}\t{}\t{}\t{}", idx, std::real(dE_EDM), std::real(dE_f_NSM), std::real(dE_zeez),
+            std::imag(dE_EDM), std::imag(dE_f_NSM), std::imag(dE_zeez)) << std::endl;
     }
     out.close();
+    prev_time = log_time_at_point("File writes complete4", start_time, prev_time);
 //    std::cout << fmt::format("Energy vector {}", es) << std::endl;
     aef::matrix::shutdown();
 }
