@@ -137,6 +137,97 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
     return retval;
 }
 
+std::array<dcomplex, 3> aef::j_basis_vec::molec_edm(j_basis_vec other) {
+    const spin np = other.n;
+    const spin jp = other.j;
+    const spin fp = other.f;
+    const spin m_fp = other.m_f;
+
+    dcomplex xi_factors = xi(f, fp) * xi(j, jp) * xi(n, np);
+    dcomplex threej_n = w3j(n, 1, np, 0, 0, 0);
+    dcomplex sixj_factors = w6j(f, 1, fp, jp, half, j) * w6j(j, 1, jp, np, half, n);
+    dcomplex phase = -parity(1 - m_f); // add extra negative sign to account for negative in Stark 
+
+    using hfs_constants::mu_e;
+    using namespace std::complex_literals;
+
+    // technically this isn't the "true" reduced matrix element from the Wigner-Eckhart theorem
+    // since it is 
+    dcomplex reduced_mat_elt = mu_e * xi_factors * threej_n * sixj_factors * phase;
+
+    double we_factor_t = w3j(f, 1, fp, -m_f, -1, m_f);
+    double we_factor_0 = w3j(f, 1, fp, -m_f, 0, m_f);
+    double we_factor_1 = w3j(f, 1, fp, -m_f, 1, m_f);
+
+    // spherical tensor operator form
+    dcomplex mue_t = we_factor_t * reduced_mat_elt;
+    dcomplex mue_0 = we_factor_0 * reduced_mat_elt;
+    dcomplex mue_1 = we_factor_1 * reduced_mat_elt;
+
+    constexpr double inv_sqrt2 = 1 / std::numbers::sqrt2;
+
+    // cartesian form
+    dcomplex mue_x = (mue_t - mue_1) * inv_sqrt2;
+    dcomplex mue_y = (mue_t + mue_1) * 1i * inv_sqrt2;
+    dcomplex mue_z = mue_0;
+
+    return std::array<dcomplex, 3>({mue_x, mue_y, mue_z});
+}
+
+std::array<dcomplex, 3> aef::j_basis_vec::molec_mdm(j_basis_vec other) {
+    const spin np = other.n;
+    const spin jp = other.j;
+    const spin fp = other.f;
+    const spin m_fp = other.m_f;
+
+    using namespace hfs_constants;
+    using namespace std::complex_literals;
+
+    double we_factor_t = w3j(f, 1, fp, -m_f, -1, m_f);
+    double we_factor_0 = w3j(f, 1, fp, -m_f, 0, m_f);
+    double we_factor_1 = w3j(f, 1, fp, -m_f, 1, m_f);
+    // there are multiple possible contributions to the molecular mdm
+    // including one from the electron magnetic moment, a magnetic moment induced by molecular rotation,
+    // and the nuclear magnetic moment
+    
+    // electron mag moment
+    dcomplex parity_S = parity(f - m_f);
+    dcomplex prf_S = xi(j, jp) * xi(f, fp);
+    dcomplex w3j_S = 0;
+    dcomplex w6j_S = 1;
+    dcomplex rme_S = g_S * mu_B * parity_S * prf_S * w3j_S * w6j_S;
+
+    // nuclear magnetic moment
+    dcomplex parity_I = parity(f - m_f);
+    dcomplex prf_I = xi(j, jp) * xi(f, fp);
+    dcomplex w3j_I = 0;
+    dcomplex w6j_I = 1;
+    dcomplex rme_I = parity_I * prf_I * w3j_I * w6j_I;
+
+    // rotational magnetic moment
+    dcomplex parity_N = parity(f - m_f);
+    dcomplex prf_N = xi(j, jp) * xi(f, fp);
+    dcomplex w3j_N = 0;
+    dcomplex w6j_N = 1;
+    dcomplex rme_N = mu_B * parity_S * prf_S * w3j_S * w6j_S;
+
+    // full reduced matrix element is the sum of the three contributions
+    dcomplex reduced_mat_elt = rme_S + rme_I + rme_N;
+    // spherical tensor operator form
+    dcomplex mub_t = we_factor_t * reduced_mat_elt;
+    dcomplex mub_0 = we_factor_0 * reduced_mat_elt;
+    dcomplex mub_1 = we_factor_1 * reduced_mat_elt;
+
+    constexpr double inv_sqrt2 = 1 / std::numbers::sqrt2;
+
+    // cartesian form
+    dcomplex mub_x = (mub_t - mub_1) * inv_sqrt2;
+    dcomplex mub_y = (mub_t + mub_1) * 1i * inv_sqrt2;
+    dcomplex mub_z = mub_0;
+
+    return std::array<dcomplex, 3>({mub_x, mub_y, mub_z});
+}
+
 dcomplex j_basis_vec::H_hfs(j_basis_vec other) {
     return H_hfs_scalar(other) + H_hfs_tensor(other);
 }
@@ -264,6 +355,48 @@ dcomplex j_basis_vec::H_dev(j_basis_vec other, double K) {
     // 
     dcomplex f6j = w6j(f, 4, fp, jp, half, j) * w6j(j, 4, jp, np, half, n);
     return prf * f3f * f3n * f6j;
+}
+
+dcomplex j_basis_vec::I_dot_ina(j_basis_vec other){
+    const spin np = other.n;
+    const spin jp = other.j;
+    const spin fp = other.f;
+    const spin m_fp = other.m_f;
+    // \vec{I}\cdot\vec{d} is a scalar, 
+    if (f != fp || m_f != m_fp) {
+        return 0;
+    }
+    constexpr spin i = half;
+    constexpr spin s = half;
+    dcomplex prf = constexpr_sqrt(3.0 / 2.0) * sqrt(2*f + 1) * xi_prime(n, np) * xi_prime(j, jp);
+    dcomplex phase = parity(f - m_f + jp + i + f + jp + n + 1 + j);
+    dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
+    dcomplex f6j = w6j(jp, i, f, i, j, 1) * w6j(j, 1, jp, np, s, n);
+    return prf * phase * f3j * f6j;
+}
+
+dcomplex j_basis_vec::S_dot_ina(j_basis_vec other){
+    const spin np = other.n;
+    const spin jp = other.j;
+    const spin fp = other.f;
+    const spin m_fp = other.m_f;
+
+    constexpr spin i = half;
+    constexpr spin s = half;
+    constexpr spin ip = half;
+    constexpr spin sp = half;
+    
+    // \vec{S}\cdot\vec{d} is a scalar operator and conserves j
+    if (f != fp || m_f != m_fp || j != jp) {
+        return 0;
+    }
+    
+    dcomplex prf = constexpr_sqrt(s*(s+1)*(2*s+1)) * xi(n, np) * xi(j, jp) * xi(f, fp) / sqrt(2*jp+1);
+    dcomplex phase = parity(1 - m_f);
+    dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
+    dcomplex f6j = w6j(f, 1, fp, jp, i, j) * w6j(n, sp, j, s, n, 1);
+    
+    return prf * phase * f3j * f6j;
 }
 
 std::string j_basis_vec::ket_string() {

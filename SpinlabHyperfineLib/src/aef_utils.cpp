@@ -110,3 +110,33 @@ int get_num_cores() {
     return nPhysicalProcessorCount;
 #endif
 }
+
+using namespace std::chrono;
+time_point<system_clock> aef::log_time_at_point(const char* desc, time_point<system_clock>& start,
+                                                time_point<system_clock>& prev) {
+    time_point<system_clock> curr_time = system_clock::now();
+    std::string stime = fmt::format("{0:%F}-{0:%H%M}{0:%S}", curr_time);
+    using d_seconds = duration<double>;
+    // get seconds elapsed since start_time
+    auto st_diff = curr_time - start;
+    double st_sec_count = d_seconds(st_diff).count();
+    // calculate seconds elapsed since prev_time
+    auto pv_diff = curr_time - prev;
+    double pv_sec_count = d_seconds(pv_diff).count();
+
+    std::string lstr = fmt::format("{}: have taken {} seconds since last, {} seconds since start (current time is {})"
+        , desc, pv_sec_count, st_sec_count, stime);
+    std::cout << lstr << std::endl;
+    *(std::addressof(prev)) = curr_time;
+    return curr_time;
+}
+namespace fs = std::filesystem;
+
+bool aef::is_aef_run_path(fs::path in) {
+    bool has_log = fs::is_regular_file(in / "");
+    return false;
+}
+
+fs::path aef::get_aef_run_path(fs::path in) {
+    return in;
+}

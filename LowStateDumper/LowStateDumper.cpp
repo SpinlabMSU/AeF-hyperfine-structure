@@ -38,29 +38,7 @@
 
 using namespace std::chrono;
 namespace fs = std::filesystem;
-
-time_point<system_clock> log_time_at_point(
-    const char* desc,
-    time_point<system_clock>& start,
-    time_point<system_clock>& prev) {
-    using namespace std::chrono;
-    time_point<system_clock> curr_time = system_clock::now();
-    std::string stime = fmt::format("{0:%F}-{0:%H%M}{0:%S}", curr_time);
-    using d_seconds = duration<double>;
-    // get seconds elapsed since start_time
-    auto st_diff = curr_time - start;
-    double st_sec_count = d_seconds(st_diff).count();
-    // calculate seconds elapsed since prev_time
-    auto pv_diff = curr_time - prev;
-    double pv_sec_count = d_seconds(pv_diff).count();
-
-    std::string lstr = fmt::format(
-        "{}: have taken {} seconds since last, {} seconds since start (current time is {})", desc,
-        pv_sec_count, st_sec_count, stime);
-    std::cout << lstr << std::endl;
-    *(std::addressof(prev)) = curr_time;
-    return curr_time;
-}
+using aef::log_time_at_point;
 
 // the number of states in a singlet-triplet group pair (f=0 and f=1)
 constexpr int num_singlet_triplet = 4;
@@ -142,7 +120,7 @@ int main(int argc, char **argv) {
 
     if (result.count("Ez")) {
         using std::begin, std::end;
-        auto vals = result["Ez"].as<std::vector<double>>();
+        auto &vals = result["Ez"].as<std::vector<double>>();
         E_zs.insert(E_zs.end(), begin(vals), end(vals));
     } else {
         E_zs.push_back(500);

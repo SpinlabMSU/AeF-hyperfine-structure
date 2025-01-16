@@ -13,6 +13,8 @@ namespace constants {
     constexpr double c = 299792458; // m/s, exact
     constexpr double h = 6.626'070'15E-34; // J*s, exact
     constexpr double k_B = 1.380'649E-23; // J/K, exact
+    constexpr double mu_bohr = 13'996.244'9171; // MHz/T, +- 44 ulp (0.31 ppb) 
+    constexpr double mu_nuclear = 7.622'593'2188; // MHz / T, +- 24 ulp (0.31 ppb)
 };
 
 namespace unit_conversion {
@@ -35,6 +37,9 @@ namespace unit_conversion {
     /// </summary>
     constexpr double MHz_per_Ry = 3.2898419603E15 / 1E6;
 
+    /// <summary>
+    /// Energy conversion from K to MHz
+    /// </summary>
     constexpr double MHz_per_Kelvin = constants::k_B / constants::h * 1E-6;
 
 

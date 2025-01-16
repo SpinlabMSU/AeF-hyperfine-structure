@@ -52,6 +52,7 @@ namespace aef {
         __builtin_unreachable();
 #endif
     }
+    //typedef Eigen::SparseMatrix<dcomplex>;
 }
 
 extern pcg64 *pcg;
@@ -96,7 +97,16 @@ constexpr double q_mag(spin q) {
         return sqrt(q * (q + 1.0) * (2 * q + 1.0));
     }
 }
-
+#include <chrono>
+#include <filesystem>
+namespace aef {
+    std::chrono::time_point<std::chrono::system_clock> log_time_at_point(
+        const char* desc,
+        std::chrono::time_point<std::chrono::system_clock>& start,
+        std::chrono::time_point<std::chrono::system_clock>& prev);
+    bool is_aef_run_path(std::filesystem::path in);
+    std::filesystem::path get_aef_run_path(std::filesystem::path in);
+};
 #ifndef NO_MEMOIZE
 template <typename R, typename... Args>
 std::function<R(Args...)> memo(R(*fn)(Args...)) {

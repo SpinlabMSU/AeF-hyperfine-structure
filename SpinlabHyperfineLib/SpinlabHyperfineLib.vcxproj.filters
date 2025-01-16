@@ -40,6 +40,15 @@
     <Filter Include="Header Files\aef\backends">
       <UniqueIdentifier>{84b98327-1899-45ac-bd7e-8508aca636b6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\aef\operators">
+      <UniqueIdentifier>{eef27b89-ed18-4d99-bd3d-703c98a3f281}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\operators">
+      <UniqueIdentifier>{3fc1c1d1-2adb-41cf-a917-2e45665954b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\aef\quantum">
+      <UniqueIdentifier>{ff1616df-9db3-4b34-9167-208039c2365d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\aef\framework.h">
@@ -315,9 +324,6 @@
     <ClInclude Include="src\cusolver_utils.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\cusolver_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\cuda_utils.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -341,6 +347,33 @@
     </ClInclude>
     <ClInclude Include="include\aef\cuda_matrix_utils.h">
       <Filter>Header Files\aef</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\operators\IOperator.h">
+      <Filter>Header Files\aef\operators</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\operators\basis_ket.h">
+      <Filter>Header Files\aef\operators</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\operators\PerturbationFramework.h">
+      <Filter>Header Files\aef\operators</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\quantum\matrix.h">
+      <Filter>Header Files\aef\quantum</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\quantum.h">
+      <Filter>Header Files\aef</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\operators\eEDMOperator.h">
+      <Filter>Header Files\aef\operators</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\operators\NSMOperator.h">
+      <Filter>Header Files\aef\operators</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\operators\StarkOperator.h">
+      <Filter>Header Files\aef\operators</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\operators\ZeemanOperator.h">
+      <Filter>Header Files\aef\operators</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -391,6 +424,30 @@
     </ClCompile>
     <ClCompile Include="src\matrix_utils.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cusolver_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\operators\IOperator.cpp">
+      <Filter>Source Files\operators</Filter>
+    </ClCompile>
+    <ClCompile Include="src\operators\PerturbationFramework.cpp">
+      <Filter>Source Files\operators</Filter>
+    </ClCompile>
+    <ClCompile Include="src\quantum.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\operators\eEDMOperator.cpp">
+      <Filter>Source Files\operators</Filter>
+    </ClCompile>
+    <ClCompile Include="src\operators\NSMOperator.cpp">
+      <Filter>Source Files\operators</Filter>
+    </ClCompile>
+    <ClCompile Include="src\operators\StarkOperator.cpp">
+      <Filter>Source Files\operators</Filter>
+    </ClCompile>
+    <ClCompile Include="src\operators\ZeemanOperator.cpp">
+      <Filter>Source Files\operators</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
