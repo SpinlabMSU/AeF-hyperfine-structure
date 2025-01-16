@@ -271,8 +271,8 @@ int main(int argc, char **argv) {
 
     // todo parse args
     // args should include: E_max, nmax, enable_debug_log
-    cxxopts::Options options("aef-hyperfine-structure", "Program to simulate the hyperfine structure of"
-        "diatomic Alkaline - monoflouride molecules");
+    cxxopts::Options options("aef-hyperfine-structure", "Program to calculate the hyperfine structure of"
+        " diatomic Alkaline-monofluoride molecules");
     options.add_options()
         ("h,help", "Print usage")
         ("e,E_max", "Maximum electric field [V/cm]", cxxopts::value<double>())

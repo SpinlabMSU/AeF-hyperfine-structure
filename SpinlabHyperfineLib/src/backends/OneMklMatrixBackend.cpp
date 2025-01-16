@@ -77,30 +77,29 @@ ResultCode aef::matrix::OneMklMatrixBackend::shutdown() {
 }
 
 ResultCode aef::matrix::OneMklMatrixBackend::set_max_size(int nMaxDim) {
-    return ResultCode();
+    return ResultCode::Unimplemented;
 }
 
 ResultCode aef::matrix::OneMklMatrixBackend::multiply(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd& out) {
-    
-    return ResultCode();
+    return ResultCode::Unimplemented;
 }
 
 ResultCode aef::matrix::OneMklMatrixBackend::commutator(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd& out) {
-    return ResultCode();
+    return ResultCode::Unimplemented;
 }
 
 ResultCode aef::matrix::OneMklMatrixBackend::group_action(Eigen::MatrixXcd& out, Eigen::MatrixXcd& U, Eigen::MatrixXcd& A) {
-    return ResultCode();
+    return ResultCode::Unimplemented;
 }
 
 ResultCode aef::matrix::OneMklMatrixBackend::expectation_value(dcomplex& out, Eigen::VectorXcd& v1, Eigen::MatrixXcd& A) {
-    return ResultCode();
+    return ResultCode::Unimplemented;
 }
 
 ResultCode aef::matrix::OneMklMatrixBackend::matrix_element(dcomplex& out, Eigen::VectorXcd& v1, Eigen::MatrixXcd& A, Eigen::VectorXcd& v2) {
-    return ResultCode();
+    return ResultCode::Unimplemented;
 }
 
 ResultCode aef::matrix::OneMklMatrixBackend::diagonalize(Eigen::MatrixXcd& mat, Eigen::VectorXcd& evals, Eigen::MatrixXcd& evecs) {
-    return ResultCode();
+    return ResultCode::Unimplemented;
 }

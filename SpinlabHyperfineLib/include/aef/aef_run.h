@@ -21,12 +21,15 @@
 #pragma once
 #include <aef/aef_types.h>
 #include <filesystem>
+#include <chrono>
+
 namespace aef {
     namespace fs = std::filesystem;
 
     struct run_params {
         spin nmax;
         double calc_E_z;
+        double max_E_z;
         double K;
     };
 
@@ -34,16 +37,22 @@ namespace aef {
         fs::path runpath;
         bool valid_checked;
         bool valid;
+        bool valid_params;
         run_params params;
+        std::vector<double> stk_shifts;
+        std::chrono::system_clock::time_point start_time;
+        std::vector<std::chrono::nanoseconds> durations;
+        std::string run_name;
 
     public:
         aef_run(char* path);
         aef_run(std::filesystem::path runpath);
         ~aef_run();
 
-        run_params parse_params(bool force_reparse);
+        run_params parse_params(bool force_reparse=false);
         
-        bool is_valid();
+        bool is_valid(bool force_recheck=false);
+        bool has_log();
         bool has_matrix();
         bool has_coeffs();
 
