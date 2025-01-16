@@ -11,7 +11,7 @@ aef::aef_run::aef_run(char* path_) {
     auto rp = runpath;
     bool fail = false;
     while (!fs::is_regular_file(rp / "out.log")) {
-        //if (rp.)
+            fail = true;
     }
     if (!fail) {
         runpath = rp;
