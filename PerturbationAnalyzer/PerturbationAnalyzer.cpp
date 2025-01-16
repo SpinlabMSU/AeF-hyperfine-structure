@@ -19,6 +19,7 @@
     AeF-hyperfine-structure. If not, see <https://www.gnu.org/licenses/>.
 */
 #include <pch.h>
+#include <system_error>
 #include <aef/aef.h>
 #include <aef/debug_stream.h>
 #include <aef/matrix_utils.h>
@@ -71,8 +72,8 @@ int main(int argc, char **argv) {
 
     // todo parse args
     // args should include: E_max, nmax, enable_debug_log
-    cxxopts::Options options("aef-hyperfine-structure", "Program to simulate the hyperfine structure of"
-        "diatomic Alkaline - monoflouride molecules");
+    cxxopts::Options options("aef-hyperfine-structure", "Program to calculate perturbative corrections to"
+        " the hyperfine structure of diatomic Alkaline - monofluoride molecules");
     options.add_options()
         ("h,help", "Print usage")
         ("e,E_max", "Maximum electric field [V/cm]", cxxopts::value<double>())
@@ -120,10 +121,19 @@ int main(int argc, char **argv) {
 
     if (!load_from_file) {
         std::clog << "[PerturbationAnalyzer] Error: must load from file" << std::endl;
+        exit(1);
     }
+
+    std::error_code ec;
+
     fs::path runpath = aef::get_aef_run_path(fs::absolute(loadname));
     dpath = runpath / "ptfw";
-    fs::create_directories(dpath);
+    fs::create_directories(dpath, ec);
+    if (ec) {
+        std::clog << "[PerturbationAnalyzer] Unable to create output directory, error category:" <<
+            ec.category().name() << ", code: " << ec.value() << ", message: " << ec.message() << std::endl;
+        exit(2);
+    }
 
     // create info log
     std::ofstream oLog(dpath / "perturbation_analyzer_out.log", std::ios::trunc | std::ios::out);
