@@ -18,8 +18,8 @@
 #include "aef/MolecularSystem.h"
 
 namespace aef {
-    MolecularSystem::MolecularSystem(spin nmax_, double E_z, double K):
-        nmax(nmax_)
+    MolecularSystem::MolecularSystem(IMolecularCalculator &calc_) :
+        calc
     {
     }
     void MolecularSystem::set_nmax(spin nmax_) {
