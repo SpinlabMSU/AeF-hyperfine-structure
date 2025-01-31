@@ -27,6 +27,8 @@
 #include <filesystem>
 #include <istream>
 #include <unordered_map>
+#include <span>
+#include <set>
 #include <vector>
 
 #include <aef/operators/IOperator.h>
@@ -36,6 +38,8 @@ namespace aef {
 
     class IMolecularCalculator {
     public:
+        virtual ResultCode set_parameter(std::string id, double value) = 0;
+        virtual void set_nmax(spin nmax);
         virtual size_t nBasisElts() = 0;
 
         // hamiltonian
@@ -50,18 +54,16 @@ namespace aef {
         virtual void calculate_d10(Eigen::MatrixXcd& H) = 0;
 
         //
-        virtual ResultCode getOperatorList(IOperator<)
-
+        virtual ResultCode getSupportedOperators(std::set<std::string>& list) = 0;
+        
     public:
+        // 
         template<class T> static IMolecularCalculator* createInstance() {
             return new T;
         }
         typedef IMolecularCalculator* (*pfnMolCalcMaker)();
         static void registerMolCalcType(std::string name, pfnMolCalcMaker ctor);
-        static IMolecularCalculator *makeCalculatorOfType
-    private:
-
-
+        static IMolecularCalculator* makeCalculatorOfType(std::string name);
     };
 
     struct ExternalFieldParameters {
@@ -73,10 +75,6 @@ namespace aef {
     /// The aef::MolecularSystem class implements a generic
     /// </summary>
     class MolecularSystem {
-        // class ifnfo
-        typedef IMolecularCalculator(*molCalcMaker)();
-        static std::unordered_map<std::string, molCalcMaker> molCalcMakerMap;
-        // 
     private:
         std::unordered_map<std::string, Eigen::MatrixXcd*> operators;
 
@@ -84,11 +82,13 @@ namespace aef {
         size_t nBasisElts;
         bool enableDev;
     private:
-        IMolecularCalculator *calc;
+        IMolecularCalculator &calc;
         bool init;
         bool diagonalized;
         bool dkq_init;
     public:
+        double E_z;
+        double K;
 
         Eigen::DiagonalMatrix<dcomplex, Eigen::Dynamic> H_rot;
         Eigen::MatrixXcd H_hfs;
@@ -107,26 +107,24 @@ namespace aef {
         Eigen::MatrixXcd d11;
         Eigen::MatrixXcd d1t;
 
-        MolecularSystem(IMolecularCalculator& calc);
+        MolecularSystem(IMolecularCalculator& calc, spin nmax_, double E_z_ = 0, double K=0.0);
         ~MolecularSystem();
-
-
 
         void set_nmax(spin nmax_);
         void calculate_matrix_elts();
         void calculate_dkq();
+        aef::ResultCode diagonalize();
 
 
-
-        bool load(std::istream& in);
-        bool save(std::ostream& out);
+        aef::ResultCode load(std::istream& in);
+        aef::ResultCode save(std::ostream& out);
 
         // convienence methods
-        bool load_matrix_elts(std::string inpath);
-        bool save_matrix_elts(std::string out);
+        aef::ResultCode load(std::string inpath);
+        aef::ResultCode save(std::string out);
 
-        bool load_matrix_elts(std::filesystem::path inpath);
-        bool save_matrix_elts(std::filesystem::path out);
+        aef::ResultCode load(std::filesystem::path inpath);
+        aef::ResultCode save(std::filesystem::path out);
 
 
         inline dcomplex eval_H(Eigen::VectorXcd& v, Eigen::VectorXcd& w) {
