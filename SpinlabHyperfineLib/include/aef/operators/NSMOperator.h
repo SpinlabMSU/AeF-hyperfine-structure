@@ -1,5 +1,5 @@
 /*
-    aef/operators/NSMOperator.h -- contains IOperator implementation for NSMs
+    aef/operators/NSMOperator.h -- contains IKetOperator implementation for NSMs
 
     This file is part of the AeF-hyperfine-structure program.
 
@@ -25,7 +25,7 @@
 #include "IOperator.h"
 
 namespace aef::operators {
-    class NSMOperator : public IOperator<aef::j_basis_vec> {
+    class NSMOperator : public IKetOperator<aef::j_basis_vec> {
         OperatorInfo info;
     public:
         NSMOperator();

@@ -1,5 +1,5 @@
 /*
-    aef/operators/IOperator.h -- contains various utility functions
+    aef/operators/IKetOperator.h -- contains various utility functions
 
     This file is part of the AeF-hyperfine-structure program.
 
@@ -33,10 +33,10 @@ namespace aef::operators {
     };
 
     /// <summary>
-    /// IOperator&lt;BasisKet&gt;
+    /// IKetOperator&lt;BasisKet&gt;
     /// </summary>
     /// <typeparam name="basis_ket">The Basis Ket type</typeparam>
-    template <IBasisKet<int> basis_ket> class IOperator {
+    template <IBasisKet<int> basis_ket> class IKetOperator {
     public:
         virtual dcomplex matrixElement(basis_ket k1, basis_ket k2) = 0;
         virtual void fillMatrix(Eigen::SparseMatrix<dcomplex> &matrix) = 0;
@@ -44,9 +44,25 @@ namespace aef::operators {
     
         virtual OperatorInfo *getInfo() = 0;
 
-        IOperator() {}
+        IKetOperator() {}
         //
         // as a -
+        virtual ~IKetOperator() {}
+    };
+
+
+    /// <summary>
+    /// IOperator&lt;BasisKet&gt;
+    /// </summary>
+    class IOperator {
+    public:
+        virtual dcomplex matrixElement(size_t k1, size_t k2) = 0;
+        virtual void fillMatrix(Eigen::SparseMatrix<dcomplex>& matrix) = 0;
+        virtual void fillMatrix(Eigen::MatrixXcd& matrix) = 0;
+
+        virtual OperatorInfo* getInfo() = 0;
+
+        IOperator() {}
         virtual ~IOperator() {}
     };
 }

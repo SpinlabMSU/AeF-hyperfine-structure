@@ -25,7 +25,7 @@
 #include "IOperator.h"
 
 namespace aef::operators {
-    class ZeemanOperator : public IOperator<aef::j_basis_vec> {
+    class ZeemanOperator : public IKetOperator<aef::j_basis_vec> {
         OperatorInfo info;
         double B;
         union {

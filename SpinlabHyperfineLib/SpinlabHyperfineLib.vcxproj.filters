@@ -49,6 +49,12 @@
     <Filter Include="Header Files\aef\quantum">
       <UniqueIdentifier>{ff1616df-9db3-4b34-9167-208039c2365d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\systems">
+      <UniqueIdentifier>{145714da-be13-477d-a403-64f057a97b20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\aef\systems">
+      <UniqueIdentifier>{c828722a-a433-48be-aae4-2f7ffc6907db}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\aef\framework.h">
@@ -381,6 +387,9 @@
     <ClInclude Include="include\aef\operators\operators.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\aef\systems\BaFMolecularCalculator.h">
+      <Filter>Header Files\aef\systems</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp">
@@ -457,6 +466,9 @@
     </ClCompile>
     <ClCompile Include="src\aef_run.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\BaFMolecularCalculator.cpp">
+      <Filter>Source Files\systems</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

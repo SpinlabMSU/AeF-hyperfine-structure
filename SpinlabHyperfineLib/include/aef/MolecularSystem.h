@@ -28,7 +28,7 @@
 #include <istream>
 #include <unordered_map>
 #include <span>
-#include <set>
+#include <unordered_set>
 #include <vector>
 
 #include <aef/operators/IOperator.h>
@@ -38,9 +38,10 @@ namespace aef {
 
     class IMolecularCalculator {
     public:
+        virtual ResultCode get_parameter(std::string id, double& out) = 0;
         virtual ResultCode set_parameter(std::string id, double value) = 0;
-        virtual void set_nmax(spin nmax);
-        virtual size_t nBasisElts() = 0;
+        virtual void set_nmax(spin nmax) = 0;
+        virtual size_t get_nBasisElts() = 0;
 
         // hamiltonian
         virtual ResultCode calculate_H_rot(Eigen::DiagonalMatrix<dcomplex, Eigen::Dynamic>& H) = 0;
@@ -50,14 +51,15 @@ namespace aef {
         
         
         // operators
+        virtual void calculate_F_z(Eigen::MatrixXcd& F_z) = 0;
         virtual ResultCode calculate_dkq(Eigen::MatrixXcd& d, int q) = 0;
+        virtual void calculate_d1t(Eigen::MatrixXcd& H) = 0;
         virtual void calculate_d10(Eigen::MatrixXcd& H) = 0;
-
-        //
-        virtual ResultCode getSupportedOperators(std::set<std::string>& list) = 0;
+        virtual void calculate_d11(Eigen::MatrixXcd& H) = 0;
         
+
     public:
-        // 
+        // convenience function for use as a molcalcmaker
         template<class T> static IMolecularCalculator* createInstance() {
             return new T;
         }
@@ -76,7 +78,8 @@ namespace aef {
     /// </summary>
     class MolecularSystem {
     private:
-        std::unordered_map<std::string, Eigen::MatrixXcd*> operators;
+        std::unordered_map<std::string, Eigen::MatrixXcd*> opMatMap;
+        std::unordered_map<std::string, aef::operators::IOperator*> opMap;
 
         spin nmax;
         size_t nBasisElts;
@@ -110,10 +113,10 @@ namespace aef {
         MolecularSystem(IMolecularCalculator& calc, spin nmax_, double E_z_ = 0, double K=0.0);
         ~MolecularSystem();
 
-        void set_nmax(spin nmax_);
+        void set_nmax(spin nmax_); // 
         void calculate_matrix_elts();
-        void calculate_dkq();
-        aef::ResultCode diagonalize();
+        void calculate_dkq(); // 
+        aef::ResultCode diagonalize(); // always uses aef::matrix now
 
 
         aef::ResultCode load(std::istream& in);
@@ -126,10 +129,70 @@ namespace aef {
         aef::ResultCode load(std::filesystem::path inpath);
         aef::ResultCode save(std::filesystem::path out);
 
-
         inline dcomplex eval_H(Eigen::VectorXcd& v, Eigen::VectorXcd& w) {
             return (v.transpose() * H_tot * w)(0, 0);
         }
+
+
+    /// <summary>
+    /// This section contains code for PTFW2
+    /// </summary>
+    public:
+        /// <summary>
+        /// Finds operator with given ID
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        aef::operators::IOperator* getOperator(const std::string& id);
+        bool hasOperator(const std::string& id) {
+            return nullptr != getOperator(id);
+        }
+
+        /// <summary>
+        /// Registers an operator with the given id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="op"></param>
+        void addOperator(const std::string& id, aef::operators::IOperator* op);
+
+        /// <summary>
+        /// Evaluate the matrix forms of all registered operators
+        /// </summary>
+        void evaluate(void);
+
+        /// <summary>
+        /// Get the matrix form of the given operator in the default basis
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Eigen::MatrixXcd* getOperatorMatrix(const std::string& id);
+
+        /// <summary>
+        /// Gets the matrix element of the given operator in the energy-eigenstate basis
+        /// </summary>
+        /// <param name="eidx1"></param>
+        /// <param name="eidx2"></param>
+        /// <returns></returns>
+        dcomplex get_matrix_element(const std::string& id, int eidx1, int eidx2);
+
+        /// <summary>
+        /// Return the expectation value of the given operator using the
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="eidx1"></param>
+        /// <returns></returns>
+        dcomplex expectation_value(const std::string& id, int eidx1);
+
+        /// <summary>
+        /// Perturbatively calculate the leading order changes in energy of the energy eigenstates resulting
+        /// from the given operator.
+        /// 
+        /// Limitation: currently only handles first order.
+        /// </summary>
+        /// <param name="id">operator ID</param>
+        /// <param name="output"></param>
+        /// <param name="workspace"></param>
+        aef::ResultCode delta_E_lo(const std::string& id, Eigen::VectorXcd& output, Eigen::MatrixXcd* workspace = nullptr);
     };
 };
 #endif //_AEF_MOLECULAR_SYSTEM_H

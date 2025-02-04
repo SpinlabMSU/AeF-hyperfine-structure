@@ -29,7 +29,7 @@ namespace aef::operators{
         using System = HyperfineCalculator;
 
         System* sys;
-        std::unordered_map<std::string, IOperator<basis_vec>*> opMap;
+        std::unordered_map<std::string, IKetOperator<basis_vec>*> opMap;
         std::unordered_map<std::string, Eigen::MatrixXcd*> opMatMap;
         void* pImpl;
     // eventual interface
@@ -39,11 +39,11 @@ namespace aef::operators{
         System* get_system();
         void set_basis_system(System* calc);
 
-        IOperator<basis_vec>* getOperator(const std::string& id);
+        IKetOperator<basis_vec>* getOperator(const std::string& id);
         bool hasOperator(const std::string& id) {
             return nullptr != getOperator(id);
         }
-        void addOperator(const std::string &id, IOperator<basis_vec>* op);
+        void addOperator(const std::string &id, IKetOperator<basis_vec>* op);
 
         /// <summary>
         /// Perform

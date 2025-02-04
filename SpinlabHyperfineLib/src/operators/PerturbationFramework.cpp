@@ -31,11 +31,11 @@ void aef::operators::PerturbationFramework::set_basis_system(System* calc) {
         sys = calc;
 }
 
-IOperator<basis_vec>* aef::operators::PerturbationFramework::getOperator(const std::string& id) {
+IKetOperator<basis_vec>* aef::operators::PerturbationFramework::getOperator(const std::string& id) {
     return opMap[id];
 }
 
-void aef::operators::PerturbationFramework::addOperator(const std::string& id, IOperator<basis_vec>* op) {
+void aef::operators::PerturbationFramework::addOperator(const std::string& id, IKetOperator<basis_vec>* op) {
     opMap.emplace(id, op);
 }
 

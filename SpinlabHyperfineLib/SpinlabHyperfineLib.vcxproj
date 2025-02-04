@@ -247,6 +247,7 @@
     <ClInclude Include="include\aef\quantum.h" />
     <ClInclude Include="include\aef\quantum\matrix.h" />
     <ClInclude Include="include\aef\raf_constants.h" />
+    <ClInclude Include="include\aef\systems\BaFMolecularCalculator.h" />
     <ClInclude Include="include\aef\teestream.hpp" />
     <ClInclude Include="include\aef\xiffstream.h" />
     <ClInclude Include="include\gcem.hpp" />
@@ -376,6 +377,7 @@
     <ClCompile Include="SpinlabHyperfineLib.cpp" />
     <ClCompile Include="src\plaf_utils.cpp" />
     <ClCompile Include="src\quantum.cpp" />
+    <ClCompile Include="src\systems\BaFMolecularCalculator.cpp" />
     <ClCompile Include="src\teestream.cpp" />
     <ClCompile Include="src\xiffstream.cpp" />
   </ItemGroup>

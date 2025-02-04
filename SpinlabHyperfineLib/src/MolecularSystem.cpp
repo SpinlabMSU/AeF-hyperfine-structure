@@ -20,17 +20,39 @@
 
 namespace aef {
     MolecularSystem::MolecularSystem(IMolecularCalculator &calc_, spin nmax_, double E_z_, double K_) :
-        calc(calc_) {
+        calc(calc_), E_z(E_z_), K(K_) {
         diagonalized = false;
         init = false;
         dkq_init = false;
+        enableDev = K != 0;
 
         set_nmax(nmax_);
     }
     void MolecularSystem::set_nmax(spin nmax_) {
+        // nmax must be a non-negative half-integer
+        assert(nmax >= 0 && floor(nmax * 2) == (nmax * 2));
+        nmax = nmax_;
         calc.set_nmax(nmax);
-        nBasisElts = calc.nBasisElts();
+        nBasisElts = calc.get_nBasisElts();
+        H_rot.resize(nBasisElts);
+        H_hfs.resize(nBasisElts, nBasisElts);
+        H_stk.resize(nBasisElts, nBasisElts);
+        H_dev.resize(nBasisElts, nBasisElts);
+        H_tot.resize(nBasisElts, nBasisElts);
+        F_z.resize(nBasisElts, nBasisElts);
+        init = false;
+        d1t.resize(nBasisElts, nBasisElts);
+        d10.resize(nBasisElts, nBasisElts);
+        d11.resize(nBasisElts, nBasisElts);
+        dkq_init = false;
+        Es.resize(nBasisElts);
+        Vs.resize(nBasisElts, nBasisElts);
+        Vst.resize(nBasisElts, nBasisElts);
+        diagonalized = false;
 
+        for (auto& [id, mat] : opMatMap) {
+            mat->resize(nBasisElts, nBasisElts);
+        }
 
     }
     void MolecularSystem::calculate_matrix_elts() {
@@ -38,6 +60,10 @@ namespace aef {
         calc.calculate_H_hfs(this->H_hfs);
         calc.calculate_H_stk(this->H_stk);
         calc.calculate_H_dev(this->H_dev);
+
+        H_tot.setZero();
+        H_tot.diagonal() = H_rot.diagonal();
+        H_tot += H_hfs + E_z * H_hfs + K * H_dev;
 
         init = true;
     }
@@ -59,6 +85,12 @@ namespace aef {
         this->d1t.resize(0, 0);
         this->d10.resize(0, 0);
         this->d11.resize(0, 0);
+
+        for (auto& [id, mat] : opMatMap) {
+            delete mat;
+        }
+        opMatMap.clear();
+        opMap.clear();
     }
 
     aef::ResultCode MolecularSystem::diagonalize() {
@@ -92,6 +124,10 @@ namespace aef {
     /////// IO code
      // load and save --> todo choose either XIFF or TTree
     aef::ResultCode MolecularSystem::load(std::istream& in) {
+        // XIFF draft -->
+        // XIFF header type "AEF0"
+        
+
         return aef::ResultCode::Unimplemented;
     }
     aef::ResultCode MolecularSystem::save(std::ostream& out) {
@@ -116,6 +152,79 @@ namespace aef {
     aef::ResultCode MolecularSystem::save(std::filesystem::path outpath) {
         std::ofstream out(outpath, std::ios::binary | std::ios::trunc | std::ios::out);
         return save(outpath);
+    }
+
+
+    ////// PTFW2
+
+    aef::operators::IOperator* MolecularSystem::getOperator(const std::string& id) {
+        if (!opMap.contains(id)) {
+            return nullptr;
+        }
+        return opMap[id];
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="op"></param>
+    void MolecularSystem::addOperator(const std::string& id, aef::operators::IOperator* op) {
+        opMap[id] = op;
+        opMatMap[id] = new Eigen::MatrixXcd(nBasisElts, nBasisElts); // allocate matrix
+    }
+
+    void MolecularSystem::evaluate(void) {
+        for (auto& [id, op] : opMap) {
+            Eigen::MatrixXcd* opMat;
+            if (!opMatMap.contains(id)) {
+                opMat = new Eigen::MatrixXcd(nBasisElts, nBasisElts);
+                opMatMap.emplace(id, opMat);
+            } else {
+                opMat = opMatMap[id];
+            }
+            op->fillMatrix(*opMat);
+        }
+    }
+
+    Eigen::MatrixXcd* MolecularSystem::getOperatorMatrix(const std::string& id) {
+        return opMatMap[id];
+    }
+
+    dcomplex MolecularSystem::get_matrix_element(const std::string& id, int eidx1, int eidx2) {
+        Eigen::VectorXcd state1 = Vs.col(eidx1);
+        Eigen::VectorXcd state2 = Vs.col(eidx2);
+        Eigen::MatrixXcd* op = getOperatorMatrix(id);
+
+        dcomplex out;
+        aef::matrix::matrix_element(out, state1, *op, state2);
+        return out;
+    }
+
+    dcomplex MolecularSystem::expectation_value(const std::string& id, int eidx1) {
+        Eigen::VectorXcd state1 = Vs.col(eidx1);
+        Eigen::MatrixXcd* op = getOperatorMatrix(id);
+
+        dcomplex out;
+        aef::matrix::expectation_value(out, state1, *op);
+        return out;
+    }
+
+    aef::ResultCode MolecularSystem::delta_E_lo(const std::string& id, Eigen::VectorXcd& output, Eigen::MatrixXcd* workspace) {
+        bool internal_workspace = !workspace;
+        if (internal_workspace) {
+            workspace = new Eigen::MatrixXcd;
+            workspace->resize(nBasisElts, nBasisElts);
+        }
+        Eigen::MatrixXcd* op = getOperatorMatrix(id);
+        // get expectation values
+        aef::matrix::group_action(*workspace, Vs, *op);
+        output = workspace->diagonal();
+        // second order ???
+
+        if (internal_workspace) {
+            delete workspace;
+        }
     }
 
     /// Makermap code

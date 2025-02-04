@@ -24,7 +24,7 @@
 #include <aef/aef.h>
 #include "IOperator.h"
 namespace aef::operators {
-    class eEDMOperator : public IOperator<aef::j_basis_vec> {
+    class eEDMOperator : public IKetOperator<aef::j_basis_vec> {
         OperatorInfo info;
     public:
         eEDMOperator();
