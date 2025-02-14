@@ -40,6 +40,14 @@ namespace xiff {
 union fourcc {
   uint8_t cc[4];
   uint32_t ucode;
+
+  bool operator == (fourcc other) {
+      return this->ucode == other.ucode;
+  }
+
+  int operator <=> (fourcc other) {
+      return ucode - other.ucode;
+  }
 };
 
 // common codes
@@ -49,7 +57,16 @@ constexpr fourcc fmt_ = fourcc({'f', 'm', 't', ' '});
 constexpr fourcc list = fourcc({'l', 'i', 's', 't'});
 constexpr fourcc grup = fourcc({'g', 'r', 'p', ' '});
 constexpr fourcc mtrx = fourcc({'m', 't', 'r', 'x'});
+constexpr fourcc end0 = fourcc({'e', 'n', 'd', '\0' });
 }; // namespace common_cc
+
+namespace aef_cc {
+    constexpr fourcc aef0 = fourcc({ 'A', 'e', 'F', '0' });
+    constexpr fourcc prms = fourcc({ 'p', 'r', 'm', 's' });
+    constexpr fourcc oplist = fourcc({ 'A', 'e', 'F', '0' });
+    constexpr fourcc aef0 = fourcc({ 'A', 'e', 'F', '0' });
+    constexpr fourcc aef0 = fourcc({ 'A', 'e', 'F', '0' });
+}
 
 struct chunk_hdr {
   // defines xiff chunk type
@@ -71,6 +88,8 @@ struct xiff_hdr {
   fourcc extra;
   // data begins here
 };
+
+constexpr size_t xiff_header_extra_size = sizeof(xiff_hdr) - sizeof(chunk_hdr);
 
 class xiffstream {
 private:

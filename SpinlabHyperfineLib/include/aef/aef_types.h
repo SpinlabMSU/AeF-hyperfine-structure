@@ -55,6 +55,7 @@ namespace aef {
         InternalError = -6,
         HardwareFailure = -7,
         NotAvailable = -8,
+        InvalidFormat = -9,
         _LastErrorCodeP1,
         NumErrorCodes = OutOfMemory - (_LastErrorCodeP1 - 1) + 1,
         NumCodes = NumSuccessfulCodes + NumErrorCodes,

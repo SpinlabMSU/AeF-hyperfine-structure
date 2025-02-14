@@ -230,6 +230,8 @@
     <ClInclude Include="include\aef\cuda_matrix_utils.h" />
     <ClInclude Include="include\aef\debug_stream.h" />
     <ClInclude Include="include\aef\HyperfineCalculator.hpp" />
+    <ClInclude Include="include\aef\io\aefchunk.h" />
+    <ClInclude Include="include\aef\io\molsys_io.h" />
     <ClInclude Include="include\aef\jf_basis_vec.h" />
     <ClInclude Include="include\aef\LogRedirector.h" />
     <ClInclude Include="include\aef\MatrixOpBackend.h" />
@@ -247,6 +249,7 @@
     <ClInclude Include="include\aef\quantum.h" />
     <ClInclude Include="include\aef\quantum\matrix.h" />
     <ClInclude Include="include\aef\raf_constants.h" />
+    <ClInclude Include="include\aef\root_matrix_io.h" />
     <ClInclude Include="include\aef\systems\BaFMolecularCalculator.h" />
     <ClInclude Include="include\aef\teestream.hpp" />
     <ClInclude Include="include\aef\xiffstream.h" />
@@ -377,6 +380,7 @@
     <ClCompile Include="SpinlabHyperfineLib.cpp" />
     <ClCompile Include="src\plaf_utils.cpp" />
     <ClCompile Include="src\quantum.cpp" />
+    <ClCompile Include="src\root_matrix_io.cpp" />
     <ClCompile Include="src\systems\BaFMolecularCalculator.cpp" />
     <ClCompile Include="src\teestream.cpp" />
     <ClCompile Include="src\xiffstream.cpp" />

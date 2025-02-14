@@ -17,6 +17,14 @@
 #include "pch.h"
 #include "aef/MolecularSystem.h"
 #include <unordered_map>
+#include <aef/xiffstream.h>
+#include <aef/io/aefchunk.h>
+
+#include <TKey.h>
+#include <TFile.h>
+#include <TTree.h>
+#include <TParameter.h>
+#include <TMap.h>
 
 namespace aef {
     MolecularSystem::MolecularSystem(IMolecularCalculator &calc_, spin nmax_, double E_z_, double K_) :
@@ -121,25 +129,224 @@ namespace aef {
         return rc;
     }
 
+    struct prms_payload_fixed {
+        uint32_t twice_nmax;
+        int n_extra;
+        double E_z;
+        double K;
+    };
+
+    namespace molsys_flags {
+        constexpr uint16_t compress = 0x1;
+    };
+
+    namespace {
+        /*
+         * <summary>
+         * This enum class describes what each bit of flags means.
+         * </summary>
+         */
+        enum hyp_flags : uint16_t {
+            // 
+            FLAG_INIT = 1,
+            // if this flag is set, then the file contains the computed eigenenergies/eigenstates of the Hamiltonian
+            FLAG_DIAG = 2,
+            // if this flag is set, then the file contains the MDA spherical tensor operators
+            FLAG_DKQ_INIT = 4,
+            // if this flag is set, then the file contains the specific values of electric field strength and 
+            // devonshire coupling constant used to calculate these parts of the Hamiltonian.
+            FLAG_E_DEV_PARMS = 8
+        };
+    };
+
+    aef::ResultCode MolecularSystem::read_chunk(std::istream& in, void* chdr_, void *dst) {
+        auto *pChdr = static_cast<aef::chunk::chunk_hdr*>(chdr_);
+        auto &chdr = *pChdr;
+        in.read((char*)&chdr, sizeof(chdr));
+        switch (chdr.type) {
+        case aef::chunk::hamiltonian_chunk:
+            // hamiltonian_chunk
+            std::cout << "[aef::MolecularSystem] reading hamiltonian chunk" << std::endl;
+            aef::chunk::chunk_hdr mhdr;
+            read_chunk(in, (void*)&mhdr, (void*)&H_rot.diagonal());
+            read_chunk(in, (void*)&mhdr, (void*)&H_hfs);
+            read_chunk(in, (void*)&mhdr, (void*)&H_stk);
+            read_chunk(in, (void*)&mhdr, (void*)&H_dev);
+            break;
+        case aef::chunk::matrix:
+            if (dst == nullptr) {
+                std::clog << "[aef::MolecularSystem] read_chunk error, no destination provided for matrix chunk" << std::endl;
+            }
+            break;
+        default:
+            std::clog << "[aef::MolecularSystem] Warning: encountered unknown tag during loading" << std::endl;
+            // handle end tag
+        case aef::chunk::end0:
+            std::cout << "[aef::MolecularSystem] load complete, hit end tag" << std::endl;
+            break;
+        }
+
+        return aef::ResultCode();
+    }
+
+
     /////// IO code
      // load and save --> todo choose either XIFF or TTree
-    aef::ResultCode MolecularSystem::load(std::istream& in) {
-        // XIFF draft -->
-        // XIFF header type "AEF0"
+    aef::ResultCode MolecularSystem::load(std::istream& in_, char *path) {
+        std::cout << fmt::format("[aef::MolecularSystem] loading from stream, path {}", path) << std::endl;
+        ////////////////
+        //// aefchunk file format
         
+        /// file header
+        aef::chunk::file_hdr fhdr = {};
+        in_.read((char*)&fhdr, sizeof(fhdr));
+        
+        // test magic
+        if (fhdr.hdr.type != aef::chunk::file_magic) {
+            std::clog << fmt::format("[MolecularSystem aefchunk loader] Error: file \"{}\" is not an aefchunk file!", path) << std::endl;
+            return aef::ResultCode::InvalidFormat;
+        }
+
+        // test filetype
+        if (fhdr.filetype != aef::chunk::mol_sys) {
+            std::string str((char*)&(fhdr.filetype), 4);
+            std::clog << fmt::format("[MolecularSystem aefchunk loader] Error: file \"{}\" has invalid format \"{}\"!", path, str) << std::endl;
+            return aef::ResultCode::InvalidFormat;
+        }
+        // check version is in-range
+        uint16_t version = fhdr.hdr.version;
+        if (version < (uint16_t)MINIMUM_LOAD_VERSION) {
+            std::cout << "" << std::endl;
+        }
+        
+        /// flags
+        uint16_t flags = fhdr.hdr.flags;
+        // handle compression.
+        zstr::istream zin(in_);
+        bool is_stream_compressed = (flags & (uint16_t)molsys_flags::compress);
+        std::istream* pIn = is_stream_compressed ? new zstr::istream(in_) : &in_;
+        std::istream& in = *pIn;
+
+        /// Start reading chunks
+        aef::chunk::chunk_hdr chdr;
+
+        // the params block must come first
+        in.read((char*)&chdr, sizeof(chdr));
+        if (chdr.type != aef::chunk::prms) {
+            std::clog << "[aef::MolecularSystem] Error: molsys file {} is malformed" << std::endl;
+        }
+        this->init = flags & FLAG_INIT;
+        this->dkq_init = flags & FLAG_DKQ_INIT;
+        this->diagonalized = flags & FLAG_DIAG;
+
+        {
+            // handle params chunk "payload".  Here the "version" is actually used to store the payload size
+            uint16_t payload_size = chdr.version;
+            prms_payload_fixed *pay = (prms_payload_fixed*)calloc(payload_size, 1);
+            in.read((char*)pay, payload_size);
+            this->nmax = pay->twice_nmax / 2.0;
+
+            this->set_nmax(nmax);
+            this->E_z = pay->E_z;
+            this->K = pay->K; 
+            // todo add
+
+
+            free(pay);
+        }
+        // handle the other chunks in-order using read_chunk
+        do {
+            this->read_chunk(in, (void*)&chdr, nullptr);
+        } while (chdr.type != aef::chunk::end0);
+
+        // finish
+        if (pIn != &in_) {
+            delete pIn; pIn = nullptr;
+        }
+        return aef::ResultCode::Success;
+        /////////////////////////////////////
+        //// XIFF code -- format aef0
+        //// note that file header will be uncompressed
+        xiff::xiff_hdr xhdr = {};
+        in.read((char*) & xhdr, sizeof(xhdr));
+        
+        // match type
+        if (xhdr.file_hdr.type != xiff::common_cc::xiff || xhdr.file_hdr.version > 0) {
+            std::clog << std::format("[aef::MolecularSystem] file {} is not a recognized XIFF file", path) << std::endl;
+            return ResultCode::InvalidFormat;
+        }
+
+        // match file type
+        if (xhdr.ftype != xiff::aef_cc::aef0) {
+            std::clog << std::format("[aef::MolecularSystem] XIFF file {}  is not an AeFDat file", path) << std::endl;
+            return ResultCode::InvalidFormat;
+        }
+
+        xiff::chunk_hdr chdr = {};
+        in.read((char*)&chdr, sizeof(chdr));
+        if (chdr.type != xiff::aef_cc::prms) {
+            return ResultCode::InvalidFormat;
+        }
+
+        do {
+            chdr = {};
+            in.read((char*)&chdr, sizeof(chdr));
+            switch (std::bit_cast<uint32_t>(chdr.type.cc)) {
+            case std::bit_cast<uint32_t>(xiff::aef_cc::oplist.cc):
+                break;
+            }
+        } while (chdr.type != xiff::common_cc::end0);
+
 
         return aef::ResultCode::Unimplemented;
     }
-    aef::ResultCode MolecularSystem::save(std::ostream& out) {
+    aef::ResultCode MolecularSystem::save(std::ostream& out_, char *path) {
         return aef::ResultCode::Unimplemented;
     }
 
     aef::ResultCode MolecularSystem::load(std::string inpath) {
+        TFile f(inpath.c_str(), "READ");
+
         std::ifstream in(inpath, std::ios::binary);
         return load(in);
     }
 
+    enum class aef_molsys_flags:uint64_t {
+        flag_init = 1,
+        flag_diag = 2,
+        flag_dkq_init = 4,
+        flag_enableDev = 8,
+    };
+
     aef::ResultCode MolecularSystem::save(std::string outpath) {
+        TFile sav(outpath.c_str(), "RECREATE");
+        sav.cd();
+        // save properties: nmax, E_z, K, 
+        TParameter<uint64_t> prop_version("version", 0);
+        uint64_t flags = 0;
+        if (this->init) flags |= (uint64_t)aef_molsys_flags::flag_init;
+        if (this->diagonalized) flags |= (uint64_t)aef_molsys_flags::flag_diag;
+        if (this->dkq_init) flags |= (uint64_t)aef_molsys_flags::flag_dkq_init;
+        if (this->enableDev) flags |= (uint64_t)aef_molsys_flags::flag_enableDev;
+
+        // bitset
+        TParameter<uint64_t> prop_flags("flags", flags);
+        TParameter<spin> prop_nmax("nmax", nmax);
+        TParameter<double> prop_E_z("E_z", E_z);
+        TParameter<double> prop_K("K", K);
+
+
+        TMap m;
+        m.Add(&prop_version);
+        m.Add(&prop_nmax);
+        m.Add(&prop_E_z);
+        m.Add(&prop_K);
+        m.Write("properties", TObject::kSingleKey);
+        // save operator list
+
+        //
+
+
         std::ofstream out(outpath, std::ios::binary | std::ios::trunc | std::ios::out);
         return save(outpath);
     }

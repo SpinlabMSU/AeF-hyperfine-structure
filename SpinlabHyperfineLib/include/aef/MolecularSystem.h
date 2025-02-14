@@ -56,6 +56,10 @@ namespace aef {
         virtual void calculate_d1t(Eigen::MatrixXcd& H) = 0;
         virtual void calculate_d10(Eigen::MatrixXcd& H) = 0;
         virtual void calculate_d11(Eigen::MatrixXcd& H) = 0;
+
+        // load/save any state
+        virtual void load(std::istream& in) = 0;
+        virtual void save(std::ostream& out) = 0;
         
 
     public:
@@ -68,10 +72,7 @@ namespace aef {
         static IMolecularCalculator* makeCalculatorOfType(std::string name);
     };
 
-    struct ExternalFieldParameters {
-        double E_z;
-        double K;
-    };
+#include "io/molsys_io.h"
 
     /// <summary>
     /// The aef::MolecularSystem class implements a generic
@@ -119,8 +120,8 @@ namespace aef {
         aef::ResultCode diagonalize(); // always uses aef::matrix now
 
 
-        aef::ResultCode load(std::istream& in);
-        aef::ResultCode save(std::ostream& out);
+        aef::ResultCode load(std::istream& in, char *path=nullptr);
+        aef::ResultCode save(std::ostream& out, char *path=nullptr);
 
         // convienence methods
         aef::ResultCode load(std::string inpath);
@@ -132,7 +133,8 @@ namespace aef {
         inline dcomplex eval_H(Eigen::VectorXcd& v, Eigen::VectorXcd& w) {
             return (v.transpose() * H_tot * w)(0, 0);
         }
-
+    private:
+        aef::ResultCode read_chunk(std::istream &in, void *chdr, void *dst);
 
     /// <summary>
     /// This section contains code for PTFW2

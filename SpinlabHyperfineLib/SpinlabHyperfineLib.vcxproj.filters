@@ -55,6 +55,9 @@
     <Filter Include="Header Files\aef\systems">
       <UniqueIdentifier>{c828722a-a433-48be-aae4-2f7ffc6907db}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\aef\io">
+      <UniqueIdentifier>{ff68ee78-76d3-4648-94d0-1ffcba4fedda}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\aef\framework.h">
@@ -279,9 +282,6 @@
     <ClInclude Include="include\aef\baf_constants.hpp">
       <Filter>Header Files\aef</Filter>
     </ClInclude>
-    <ClInclude Include="include\aef\matrix_io.hpp">
-      <Filter>Header Files\aef</Filter>
-    </ClInclude>
     <ClInclude Include="include\aef\HyperfineCalculator.hpp">
       <Filter>Header Files\aef</Filter>
     </ClInclude>
@@ -289,9 +289,6 @@
       <Filter>Header Files\aef</Filter>
     </ClInclude>
     <ClInclude Include="include\aef\units.hpp">
-      <Filter>Header Files\aef</Filter>
-    </ClInclude>
-    <ClInclude Include="include\aef\teestream.hpp">
       <Filter>Header Files\aef</Filter>
     </ClInclude>
     <ClInclude Include="include\pcg\pcg_extras.hpp">
@@ -303,13 +300,7 @@
     <ClInclude Include="include\pcg\pcg_uint128.hpp">
       <Filter>Header Files\pcg</Filter>
     </ClInclude>
-    <ClInclude Include="include\aef\debug_stream.h">
-      <Filter>Header Files\aef</Filter>
-    </ClInclude>
     <ClInclude Include="include\aef\MolecularSystem.h">
-      <Filter>Header Files\aef</Filter>
-    </ClInclude>
-    <ClInclude Include="include\aef\xiffstream.h">
       <Filter>Header Files\aef</Filter>
     </ClInclude>
     <ClInclude Include="..\include\fmt.hpp">
@@ -390,6 +381,27 @@
     <ClInclude Include="include\aef\systems\BaFMolecularCalculator.h">
       <Filter>Header Files\aef\systems</Filter>
     </ClInclude>
+    <ClInclude Include="include\aef\matrix_io.hpp">
+      <Filter>Header Files\aef\io</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\teestream.hpp">
+      <Filter>Header Files\aef\io</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\xiffstream.h">
+      <Filter>Header Files\aef\io</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\debug_stream.h">
+      <Filter>Header Files\aef\io</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\io\aefchunk.h">
+      <Filter>Header Files\aef\io</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\root_matrix_io.h">
+      <Filter>Header Files\aef\io</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\io\molsys_io.h">
+      <Filter>Header Files\aef\io</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp">
@@ -469,6 +481,9 @@
     </ClCompile>
     <ClCompile Include="src\systems\BaFMolecularCalculator.cpp">
       <Filter>Source Files\systems</Filter>
+    </ClCompile>
+    <ClCompile Include="src\root_matrix_io.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
