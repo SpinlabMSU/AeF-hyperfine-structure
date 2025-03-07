@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <aef/xiffstream.h>
 #include <aef/io/aefchunk.h>
+#include <aef/matrix_io.hpp>
 
 #include <TKey.h>
 #include <TFile.h>
@@ -27,7 +28,7 @@
 #include <TMap.h>
 
 namespace aef {
-    MolecularSystem::MolecularSystem(IMolecularCalculator &calc_, spin nmax_, double E_z_, double K_) :
+    MolecularSystem::MolecularSystem(IMolecularCalculator *calc_, spin nmax_, double E_z_, double K_) :
         calc(calc_), E_z(E_z_), K(K_) {
         diagonalized = false;
         init = false;
@@ -40,8 +41,8 @@ namespace aef {
         // nmax must be a non-negative half-integer
         assert(nmax >= 0 && floor(nmax * 2) == (nmax * 2));
         nmax = nmax_;
-        calc.set_nmax(nmax);
-        nBasisElts = calc.get_nBasisElts();
+        calc->set_nmax(nmax);
+        nBasisElts = calc->get_nBasisElts();
         H_rot.resize(nBasisElts);
         H_hfs.resize(nBasisElts, nBasisElts);
         H_stk.resize(nBasisElts, nBasisElts);
@@ -64,10 +65,10 @@ namespace aef {
 
     }
     void MolecularSystem::calculate_matrix_elts() {
-        calc.calculate_H_rot(this->H_rot);
-        calc.calculate_H_hfs(this->H_hfs);
-        calc.calculate_H_stk(this->H_stk);
-        calc.calculate_H_dev(this->H_dev);
+        calc->calculate_H_rot(this->H_rot);
+        calc->calculate_H_hfs(this->H_hfs);
+        calc->calculate_H_stk(this->H_stk);
+        calc->calculate_H_dev(this->H_dev);
 
         H_tot.setZero();
         H_tot.diagonal() = H_rot.diagonal();
@@ -76,9 +77,9 @@ namespace aef {
         init = true;
     }
     void MolecularSystem::calculate_dkq() {
-        calc.calculate_dkq(this->d1t, -1);
-        calc.calculate_dkq(this->d10,  0);
-        calc.calculate_dkq(this->d11, +1);
+        calc->calculate_dkq(this->d1t, -1);
+        calc->calculate_dkq(this->d10,  0);
+        calc->calculate_dkq(this->d11, +1);
         dkq_init = true;
     }
 
@@ -134,6 +135,8 @@ namespace aef {
         int n_extra;
         double E_z;
         double K;
+
+        int calcTypeLen;
     };
 
     namespace molsys_flags {
@@ -159,6 +162,10 @@ namespace aef {
         };
     };
 
+    aef::ResultCode MolecularSystem::write_chunk(std::ostream& out, void* chdr, void* data) {
+        return aef::ResultCode();
+    }
+
     aef::ResultCode MolecularSystem::read_chunk(std::istream& in, void* chdr_, void *dst) {
         auto *pChdr = static_cast<aef::chunk::chunk_hdr*>(chdr_);
         auto &chdr = *pChdr;
@@ -177,13 +184,60 @@ namespace aef {
             if (dst == nullptr) {
                 std::clog << "[aef::MolecularSystem] read_chunk error, no destination provided for matrix chunk" << std::endl;
             }
+
+            ptrdiff_t offset = chdr.version | (chdr.flags & 0xff) << 8;
+            char* dst_ = ((char*)this) + offset;
+            // flags indicates the datatype
+            bool is_vector = chdr.flags & 1;
+            bool is_complex = chdr.flags & 2;
+
+            if (is_complex) {
+                if (is_vector) {
+                    auto* v = (Eigen::VectorXcd*)dst;
+                    Eigen::read_binary(in, v);
+                } else {
+                    auto* v = (Eigen::VectorXcd*)dst;
+                    Eigen::read_binary(in, v);
+                }
+            }
+            return aef::ResultCode::Success;
+        case aef::chunk::oplist:
+            // note: oplist stores version in upper byte of flags
+            std::clog << "[aef::MolecularSystem] loading perturbative operator map" << std::endl;
+            {
+                std::vector<std::string> ops;
+                int version = chdr.flags >> 8;
+                int nops = (chdr.flags & 0xff) | chdr.version;
+                char opId[max_op_id_len];
+                memset(opId, 0, max_op_id_len);
+                for (int idxOp = 0; idxOp < nops; idxOp++) {
+                    int len = 0;
+                    in.read((char*)&len, sizeof(len));
+                    assert(len < max_op_id_len);
+                    in.read(opId, len);
+                    // TODO figure out how to load IOperator
+                }
+                //for (int idx)
+            };
             break;
+        case 0:
+        {
+            // patch chunk = lol
+            // TODO remove this, it's not neccessary
+            char* dst;
+            in.read((char*)&dst, sizeof(char*));
+            size_t len;
+            in.read((char*)&len, sizeof(size_t));
+            // good luck with ASLR
+            in.read(dst, len);
+        }
+            return aef::ResultCode::Success;
         default:
             std::clog << "[aef::MolecularSystem] Warning: encountered unknown tag during loading" << std::endl;
             // handle end tag
         case aef::chunk::end0:
             std::cout << "[aef::MolecularSystem] load complete, hit end tag" << std::endl;
-            break;
+            return aef::ResultCode::Success;
         }
 
         return aef::ResultCode();
@@ -251,7 +305,11 @@ namespace aef {
             this->K = pay->K; 
             // todo add
 
+            std::string calcType(pay->calcTypeLen + 1, 0);
+            in.read(calcType.data(), pay->calcTypeLen);
 
+            this->calc;
+            aef::IMolecularCalculator::makeCalculatorOfType(calcType);
             free(pay);
         }
         // handle the other chunks in-order using read_chunk
@@ -264,41 +322,6 @@ namespace aef {
             delete pIn; pIn = nullptr;
         }
         return aef::ResultCode::Success;
-        /////////////////////////////////////
-        //// XIFF code -- format aef0
-        //// note that file header will be uncompressed
-        xiff::xiff_hdr xhdr = {};
-        in.read((char*) & xhdr, sizeof(xhdr));
-        
-        // match type
-        if (xhdr.file_hdr.type != xiff::common_cc::xiff || xhdr.file_hdr.version > 0) {
-            std::clog << std::format("[aef::MolecularSystem] file {} is not a recognized XIFF file", path) << std::endl;
-            return ResultCode::InvalidFormat;
-        }
-
-        // match file type
-        if (xhdr.ftype != xiff::aef_cc::aef0) {
-            std::clog << std::format("[aef::MolecularSystem] XIFF file {}  is not an AeFDat file", path) << std::endl;
-            return ResultCode::InvalidFormat;
-        }
-
-        xiff::chunk_hdr chdr = {};
-        in.read((char*)&chdr, sizeof(chdr));
-        if (chdr.type != xiff::aef_cc::prms) {
-            return ResultCode::InvalidFormat;
-        }
-
-        do {
-            chdr = {};
-            in.read((char*)&chdr, sizeof(chdr));
-            switch (std::bit_cast<uint32_t>(chdr.type.cc)) {
-            case std::bit_cast<uint32_t>(xiff::aef_cc::oplist.cc):
-                break;
-            }
-        } while (chdr.type != xiff::common_cc::end0);
-
-
-        return aef::ResultCode::Unimplemented;
     }
     aef::ResultCode MolecularSystem::save(std::ostream& out_, char *path) {
         return aef::ResultCode::Unimplemented;

@@ -64,6 +64,15 @@ namespace aef::operators {
 
         IOperator() {}
         virtual ~IOperator() {}
+
+    public:
+        // convenience function for use as a molcalcmaker
+        template<class T> static IOperator* createInstance() {
+            return new T;
+        }
+        typedef IOperator* (*pfnOperatorMaker)();
+        static void registerOperatorType(std::string name, pfnOperatorMaker ctor);
+        static IOperator* makeOperatorOfType(std::string name);
     };
 }
 #endif //_AEF_OPERATOR_IOPERATOR_H

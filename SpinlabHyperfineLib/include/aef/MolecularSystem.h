@@ -35,7 +35,7 @@
 
 
 namespace aef {
-
+    constexpr size_t max_op_id_len = 256;
     class IMolecularCalculator {
     public:
         virtual ResultCode get_parameter(std::string id, double& out) = 0;
@@ -86,7 +86,7 @@ namespace aef {
         size_t nBasisElts;
         bool enableDev;
     private:
-        IMolecularCalculator &calc;
+        IMolecularCalculator *calc;
         bool init;
         bool diagonalized;
         bool dkq_init;
@@ -111,7 +111,7 @@ namespace aef {
         Eigen::MatrixXcd d11;
         Eigen::MatrixXcd d1t;
 
-        MolecularSystem(IMolecularCalculator& calc, spin nmax_, double E_z_ = 0, double K=0.0);
+        MolecularSystem(IMolecularCalculator* calc, spin nmax_, double E_z_ = 0, double K=0.0);
         ~MolecularSystem();
 
         void set_nmax(spin nmax_); // 
@@ -134,6 +134,8 @@ namespace aef {
             return (v.transpose() * H_tot * w)(0, 0);
         }
     private:
+        MolecularSystem();
+        aef::ResultCode write_chunk(std::ostream& out, void* chdr, void* data);
         aef::ResultCode read_chunk(std::istream &in, void *chdr, void *dst);
 
     /// <summary>

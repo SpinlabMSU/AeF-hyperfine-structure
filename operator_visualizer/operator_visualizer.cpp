@@ -56,7 +56,7 @@ TTree *generate_basis_ttree(HyperfineCalculator &calc) {
 }
 
 
-TTree *generate_matrix_tree(HyperfineCalculator &calc, const char *name, const char *title, Eigen::MatrixXcd &op, double mag_thresh=1.0e-17, bool use_rel_thres=true) {
+TTree *write_matrix_tree(HyperfineCalculator &calc, const char *name, const char *title, Eigen::MatrixXcd &op, double mag_thresh=1.0e-17, bool use_rel_thres=true) {
     TTree* matrix_tree = new TTree(name, title);
 
     const Eigen::Index nBasisElts = calc.nBasisElts;
@@ -159,8 +159,8 @@ int main(int argc, char **argv) {
 
     TFile rfile(root_file_name.c_str(), "RECREATE");
     (void)generate_basis_ttree(calc);
-    (void)generate_matrix_tree(calc, "H_tot", "total Hamiltonian", calc.H_tot);
-    (void)generate_matrix_tree(calc, "U", "Energy eigenbasis in matrix form", calc.Vs);
+    (void)write_matrix_tree(calc, "H_tot", "total Hamiltonian", calc.H_tot);
+    (void)write_matrix_tree(calc, "U", "Energy eigenbasis in matrix form", calc.Vs);
 
     // save important run information
     TDirectory* dir = gDirectory->mkdir("parameters");
