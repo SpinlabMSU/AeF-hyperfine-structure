@@ -81,10 +81,9 @@ namespace aef {
     private:
         std::unordered_map<std::string, Eigen::MatrixXcd*> opMatMap;
         std::unordered_map<std::string, aef::operators::IOperator*> opMap;
-
+    public:
         spin nmax;
         size_t nBasisElts;
-        bool enableDev;
     private:
         IMolecularCalculator *calc;
         bool init;
@@ -93,6 +92,7 @@ namespace aef {
     public:
         double E_z;
         double K;
+        bool enableDev;
 
         Eigen::DiagonalMatrix<dcomplex, Eigen::Dynamic> H_rot;
         Eigen::MatrixXcd H_hfs;
@@ -114,6 +114,8 @@ namespace aef {
         MolecularSystem(IMolecularCalculator* calc, spin nmax_, double E_z_ = 0, double K=0.0);
         ~MolecularSystem();
 
+        IMolecularCalculator* get_calc();
+
         void set_nmax(spin nmax_); // 
         void calculate_matrix_elts();
         void calculate_dkq(); // 
@@ -133,6 +135,7 @@ namespace aef {
         inline dcomplex eval_H(Eigen::VectorXcd& v, Eigen::VectorXcd& w) {
             return (v.transpose() * H_tot * w)(0, 0);
         }
+
     private:
         MolecularSystem();
         aef::ResultCode write_chunk(std::ostream& out, void* chdr, void* data);

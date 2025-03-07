@@ -6,9 +6,10 @@ namespace aef {
     private:
         spin nmax;
         size_t nBasisElts;
-        std::vector<j_basis_vec> basis;
     public:
+        std::vector<j_basis_vec> basis;
         BaFMolecularCalculator();
+        BaFMolecularCalculator(spin nmax_);
         virtual ~BaFMolecularCalculator();
 
 
@@ -33,6 +34,10 @@ namespace aef {
         virtual void calculate_d1t(Eigen::MatrixXcd& H);
         virtual void calculate_d10(Eigen::MatrixXcd& H);
         virtual void calculate_d11(Eigen::MatrixXcd& H);
+
+        // IO
+        virtual void load(std::istream& in);
+        virtual void save(std::ostream& out);
     };
 
 }

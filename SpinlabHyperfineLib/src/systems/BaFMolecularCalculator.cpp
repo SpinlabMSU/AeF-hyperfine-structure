@@ -6,6 +6,10 @@ using aef::ResultCode;
 aef::BaFMolecularCalculator::BaFMolecularCalculator(): nmax(-1), nBasisElts(0){
 }
 
+aef::BaFMolecularCalculator::BaFMolecularCalculator(spin nmax_) : nmax(nmax_) {
+    set_nmax(nmax_);
+}
+
 aef::BaFMolecularCalculator::~BaFMolecularCalculator() {}
 
 ResultCode aef::BaFMolecularCalculator::get_parameter(std::string id, double& out) {
@@ -125,4 +129,12 @@ void aef::BaFMolecularCalculator::calculate_d11(Eigen::MatrixXcd& H) {
             H(jdx, idx) = std::conj(melt);
         }
     }
+}
+
+void aef::BaFMolecularCalculator::load(std::istream& in) {
+    return;
+}
+
+void aef::BaFMolecularCalculator::save(std::ostream& out) {
+    return;
 }

@@ -64,8 +64,6 @@ namespace aef_cc {
     constexpr fourcc aef0 = fourcc({ 'A', 'e', 'F', '0' });
     constexpr fourcc prms = fourcc({ 'p', 'r', 'm', 's' });
     constexpr fourcc oplist = fourcc({ 'A', 'e', 'F', '0' });
-    constexpr fourcc aef0 = fourcc({ 'A', 'e', 'F', '0' });
-    constexpr fourcc aef0 = fourcc({ 'A', 'e', 'F', '0' });
 }
 
 struct chunk_hdr {

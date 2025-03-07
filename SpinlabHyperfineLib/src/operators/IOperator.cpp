@@ -3,7 +3,6 @@
 #include <unordered_map>
 
 namespace {
-    std::unordered_map<std::string, aef::operators::IOperator::pfnOperatorMaker> &opTypeMap = registerDefaults();
 
     std::unordered_map<std::string, aef::operators::IOperator::pfnOperatorMaker> &registerDefaults() {
         auto* map = new std::unordered_map<std::string, aef::operators::IOperator::pfnOperatorMaker>;
@@ -11,6 +10,7 @@ namespace {
 
         return *map;
     }
+    std::unordered_map<std::string, aef::operators::IOperator::pfnOperatorMaker> &opTypeMap = registerDefaults();
 }
 
 void aef::operators::IOperator::registerOperatorType(std::string name, pfnOperatorMaker ctor) {

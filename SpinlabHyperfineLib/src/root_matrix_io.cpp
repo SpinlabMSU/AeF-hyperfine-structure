@@ -1,4 +1,6 @@
 #include <pch.h>
+#define _SILENCE_ALL_CXX23_DEPRECATION_WARNINGS
+#include <span>
 #include <aef/root_matrix_io.h>
 
 TTree *aef::write_self_adj_op_tree(Eigen::MatrixXcd& op, const char* name, const char* title, double mag_thresh, bool use_rel_thresh) {
@@ -24,10 +26,10 @@ TTree *aef::write_self_adj_op_tree(Eigen::MatrixXcd& op, const char* name, const
     }
 
 
-    uint32_t sidx;
-    Eigen::Index idx, jdx;
-    aef::dcomplex val;
-    double re, im, mag;
+    uint32_t sidx = 0;
+    Eigen::Index idx = 0, jdx = 0;
+    aef::dcomplex val = 0;
+    double re = 0, im = 0, mag = 0;
 
     size_t nFills = 0; // number of matrix elements large enough to be "filled" and written out
     size_t nZeros = 0; // number of matrix elements that are exactly zero

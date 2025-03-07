@@ -83,6 +83,9 @@ namespace aef {
         dkq_init = true;
     }
 
+    aef::IMolecularCalculator* MolecularSystem::get_calc() {
+        return calc;
+    }
 
 
     MolecularSystem::~MolecularSystem() {
@@ -181,8 +184,10 @@ namespace aef {
             read_chunk(in, (void*)&mhdr, (void*)&H_dev);
             break;
         case aef::chunk::matrix:
+        {
             if (dst == nullptr) {
                 std::clog << "[aef::MolecularSystem] read_chunk error, no destination provided for matrix chunk" << std::endl;
+                return aef::ResultCode::InvalidArgument;
             }
 
             ptrdiff_t offset = chdr.version | (chdr.flags & 0xff) << 8;
@@ -194,13 +199,14 @@ namespace aef {
             if (is_complex) {
                 if (is_vector) {
                     auto* v = (Eigen::VectorXcd*)dst;
-                    Eigen::read_binary(in, v);
+                    Eigen::read_binary(in, *v);
                 } else {
-                    auto* v = (Eigen::VectorXcd*)dst;
-                    Eigen::read_binary(in, v);
+                    auto* v = (Eigen::MatrixXcd*)dst;
+                    Eigen::read_binary(in, *v);
                 }
             }
             return aef::ResultCode::Success;
+        }
         case aef::chunk::oplist:
             // note: oplist stores version in upper byte of flags
             std::clog << "[aef::MolecularSystem] loading perturbative operator map" << std::endl;
@@ -224,9 +230,9 @@ namespace aef {
         {
             // patch chunk = lol
             // TODO remove this, it's not neccessary
-            char* dst;
+            char* dst = nullptr;
             in.read((char*)&dst, sizeof(char*));
-            size_t len;
+            size_t len = 0;
             in.read((char*)&len, sizeof(size_t));
             // good luck with ASLR
             in.read(dst, len);
