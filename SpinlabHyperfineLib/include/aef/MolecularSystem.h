@@ -122,8 +122,8 @@ namespace aef {
         aef::ResultCode diagonalize(); // always uses aef::matrix now
 
 
-        aef::ResultCode load(std::istream& in, char *path=nullptr);
-        aef::ResultCode save(std::ostream& out, char *path=nullptr);
+        aef::ResultCode load(std::istream& in, const char *path=nullptr);
+        aef::ResultCode save(std::ostream& out, const char *path=nullptr);
 
         // convienence methods
         aef::ResultCode load(std::string inpath);

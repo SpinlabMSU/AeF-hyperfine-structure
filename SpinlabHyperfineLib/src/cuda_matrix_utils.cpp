@@ -2,6 +2,9 @@
 
 #define _SILENCE_ALL_CXX23_DEPRECATION_WARNINGS
 #define _AEF_WILL_USE_CUDA_HEADERS
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include "aef/cuda_matrix_utils.h"
 
 #include <algorithm>

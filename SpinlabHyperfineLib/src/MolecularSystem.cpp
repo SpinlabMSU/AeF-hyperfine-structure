@@ -241,6 +241,7 @@ namespace aef {
         default:
             std::clog << "[aef::MolecularSystem] Warning: encountered unknown tag during loading" << std::endl;
             // handle end tag
+            [[fallthrough]];
         case aef::chunk::end0:
             std::cout << "[aef::MolecularSystem] load complete, hit end tag" << std::endl;
             return aef::ResultCode::Success;
@@ -252,7 +253,7 @@ namespace aef {
 
     /////// IO code
      // load and save --> todo choose either XIFF or TTree
-    aef::ResultCode MolecularSystem::load(std::istream& in_, char *path) {
+    aef::ResultCode MolecularSystem::load(std::istream& in_, const char *path) {
         std::cout << fmt::format("[aef::MolecularSystem] loading from stream, path {}", path) << std::endl;
         ////////////////
         //// aefchunk file format
@@ -303,6 +304,7 @@ namespace aef {
             // handle params chunk "payload".  Here the "version" is actually used to store the payload size
             uint16_t payload_size = chdr.version;
             prms_payload_fixed *pay = (prms_payload_fixed*)calloc(payload_size, 1);
+            assert(pay);
             in.read((char*)pay, payload_size);
             this->nmax = pay->twice_nmax / 2.0;
 
@@ -329,7 +331,7 @@ namespace aef {
         }
         return aef::ResultCode::Success;
     }
-    aef::ResultCode MolecularSystem::save(std::ostream& out_, char *path) {
+    aef::ResultCode MolecularSystem::save(std::ostream& out_, const char *path) {
         return aef::ResultCode::Unimplemented;
     }
 
@@ -348,6 +350,7 @@ namespace aef {
     };
 
     aef::ResultCode MolecularSystem::save(std::string outpath) {
+#if 0
         TFile sav(outpath.c_str(), "RECREATE");
         sav.cd();
         // save properties: nmax, E_z, K, 
@@ -375,9 +378,9 @@ namespace aef {
 
         //
 
-
+#endif
         std::ofstream out(outpath, std::ios::binary | std::ios::trunc | std::ios::out);
-        return save(outpath);
+        return save(out, outpath.c_str());
     }
 
     aef::ResultCode MolecularSystem::load(std::filesystem::path inpath) {

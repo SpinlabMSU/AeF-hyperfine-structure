@@ -38,6 +38,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define DISABLE_CUSPARSE_DEPRECATED
+#define DISABLE_CUDENSE_DEPRECATED
 
 #include <cuda.h>
 #include <cuda_runtime.h>

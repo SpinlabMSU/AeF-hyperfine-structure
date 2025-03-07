@@ -485,6 +485,12 @@
     <ClCompile Include="src\root_matrix_io.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\cuda_matrix_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cuda_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="include\Eigen\Cholesky">
@@ -578,13 +584,5 @@
       <Filter>Header Files\Eigen</Filter>
     </None>
     <None Include="cpp.hint" />
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="src\cuda_matrix_utils.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
-    <CudaCompile Include="src\cuda_utils.cu">
-      <Filter>Source Files</Filter>
-    </CudaCompile>
   </ItemGroup>
 </Project>

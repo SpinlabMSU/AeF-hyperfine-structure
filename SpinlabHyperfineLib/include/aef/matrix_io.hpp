@@ -91,7 +91,7 @@ namespace Eigen {
 
 
 #ifndef AEF_STREAM_NDEBUG
-    void print_stream_position(std::istream& in) {
+    inline void print_stream_position(std::istream& in) {
         auto tellg = in.tellg();
         std::streamoff pos = tellg;
         std::cout << fmt::format("Stream position {} = 0x{:x} (estimated is {:#x})", (int64_t)pos, (int64_t)pos, ::stream_pos) << std::endl;

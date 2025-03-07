@@ -25,8 +25,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 // derived from helper_cuda.h in cuda samples
-
-//#include <pch.h>
+#define _SILENCE_ALL_CXX23_DEPRECATION_WARNINGS
+#define _AEF_WILL_USE_CUDA_HEADERS
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include "cuda_utils.h"
 #include <iostream>
 #ifndef __CUDACC__
