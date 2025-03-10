@@ -271,6 +271,7 @@
     <ClInclude Include="include\aef\raf_constants.h" />
     <ClInclude Include="include\aef\root_matrix_io.h" />
     <ClInclude Include="include\aef\systems\BaFMolecularCalculator.h" />
+    <ClInclude Include="include\aef\systems\RaFMolecularCalculator.h" />
     <ClInclude Include="include\aef\teestream.hpp" />
     <ClInclude Include="include\aef\xiffstream.h" />
     <ClInclude Include="include\gcem.hpp" />
@@ -402,6 +403,7 @@
     <ClCompile Include="src\quantum.cpp" />
     <ClCompile Include="src\root_matrix_io.cpp" />
     <ClCompile Include="src\systems\BaFMolecularCalculator.cpp" />
+    <ClCompile Include="src\systems\RaFMolecularCalculator.cpp" />
     <ClCompile Include="src\teestream.cpp" />
     <ClCompile Include="src\xiffstream.cpp" />
   </ItemGroup>

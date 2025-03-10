@@ -402,6 +402,9 @@
     <ClInclude Include="include\aef\io\molsys_io.h">
       <Filter>Header Files\aef\io</Filter>
     </ClInclude>
+    <ClInclude Include="include\aef\systems\RaFMolecularCalculator.h">
+      <Filter>Header Files\aef\systems</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp">
@@ -490,6 +493,9 @@
     </ClCompile>
     <ClCompile Include="src\cuda_utils.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\systems\RaFMolecularCalculator.cpp">
+      <Filter>Source Files\systems</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
