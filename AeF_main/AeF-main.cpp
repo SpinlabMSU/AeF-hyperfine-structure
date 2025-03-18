@@ -21,7 +21,7 @@
 #include <pch.h>
 #include "AeF-main.h"
 
-#include "../AeF-hyperfine-structure.inl"
+#include "AeF-main.inl"
 // int32_t closest_approx(Eigen)
 
 

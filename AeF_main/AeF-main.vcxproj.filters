@@ -30,4 +30,8 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="prebuild.ps1" />
+    <None Include="prebuild.sh" />
+  </ItemGroup>
 </Project>
