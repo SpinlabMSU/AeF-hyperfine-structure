@@ -32,19 +32,20 @@
 /// <param name="calc">HyperfineCalculator: contains operator matrix elements
 /// and states</param> <param name="E_idx">the index of Energy level to
 /// calculate with</param> <returns></returns>
-j_basis_vec expectation_values(aef::MolecularSystem& calc, int32_t E_idx) {
+aef::universal_diatomic_basis_vec expectation_values(aef::MolecularSystem& calc, int32_t E_idx) {
     //
     Eigen::VectorXcd state_vec = calc.Vs.col(E_idx);
-    j_basis_vec out;
-    // TODO come up with better solution
-    aef::BaFMolecularCalculator* mcalc = (aef::BaFMolecularCalculator*)calc.get_calc();
+    aef::universal_diatomic_basis_vec out;
+    aef::IMolecularCalculator *mcalc = calc.get_calc();
 #ifdef _WIN32
-    SecureZeroMemory((void*)&out, sizeof(j_basis_vec));
+    SecureZeroMemory((void*)&out, sizeof(aef::universal_diatomic_basis_vec));
 #else
     // explicit_bzero isn't neccessary and reduces portability
-    //explicit_bzero((void*)&out, sizeof(j_basis_vec));
-    memset((void*)&out, 0, sizeof(j_basis_vec));
+    //explicit_bzero((void*)&out, sizeof(aef::universal_diatomic_basis_vec));
+    memset((void*)&out, 0, sizeof(aef::universal_diatomic_basis_vec));
 #endif
+    out = mcalc->get_basis_ket(0);
+    out.r = out.n = out.j = out.f_1 = out.f = out.m_f = 0;
     double prob_tot = 0;
 #ifdef MATRIX_ELT_DEBUG
     double expect_mf = -0.1;
@@ -58,7 +59,7 @@ j_basis_vec expectation_values(aef::MolecularSystem& calc, int32_t E_idx) {
         }
 
         prob_tot += prob;
-        j_basis_vec bs_ket = mcalc->basis[kidx];
+        aef::universal_diatomic_basis_vec bs_ket = mcalc->get_basis_ket(kidx);
 
 #ifdef MATRIX_ELT_DEBUG
         if (prob > 1) {
@@ -75,8 +76,10 @@ j_basis_vec expectation_values(aef::MolecularSystem& calc, int32_t E_idx) {
             set_mf = true;
         }
 #endif
+        out.r += prob * bs_ket.r;
         out.n += prob * bs_ket.n;
         out.j += prob * bs_ket.j;
+        out.f_1 += prob * bs_ket.f_1;
         out.f += prob * bs_ket.f;
         out.m_f += prob * bs_ket.m_f;
     }
@@ -85,25 +88,29 @@ j_basis_vec expectation_values(aef::MolecularSystem& calc, int32_t E_idx) {
         DebugBreak();
     }
 
+    out.r /= prob_tot;
     out.n /= prob_tot;
     out.j /= prob_tot;
+    out.f_1 /= prob_tot;
     out.f /= prob_tot;
     out.m_f /= prob_tot;
 
     return out;
 }
 
-static inline double diff_states(j_basis_vec v1, j_basis_vec v2) {
+static inline double diff_states(aef::universal_diatomic_basis_vec v1, aef::universal_diatomic_basis_vec v2) {
     constexpr double cn = 1.5;
     constexpr double cj = 0.5; // 1.0;
+    constexpr double cf1 = 0.5;
     constexpr double cf = 3.0;
     constexpr double cm = 4.0; // 100.0;
 
     double dn = (v1.n - v2.n);
     double dj = (v1.j - v2.j);
+    double df1 = (v1.f_1 - v2.f_1);
     double df = (v1.f - v2.f);
     double dm = (v1.m_f - v2.m_f);
-    return cn * dn * dn + cj * dj * dj + cf * df * df + cm * dm * dm;
+    return cn * dn * dn + cj * dj * dj + cf1 * df1 * df1 + cf * df * df + cm * dm * dm;
 }
 
 /// <summary>
@@ -117,12 +124,11 @@ static inline double diff_states(j_basis_vec v1, j_basis_vec v2) {
 int32_t closest_state(aef::MolecularSystem& calc, int32_t ket_idx,
     int32_t exclude_Eidx = -1) {
     double chisq = (double)std::numeric_limits<double>::infinity();
-    aef::BaFMolecularCalculator* mcalc = (aef::BaFMolecularCalculator*)calc.get_calc();
-    j_basis_vec ket = mcalc->basis[ket_idx];
+    aef::universal_diatomic_basis_vec ket = calc.get_calc()->get_basis_ket(ket_idx);
     int32_t closest_idx = -1;
 
     for (int32_t Eidx = 0; Eidx < calc.nBasisElts; Eidx++) {
-        j_basis_vec expect_ket = expectation_values(calc, Eidx);
+        aef::universal_diatomic_basis_vec expect_ket = expectation_values(calc, Eidx);
         double localx2 = diff_states(ket, expect_ket);
 
         if (localx2 < chisq && Eidx != exclude_Eidx) {
@@ -185,7 +191,7 @@ void output_state_info(std::ostream& output, aef::MolecularSystem& calc
         dcomplex dz = d10;
 
         // basis operator expectation values
-        j_basis_vec v = expectation_values_jsq(calc, n);
+        aef::universal_diatomic_basis_vec v = expectation_values_jsq(calc, n);
 
         // output
         auto mda_ifo =
@@ -311,8 +317,8 @@ int main(int argc, char **argv) {
         std::string status(aef_git_status);
         bool bdirty = status.contains('M') || status.contains('d');
         std::string dirty = bdirty ? "dirty" : "clean";
-        std::cout << "AeF Hyperfine Structure main program, version compiled on " << __DATE__ << " "
-            << __TIME__ << ", git commit " << aef_git_commit << std::endl;
+        std::cout << "AeF-Hyperfine-Structure main spectrum calculation program, version compiled on " << __DATE__ << " "
+            << __TIME__ << ", git commit " << aef_git_commit << ", main program file " __FILE__ << std::endl;
         std::cout << "Git status is " << dirty << " string {" << status << "}" << std::endl;
         std::cout << fmt::format("Start time is {}", start_time) << std::endl;
         std::cout << fmt::format("Eigen will use {} threads", Eigen::nbThreads()) << std::endl;
@@ -458,16 +464,16 @@ int main(int argc, char **argv) {
     }
     oEs << std::endl;
 
-    j_basis_vec gnd = j_basis_vec::from_index(0);
-    j_basis_vec f00 = gnd;
-    int32_t if00 = f00.index();
+    aef::universal_diatomic_basis_vec gnd = pCalc->get_basis_ket(0);///aef::universal_diatomic_basis_vec::from_index(0);
+    aef::universal_diatomic_basis_vec f00 = gnd;
+    int32_t if00 = pCalc->get_index(f00);
     // n = 0, j = 0.5, f = 1 hyperfine triplet
-    j_basis_vec f1t(0, 0.5, 1, -1);
-    int32_t if1t = f1t.index();
-    j_basis_vec f10(0, 0.5, 1, 0);
-    int32_t if10 = f10.index();
-    j_basis_vec f11(0, 0.5, 1, 1);
-    int32_t if11 = f11.index();
+    aef::universal_diatomic_basis_vec f1t(0, 0.5, 1, -1);
+    int32_t if1t = pCalc->get_index(f1t);
+    aef::universal_diatomic_basis_vec f10(0, 0.5, 1, 0);
+    int32_t if10 = pCalc->get_index(f10);
+    aef::universal_diatomic_basis_vec f11(0, 0.5, 1, 1);
+    int32_t if11 = pCalc->get_index(f11);
 
     std::cout << "if1t=" << if1t << " if10=" << if10 << " if11=" << if11 << std::endl;
     std::cout << fmt::format("f00={}; f1t={}, f10={}, f11={}", f00, f1t, f10, f11) << std::endl;
@@ -475,7 +481,7 @@ int main(int argc, char **argv) {
     // oStk << "E-field (V/cm), Stark-shifted Energy of " << gnd.ket_string() << "
     // (MHz)";
     oStk << "E-field (V/cm), dE_gnd" << ", dE_f1t, dE_f10, dE_f11" << std::endl;
-    assert(calc.H_tot.rows() == calc.H_stk.rows());
+    assert(sys.H_tot.rows() == sys.H_stk.rows());
 
 #define USE_REAL_Es
 #ifdef USE_REAL_Es
@@ -491,11 +497,11 @@ int main(int argc, char **argv) {
     std::vector<etype> E3s(nStarkIterations);
 #ifndef USE_DEVONSHIRE
     // note: devonshire potential doesn't conserve m_f
-    for (int idx = 0; idx < calc.nBasisElts; idx++) {
-        j_basis_vec v1 = calc.basis[idx];
-        for (int jdx = 0; jdx < calc.nBasisElts; jdx++) {
-            j_basis_vec v2 = calc.basis[jdx];
-            double prob = std::norm(calc.H_tot(idx, jdx));
+    for (int idx = 0; idx < sys.nBasisElts; idx++) {
+        aef::universal_diatomic_basis_vec v1 = pCalc->get_basis_ket(idx);//calc.basis[idx];
+        for (int jdx = 0; jdx < sys.nBasisElts; jdx++) {
+            aef::universal_diatomic_basis_vec v2 = pCalc->get_basis_ket(jdx);
+            double prob = std::norm(sys.H_tot(idx, jdx));
             if (v1.m_f != v2.m_f && prob > 0) {
                 DebugBreak();
                 std::string ostr =
@@ -577,7 +583,7 @@ int main(int argc, char **argv) {
         double dE_f11 = std::real(sys.Es[_if11]) - E;
 
         // measure deviation of m_f for each n=0,f=0 and n=0,f=1 state
-#define DEC_MDEV(idx) j_basis_vec jb_f##idx = f##idx
+#define DEC_MDEV(idx) aef::universal_diatomic_basis_vec jb_f##idx = f##idx
         DEC_MDEV(00);
         DEC_MDEV(10);
         DEC_MDEV(11);

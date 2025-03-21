@@ -73,15 +73,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(ProjectDir)SpinlabHyperfineLib/include;$(ProjectDir)include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\root_v6.32.04\lib;C:\root_v6.32.04\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(ProjectDir)SpinlabHyperfineLib/include;$(ProjectDir)include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\root_v6.32.04\lib;C:\root_v6.32.04\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(ProjectDir)SpinlabHyperfineLib/include;$(ProjectDir)include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\root_v6.32.04\lib;C:\root_v6.32.04\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(ProjectDir)SpinlabHyperfineLib/include;$(ProjectDir)include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\root_v6.32.04\lib;C:\root_v6.32.04\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

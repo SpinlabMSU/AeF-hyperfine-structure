@@ -35,6 +35,99 @@
 
 
 namespace aef {
+
+    /// <summary>
+    /// This struct has information
+    /// 
+    /// Under normal circumstances, 
+    /// </summary>
+    struct universal_diatomic_basis_vec {
+        /// <summary>
+        /// The quantum number describing the magnitude of nuclues #1's spin (the nucleus with the larger hyperfine structure).
+        /// 
+        /// AeF-hyperfine-structure supports $I_1$ = 1/2.
+        /// </summary>
+        spin i1;
+        /// <summary>
+        /// The quantum number describing the magnitude of nucleus #2's spin (the nucleus with the smaller hyperfine structure).
+        /// 
+        /// AeF-hyperfine-structure supports $I_2$ = 0, 1/2.
+        /// </summary>
+        spin i2;
+        /// <summary>
+        /// The quantum number describing the magnitude of the molecule's net electron spin.
+        /// 
+        /// For electronic states AeF-hyperfine-structure currently supports (^2\Sigma^+) this is 1/2.
+        /// </summary>
+        spin s;
+        /// <summary>
+        /// The quantum number describing the magnitude of the the molecule's net electron orbital angular momentum.
+        /// 
+        /// For electronic states AeF-hyperfine-structure currently supports (^2\Sigma^+) this is 0.
+        /// </summary>
+        spin l;
+        /// <summary>
+        /// The quantum number describing the magnitude of the "R" internuclear-orbital angular momentum.
+        /// 
+        /// Since AeF-hyperfine-structure
+        /// </summary>
+        spin r;
+        /// <summary>
+        /// The quantum number describing the magnitude of the "N" rotational angular momentum (technically R
+        /// </summary>
+        spin n;
+        /// <summary>
+        /// The quantum number describing the magnitude of the "J" total non-nuclear-spin angular momentum
+        /// </summary>
+        spin j;
+        /// <summary>
+        /// The quantum number describing the magnitude of the "F_1" angular momentum including one nuclear spin
+        /// </summary>
+        spin f_1;
+        /// <summary>
+        /// The quantum number describing the magnitude of "F", the total angular momentum
+        /// </summary>
+        spin f;
+        /// <summary>
+        /// The "magnetic" quantum number for the total angular mometum.
+        /// </summary>
+        spin m_f;
+
+        enum class coupling_type {
+            invalid,
+            j_basis,
+            jf_basis
+        };
+
+        coupling_type type;
+
+        universal_diatomic_basis_vec(): i1(0), i2(0), l(0), s(0), r(0), f_1(0), n(0), j(0), f(0), m_f(0) {
+            type = coupling_type::invalid;
+        }
+        universal_diatomic_basis_vec(spin n_, spin j_, spin f_, spin m_f_): i1(half), i2(0), l(0), s(half), r(n_), f_1(f_),
+            n(n_), j(j_), f(f_), m_f(m_f_){
+            type = coupling_type::j_basis;
+        }
+        universal_diatomic_basis_vec(spin n_, spin j_, spin f_1_, spin f_, spin m_f_) :i1(half), i2(0), l(0), s(half), r(n_),
+            n(n_), j(j_), f_1(f_1_), f(f_), m_f(m_f_) {
+            type = coupling_type::jf_basis;
+        }
+
+        /// <summary>
+        /// Descibes this state as a ket
+        /// </summary>
+        /// <returns>A string</returns>
+        std::string ket_string();
+        /// <summary>
+        /// Returns a string that can be used in a CSV field without quoting
+        /// </summary>
+        /// <returns>description suitable for CSV</returns>
+        std::string ket_csv_str(); 
+    };
+
+
+
+
     constexpr size_t max_op_id_len = 256;
     class IMolecularCalculator {
     public:
@@ -42,12 +135,14 @@ namespace aef {
         virtual ResultCode set_parameter(std::string id, double value) = 0;
         virtual void set_nmax(spin nmax) = 0;
         virtual size_t get_nBasisElts() = 0;
+        virtual universal_diatomic_basis_vec get_basis_ket(int idx) = 0;
+        virtual int get_index(universal_diatomic_basis_vec v) = 0;
 
         // hamiltonian
         virtual ResultCode calculate_H_rot(Eigen::DiagonalMatrix<dcomplex, Eigen::Dynamic>& H) = 0;
         virtual ResultCode calculate_H_hfs(Eigen::MatrixXcd& H) = 0;
         virtual ResultCode calculate_H_dev(Eigen::MatrixXcd& H) = 0;
-        virtual ResultCode calculate_H_stk(Eigen::MatrixXcd& H) = 0;
+        virtual ResultCode calculate_H_stk(Eigen::MatrixXcd& H, double E_z=1) = 0;
         
         
         // operators
@@ -201,5 +296,22 @@ namespace aef {
         /// <param name="workspace"></param>
         aef::ResultCode delta_E_lo(const std::string& id, Eigen::VectorXcd& output, Eigen::MatrixXcd* workspace = nullptr);
     };
+};
+
+using aef::universal_diatomic_basis_vec;
+std::ostream& operator<<(std::ostream& os, universal_diatomic_basis_vec& v);
+bool operator == (const universal_diatomic_basis_vec& v1, const universal_diatomic_basis_vec& v2);
+
+template <> struct fmt::formatter<universal_diatomic_basis_vec> : fmt::formatter<std::string> {
+    auto format(universal_diatomic_basis_vec v, format_context& ctx) const {
+        if (v.type == universal_diatomic_basis_vec::coupling_type::j_basis) {
+            return formatter<std::string>::format(fmt::format("|n={},j={},f={},m_f={}>", v.n, v.j, v.f, v.m_f), ctx);
+        } else if (v.type == universal_diatomic_basis_vec::coupling_type::jf_basis) {
+            return formatter<std::string>::format(fmt::format("|n={},j={},f_1={},f={},m_f={}>", v.n, v.j, v.f_1, v.f, v.m_f), ctx);
+        } else {
+            return formatter<std::string>::format(fmt::format("|i_1={}, i_2={}, s={}, l={}, r={}, n={},j={},f_1={},f={},m_f={}>", 
+                v.i1, v.i2, v.s, v.l, v.r,v.n, v.j, v.f_1, v.f, v.m_f), ctx);
+        }
+    }
 };
 #endif //_AEF_MOLECULAR_SYSTEM_H

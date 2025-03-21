@@ -275,4 +275,14 @@ namespace aef {
         dcomplex H_hfs_nsr_2(jf_basis_vec other, double w6j_jpnsnj, double w6j_f1pjpjf1, double w6j_ff1pf1);
     };
 };
+
+using aef::jf_basis_vec;
+std::ostream& operator<<(std::ostream& os, jf_basis_vec& v);
+bool operator == (const jf_basis_vec& v1, const jf_basis_vec& v2);
+
+template <> struct fmt::formatter<jf_basis_vec> : fmt::formatter<std::string> {
+    auto format(jf_basis_vec v, format_context& ctx) const {
+        return formatter<std::string>::format(fmt::format("|n={},j={},f_1={},f={},m_f={}>", v.n, v.j, v.f1, v.f, v.m_f), ctx);
+    }
+};
 #endif //_AEF_JF_BASIS_VEC_H

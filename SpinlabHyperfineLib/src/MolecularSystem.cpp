@@ -43,6 +43,7 @@ namespace aef {
         nmax = nmax_;
         calc->set_nmax(nmax);
         nBasisElts = calc->get_nBasisElts();
+        std::cout << fmt::format("Resizing aef::MolecularSystem to nmax={}, will have {} basis elements.", nmax_, nBasisElts) << std::endl;
         H_rot.resize(nBasisElts);
         H_hfs.resize(nBasisElts, nBasisElts);
         H_stk.resize(nBasisElts, nBasisElts);
@@ -67,12 +68,12 @@ namespace aef {
     void MolecularSystem::calculate_matrix_elts() {
         calc->calculate_H_rot(this->H_rot);
         calc->calculate_H_hfs(this->H_hfs);
-        calc->calculate_H_stk(this->H_stk);
+        calc->calculate_H_stk(this->H_stk, E_z);
         calc->calculate_H_dev(this->H_dev);
 
         H_tot.setZero();
         H_tot.diagonal() = H_rot.diagonal();
-        H_tot += H_hfs + E_z * H_hfs + K * H_dev;
+        H_tot += H_hfs + H_stk + K * H_dev;
 
         init = true;
     }
@@ -332,14 +333,16 @@ namespace aef {
         return aef::ResultCode::Success;
     }
     aef::ResultCode MolecularSystem::save(std::ostream& out_, const char *path) {
+        // TODO implement
+        // write file header
+        // write matricies
+        // write operators
         return aef::ResultCode::Unimplemented;
     }
 
     aef::ResultCode MolecularSystem::load(std::string inpath) {
-        TFile f(inpath.c_str(), "READ");
-
         std::ifstream in(inpath, std::ios::binary);
-        return load(in);
+        return load(in, inpath.c_str());
     }
 
     enum class aef_molsys_flags:uint64_t {
@@ -390,7 +393,7 @@ namespace aef {
 
     aef::ResultCode MolecularSystem::save(std::filesystem::path outpath) {
         std::ofstream out(outpath, std::ios::binary | std::ios::trunc | std::ios::out);
-        return save(outpath);
+        return save(out, outpath.string().c_str());
     }
 
 
@@ -451,19 +454,30 @@ namespace aef {
 
     aef::ResultCode MolecularSystem::delta_E_lo(const std::string& id, Eigen::VectorXcd& output, Eigen::MatrixXcd* workspace) {
         bool internal_workspace = !workspace;
+        aef::ResultCode rc = ResultCode::S_NOTHING_PERFORMED;
+
         if (internal_workspace) {
             workspace = new Eigen::MatrixXcd;
             workspace->resize(nBasisElts, nBasisElts);
         }
         Eigen::MatrixXcd* op = getOperatorMatrix(id);
-        // get expectation values
-        aef::matrix::group_action(*workspace, Vs, *op);
-        output = workspace->diagonal();
-        // second order ???
+        
+        if (!op) {
+            rc = ResultCode::InvalidArgument;
+            goto end;
+        }
 
+        // get expectation values
+        rc = aef::matrix::group_action(*workspace, Vs, *op);
+        output = workspace->diagonal();
+        rc = aef::ResultCode::Success;
+        // second order ??? 
+
+        end:
         if (internal_workspace) {
             delete workspace;
         }
+        return rc;
     }
 
     /// Makermap code
@@ -481,4 +495,44 @@ namespace aef {
         }
         return nullptr;
     }
+    std::string universal_diatomic_basis_vec::ket_string() {
+        if (type == coupling_type::j_basis) {
+            return fmt::format("|n={}, j={}, f={}, m_f={}>", n, j, f, m_f);
+        } else if (type == coupling_type::jf_basis) {
+            return fmt::format("|n={}, j={}, f1={}, f={}, m_f={}>", n, j, f_1, f, m_f);
+        }
+        return fmt::format("|i1={}, i2={}, s={}, l={}, r={}, n={}, j={}, f1={}, f={}, m_f={}>", 
+            i1, i2, s, l, r,
+            n, j, f_1, f, m_f);
+    }
+    std::string universal_diatomic_basis_vec::ket_csv_str() {
+        if (type == coupling_type::j_basis) {
+            return fmt::format("|n={} j={} f={} m_f={}>", n, j, f, m_f);
+        } else if (type == coupling_type::jf_basis) {
+            return fmt::format("|n={} j={} f1={} f={} m_f={}>", n, j, f_1, f, m_f);
+        }
+        return fmt::format("|i1={} i2={} s={} l={} r={} n={} j={} f1={} f={} m_f={}>",
+            i1, i2, s, l, r,
+            n, j, f_1, f, m_f);
+    }
 };
+
+std::ostream& operator<<(std::ostream& os, universal_diatomic_basis_vec& v) {
+    return (os << fmt::format("{}", v));
+}
+
+bool operator==(const universal_diatomic_basis_vec& v1, const universal_diatomic_basis_vec& v2) {
+    if (v1.type != v2.type) return false;
+    if (v1.i1 != v2.i1) return false;
+    if (v1.i2 != v2.i2) return false;
+    if (v1.s != v2.s) return false;
+    if (v1.l != v2.l) return false;
+    if (v1.r != v2.r) return false;
+    if (v1.n != v2.n) return false;
+    if (v1.j != v2.j) return false;
+    if (v1.f_1 != v2.f_1) return false;
+    if (v1.f != v2.f) return false;
+    if (v1.m_f != v2.m_f) return false;
+
+    return true;
+}

@@ -88,4 +88,5 @@ aef::ResultCode aef::operators::PerturbationFramework::delta_E_lo(const std::str
     if (internal_workspace) {
         delete workspace;
     }
+    return aef::ResultCode::Success;
 }

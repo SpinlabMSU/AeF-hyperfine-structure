@@ -13,11 +13,11 @@ aef::BaFMolecularCalculator::BaFMolecularCalculator(spin nmax_) : nmax(nmax_) {
 aef::BaFMolecularCalculator::~BaFMolecularCalculator() {}
 
 ResultCode aef::BaFMolecularCalculator::get_parameter(std::string id, double& out) {
-    return ResultCode();
+    return ResultCode::S_NOTHING_PERFORMED;
 }
 
 ResultCode aef::BaFMolecularCalculator::set_parameter(std::string id, double value) {
-    return ResultCode();
+    return ResultCode::S_NOTHING_PERFORMED;
 }
 
 spin aef::BaFMolecularCalculator::get_nmax() {
@@ -35,9 +35,25 @@ void aef::BaFMolecularCalculator::set_nmax(spin nmax_) {
     }
 }
 
+#include <numeric>
+
+aef::universal_diatomic_basis_vec aef::BaFMolecularCalculator::get_basis_ket(int idx) {
+    if (idx >= nBasisElts) {
+        double nan = std::nan("5555");
+        return universal_diatomic_basis_vec(nan, nan, nan, nan, nan);
+    }
+    j_basis_vec v = basis[idx];
+    return universal_diatomic_basis_vec(v.n, v.j, v.f, v.m_f);
+}
+
+int aef::BaFMolecularCalculator::get_index(universal_diatomic_basis_vec v) {
+    j_basis_vec ket(v.n, v.j, v.f, v.m_f);
+    return ket.index();
+}
+
 ResultCode aef::BaFMolecularCalculator::calculate_H_rot(Eigen::DiagonalMatrix<dcomplex, Eigen::Dynamic>& H) {
     for (size_t idx = 0; idx < nBasisElts; idx++) {
-        H.diagonal()(idx, idx) = basis[idx].H_rot();
+        H.diagonal()[idx] = basis[idx].H_rot();
     }
     return ResultCode::Success;
 }
@@ -66,11 +82,11 @@ ResultCode aef::BaFMolecularCalculator::calculate_H_dev(Eigen::MatrixXcd& H) {
     return ResultCode::Success;;
 }
 
-ResultCode aef::BaFMolecularCalculator::calculate_H_stk(Eigen::MatrixXcd& H) {
+ResultCode aef::BaFMolecularCalculator::calculate_H_stk(Eigen::MatrixXcd& H, double E_z) {
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         // operators are hermitian matricies
         for (size_t jdx = 0; jdx <= idx; jdx++) {
-            dcomplex melt = basis[idx].H_hfs(basis[jdx]);
+            dcomplex melt = E_z * basis[idx].H_hfs(basis[jdx]);
             H(idx, jdx) = melt;
             H(jdx, idx) = std::conj(melt);
         }

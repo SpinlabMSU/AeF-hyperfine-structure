@@ -3,10 +3,8 @@
 #define _AEF_QUANTUM_H 1
 
 #include <aef/aef.h>
+#include <aef/MolecularSystem.h>
 
-namespace aef {
-    class MolecularSystem;
-}
 namespace aef::quantum {
     /// <summary>
     /// Performs the quantum q*(q+1) squaring for angular momenta
@@ -38,7 +36,7 @@ namespace aef::quantum {
     aef::j_basis_vec expectation_values_jsq(HyperfineCalculator& calc, int32_t E_idx);
     double expect_parity(HyperfineCalculator& calc, int32_t E_idx);
 
-    aef::j_basis_vec expectation_values_jsq(aef::MolecularSystem & calc, int32_t E_idx);
+    aef::universal_diatomic_basis_vec expectation_values_jsq(aef::MolecularSystem &sys, int32_t E_idx);
     double expect_parity(aef::MolecularSystem& calc, int32_t E_idx);
 };
 

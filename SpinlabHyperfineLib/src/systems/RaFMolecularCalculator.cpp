@@ -35,6 +35,20 @@ void aef::RaFMolecularCalculator::set_nmax(spin nmax_) {
     }
 }
 
+aef::universal_diatomic_basis_vec aef::RaFMolecularCalculator::get_basis_ket(int idx) {
+    if (idx >= nBasisElts) {
+        double nan = std::nan("5555");
+        return universal_diatomic_basis_vec(nan, nan, nan, nan, nan);
+    }
+    jf_basis_vec v = basis[idx];
+    return universal_diatomic_basis_vec(v.n, v.j, v.f1, v.f, v.m_f);
+}
+
+int aef::RaFMolecularCalculator::get_index(universal_diatomic_basis_vec v) {
+    jf_basis_vec ket(v.n, v.j, v.f_1, v.f, v.m_f);
+    return ket.index();
+}
+
 ResultCode aef::RaFMolecularCalculator::calculate_H_rot(Eigen::DiagonalMatrix<dcomplex, Eigen::Dynamic>& H) {
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         H.diagonal()(idx, idx) = basis[idx].H_rot();
@@ -66,11 +80,11 @@ ResultCode aef::RaFMolecularCalculator::calculate_H_dev(Eigen::MatrixXcd& H) {
     return ResultCode::Success;;
 }
 
-ResultCode aef::RaFMolecularCalculator::calculate_H_stk(Eigen::MatrixXcd& H) {
+ResultCode aef::RaFMolecularCalculator::calculate_H_stk(Eigen::MatrixXcd& H, double E_z) {
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         // operators are hermitian matricies
         for (size_t jdx = 0; jdx <= idx; jdx++) {
-            dcomplex melt = basis[idx].H_hfs(basis[jdx]);
+            dcomplex melt = E_z * basis[idx].H_hfs(basis[jdx]);
             H(idx, jdx) = melt;
             H(jdx, idx) = std::conj(melt);
         }

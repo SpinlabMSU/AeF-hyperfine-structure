@@ -412,3 +412,16 @@ namespace aef {
         return parity(t) * mag * w6j_jpnsnj * w6j_f1pjpjf1 * w6j_ff1pf1;
     }
 };
+
+std::ostream& operator<<(std::ostream& os, jf_basis_vec& v) {
+    return (os << fmt::format("|n={}, j={}, f_1={}, f={}, m_f={}>", v.n, v.j, v.f1, v.f, v.m_f));
+}
+
+bool operator==(const jf_basis_vec& v1, const jf_basis_vec& v2) {
+    if (v1.n != v2.n) return false;
+    if (v1.j != v2.j) return false;
+    if (v1.f1 != v2.f1) return false;
+    if (v1.f != v2.f) return false;
+    if (v1.m_f != v2.m_f) return false;
+    return true;
+}

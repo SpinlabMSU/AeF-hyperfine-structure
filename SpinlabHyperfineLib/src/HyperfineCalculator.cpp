@@ -285,7 +285,7 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
     union {
       uint8_t *u8;
       uint64_t *u64;
-    } data;
+    } data = { nullptr };
     data.u8 = rmagic;
     uint64_t rmag = *data.u64;
     data.u8 = (uint8_t *)MAGIC;
@@ -296,7 +296,7 @@ bool HyperfineCalculator::load_matrix_elts(std::istream &in) {
     union {
       uint8_t *u8;
       uint64_t *u64;
-    } data;
+    } data = { nullptr };
     data.u8 = rmagic;
     std::cout << "READ CORRECT MAGIC " << *data.u64 << std::endl;
   }

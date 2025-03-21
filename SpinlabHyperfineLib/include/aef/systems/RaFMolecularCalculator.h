@@ -17,6 +17,9 @@ namespace aef {
         virtual ResultCode set_parameter(std::string id, double value);
         virtual spin get_nmax();
         virtual void set_nmax(spin nmax);
+        virtual universal_diatomic_basis_vec get_basis_ket(int idx);
+        virtual int get_index(universal_diatomic_basis_vec v);
+
         virtual size_t get_nBasisElts() {
             return nBasisElts;
         };
@@ -25,7 +28,7 @@ namespace aef {
         virtual ResultCode calculate_H_rot(Eigen::DiagonalMatrix<dcomplex, Eigen::Dynamic>& H);
         virtual ResultCode calculate_H_hfs(Eigen::MatrixXcd& H);
         virtual ResultCode calculate_H_dev(Eigen::MatrixXcd& H);
-        virtual ResultCode calculate_H_stk(Eigen::MatrixXcd& H);
+        virtual ResultCode calculate_H_stk(Eigen::MatrixXcd& H, double E_z=1.0);
 
 
         // operators
