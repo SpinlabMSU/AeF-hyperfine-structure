@@ -74,7 +74,7 @@ ResultCode aef::BaFMolecularCalculator::calculate_H_dev(Eigen::MatrixXcd& H) {
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         // operators are hermitian matricies
         for (size_t jdx = 0; jdx <= idx; jdx++) {
-            dcomplex melt = basis[idx].H_hfs(basis[jdx]);
+            dcomplex melt = basis[idx].H_dev(basis[jdx], 1);
             H(idx, jdx) = melt;
             H(jdx, idx) = std::conj(melt);
         }
@@ -86,7 +86,7 @@ ResultCode aef::BaFMolecularCalculator::calculate_H_stk(Eigen::MatrixXcd& H, dou
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         // operators are hermitian matricies
         for (size_t jdx = 0; jdx <= idx; jdx++) {
-            dcomplex melt = E_z * basis[idx].H_hfs(basis[jdx]);
+            dcomplex melt = basis[idx].H_st(basis[jdx], E_z);
             H(idx, jdx) = melt;
             H(jdx, idx) = std::conj(melt);
         }
