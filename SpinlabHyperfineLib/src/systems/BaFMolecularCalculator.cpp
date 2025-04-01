@@ -13,11 +13,11 @@ aef::BaFMolecularCalculator::BaFMolecularCalculator(spin nmax_) : nmax(nmax_) {
 aef::BaFMolecularCalculator::~BaFMolecularCalculator() {}
 
 ResultCode aef::BaFMolecularCalculator::get_parameter(std::string id, double& out) {
-    return ResultCode::S_NOTHING_PERFORMED;
+    return ResultCode::Unimplemented;
 }
 
 ResultCode aef::BaFMolecularCalculator::set_parameter(std::string id, double value) {
-    return ResultCode::S_NOTHING_PERFORMED;
+    return ResultCode::Unimplemented;
 }
 
 spin aef::BaFMolecularCalculator::get_nmax() {
@@ -70,11 +70,11 @@ ResultCode aef::BaFMolecularCalculator::calculate_H_hfs(Eigen::MatrixXcd& H) {
     return ResultCode::Success;
 }
 
-ResultCode aef::BaFMolecularCalculator::calculate_H_dev(Eigen::MatrixXcd& H) {
+ResultCode aef::BaFMolecularCalculator::calculate_H_dev(Eigen::MatrixXcd& H, double K) {
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         // operators are hermitian matricies
         for (size_t jdx = 0; jdx <= idx; jdx++) {
-            dcomplex melt = basis[idx].H_dev(basis[jdx], 1);
+            dcomplex melt = basis[idx].H_dev(basis[jdx], K);
             H(idx, jdx) = melt;
             H(jdx, idx) = std::conj(melt);
         }
@@ -153,4 +153,8 @@ void aef::BaFMolecularCalculator::load(std::istream& in) {
 
 void aef::BaFMolecularCalculator::save(std::ostream& out) {
     return;
+}
+
+const char* aef::BaFMolecularCalculator::get_calc_type() {
+    return "138BaF,2Sigma+,I1=half,I2=0";
 }

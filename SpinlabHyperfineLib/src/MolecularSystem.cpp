@@ -26,6 +26,7 @@
 #include <TTree.h>
 #include <TParameter.h>
 #include <TMap.h>
+#include <spanstream>
 
 namespace aef {
     MolecularSystem::MolecularSystem(IMolecularCalculator *calc_, spin nmax_, double E_z_, double K_) :
@@ -69,17 +70,16 @@ namespace aef {
         calc->calculate_H_rot(this->H_rot);
         calc->calculate_H_hfs(this->H_hfs);
         calc->calculate_H_stk(this->H_stk, E_z);
-        calc->calculate_H_dev(this->H_dev);
+        calc->calculate_H_dev(this->H_dev, K);
 
         H_tot.setZero();
         H_tot.diagonal() = H_rot.diagonal();
-        H_tot += H_hfs + H_stk + K * H_dev;
+        H_tot += H_hfs + H_stk + H_dev;
 
         init = true;
-    }
-    void MolecularSystem::calculate_dkq() {
+
         calc->calculate_dkq(this->d1t, -1);
-        calc->calculate_dkq(this->d10,  0);
+        calc->calculate_dkq(this->d10, 0);
         calc->calculate_dkq(this->d11, +1);
         dkq_init = true;
     }
@@ -140,7 +140,8 @@ namespace aef {
         double E_z;
         double K;
 
-        int calcTypeLen;
+        uint32_t cbCalcData;
+        uint32_t calcTypeLen;
     };
 
     namespace molsys_flags {
@@ -160,9 +161,6 @@ namespace aef {
             FLAG_DIAG = 2,
             // if this flag is set, then the file contains the MDA spherical tensor operators
             FLAG_DKQ_INIT = 4,
-            // if this flag is set, then the file contains the specific values of electric field strength and 
-            // devonshire coupling constant used to calculate these parts of the Hamiltonian.
-            FLAG_E_DEV_PARMS = 8
         };
     };
 
@@ -193,6 +191,9 @@ namespace aef {
 
             ptrdiff_t offset = chdr.version | (chdr.flags & 0xff) << 8;
             char* dst_ = ((char*)this) + offset;
+            if (chdr.flags & (1 << 15)) {
+                dst = dst_;
+            }
             // flags indicates the datatype
             bool is_vector = chdr.flags & 1;
             bool is_complex = chdr.flags & 2;
@@ -203,7 +204,7 @@ namespace aef {
                     Eigen::read_binary(in, *v);
                 } else {
                     auto* v = (Eigen::MatrixXcd*)dst;
-                    Eigen::read_binary(in, *v);
+                    Eigen::read_binary(in, *v); 
                 }
             }
             return aef::ResultCode::Success;
@@ -227,18 +228,6 @@ namespace aef {
                 //for (int idx)
             };
             break;
-        case 0:
-        {
-            // patch chunk = lol
-            // TODO remove this, it's not neccessary
-            char* dst = nullptr;
-            in.read((char*)&dst, sizeof(char*));
-            size_t len = 0;
-            in.read((char*)&len, sizeof(size_t));
-            // good luck with ASLR
-            in.read(dst, len);
-        }
-            return aef::ResultCode::Success;
         default:
             std::clog << "[aef::MolecularSystem] Warning: encountered unknown tag during loading" << std::endl;
             // handle end tag
@@ -253,7 +242,7 @@ namespace aef {
 
 
     /////// IO code
-     // load and save --> todo choose either XIFF or TTree
+    // aefchunk load code
     aef::ResultCode MolecularSystem::load(std::istream& in_, const char *path) {
         std::cout << fmt::format("[aef::MolecularSystem] loading from stream, path {}", path) << std::endl;
         ////////////////
@@ -278,7 +267,13 @@ namespace aef {
         // check version is in-range
         uint16_t version = fhdr.hdr.version;
         if (version < (uint16_t)MINIMUM_LOAD_VERSION) {
-            std::cout << "" << std::endl;
+            std::clog << fmt::format("[MolecularSystem aefchunk loader] Error file \"{}\" uses unsupported version {} (too old)", path, version) << std::endl;
+            return aef::ResultCode::InvalidFormat;
+        }
+
+        if (version > (uint16_t)MAXIMUM_LOAD_VERSION) {
+            std::clog << fmt::format("[MolecularSystem aefchunk loader] Error file \"{}\" uses unsupported version {} (too old)", path, version) << std::endl;
+            return aef::ResultCode::InvalidFormat;
         }
         
         /// flags
@@ -290,12 +285,13 @@ namespace aef {
         std::istream& in = *pIn;
 
         /// Start reading chunks
-        aef::chunk::chunk_hdr chdr;
+        aef::chunk::chunk_hdr chdr = {};
 
         // the params block must come first
         in.read((char*)&chdr, sizeof(chdr));
         if (chdr.type != aef::chunk::prms) {
             std::clog << "[aef::MolecularSystem] Error: molsys file {} is malformed" << std::endl;
+            return aef::ResultCode::InvalidFormat;
         }
         this->init = flags & FLAG_INIT;
         this->dkq_init = flags & FLAG_DKQ_INIT;
@@ -311,15 +307,27 @@ namespace aef {
 
             this->set_nmax(nmax);
             this->E_z = pay->E_z;
-            this->K = pay->K; 
-            // todo add
+            this->K = pay->K;
 
-            std::string calcType(pay->calcTypeLen + 1, 0);
-            in.read(calcType.data(), pay->calcTypeLen);
+            //// read aef::IMolecularCalculator
+            char* curr = ((char*)pay) + sizeof(prms_payload_fixed);
+            std::string calcType(curr, pay->calcTypeLen);
+            curr += pay->calcTypeLen;
 
-            this->calc;
-            aef::IMolecularCalculator::makeCalculatorOfType(calcType);
+            // use a seperate input stream to try to prevent 
+            std::ispanstream calcIn(std::span(curr, pay->cbCalcData));
+
+            this->calc = aef::IMolecularCalculator::makeCalculatorOfType(calcType);
+            if (calc) {
+                this->calc->set_nmax(nmax);
+                calc->load(calcIn);
+            }
             free(pay);
+            if (!calc) {
+                std::clog << fmt::format("[aef::MolecularSystem] Error: molsys file \"{}\" uses unavailable IMolecularCalculator type \"{}\".",
+                    path, calcType)<< std::endl;
+                return aef::ResultCode::NotAvailable;
+            }
         }
         // handle the other chunks in-order using read_chunk
         do {
@@ -332,12 +340,61 @@ namespace aef {
         }
         return aef::ResultCode::Success;
     }
+
+
+
     aef::ResultCode MolecularSystem::save(std::ostream& out_, const char *path) {
         // TODO implement
         // write file header
+        std::ostream* out = &out_;
+        aef::chunk::file_hdr hdr = {};
+        {
+            // always compress 
+            uint16_t flags = (uint16_t)molsys_flags::compress;
+            hdr.hdr = { .type = aef::chunk::file_magic, .version = (uint16_t)CURRENT_SAVE_VERSION, .flags = flags };
+            hdr.filetype = aef::chunk::mol_sys;
+        }
+        out_.write((char*)&hdr, sizeof(hdr));
+
+        if (hdr.hdr.flags & (uint16_t)molsys_flags::compress) {
+            out = new zstr::ostream(out_);
+        }
+
+        // write parameter chunk
+        aef::chunk::chunk_hdr chdr = {};
+        {
+            chdr.type = aef::chunk::prms;
+            chdr.version = 0;
+            chdr.flags = 0;
+            if (this->init) chdr.flags |= FLAG_INIT;
+            if (this->diagonalized) chdr.flags |= FLAG_DIAG;
+            if (this->dkq_init) chdr.flags |= FLAG_DKQ_INIT;
+            std::string calcType = calc->get_calc_type();
+            struct prms_payload_fixed pay = {};
+            pay.calcTypeLen = (int)calcType.length();
+
+            std::ostringstream os;
+            calc->save(os);
+            auto buf = os.str();
+
+            out->write((char*)&chdr, sizeof(chdr));
+            out->write((char*)&pay, sizeof(pay));
+            out->write(calcType.data(), pay.calcTypeLen);
+            out->write(buf.data(), buf.length());
+        }
         // write matricies
+        write_vector(*out, &this->H_rot.diagonal());
+        write_matrix(*out, &this->H_hfs);
         // write operators
         return aef::ResultCode::Unimplemented;
+    }
+
+    aef::ResultCode aef::MolecularSystem::write_matrix(std::ostream& out, Eigen::MatrixXcd* mat) {
+        return aef::ResultCode::Success;
+    }
+
+    aef::ResultCode aef::MolecularSystem::write_vector(std::ostream& out, Eigen::VectorXcd* vec) {
+        return aef::ResultCode::Success;
     }
 
     aef::ResultCode MolecularSystem::load(std::string inpath) {
@@ -353,35 +410,6 @@ namespace aef {
     };
 
     aef::ResultCode MolecularSystem::save(std::string outpath) {
-#if 0
-        TFile sav(outpath.c_str(), "RECREATE");
-        sav.cd();
-        // save properties: nmax, E_z, K, 
-        TParameter<uint64_t> prop_version("version", 0);
-        uint64_t flags = 0;
-        if (this->init) flags |= (uint64_t)aef_molsys_flags::flag_init;
-        if (this->diagonalized) flags |= (uint64_t)aef_molsys_flags::flag_diag;
-        if (this->dkq_init) flags |= (uint64_t)aef_molsys_flags::flag_dkq_init;
-        if (this->enableDev) flags |= (uint64_t)aef_molsys_flags::flag_enableDev;
-
-        // bitset
-        TParameter<uint64_t> prop_flags("flags", flags);
-        TParameter<spin> prop_nmax("nmax", nmax);
-        TParameter<double> prop_E_z("E_z", E_z);
-        TParameter<double> prop_K("K", K);
-
-
-        TMap m;
-        m.Add(&prop_version);
-        m.Add(&prop_nmax);
-        m.Add(&prop_E_z);
-        m.Add(&prop_K);
-        m.Write("properties", TObject::kSingleKey);
-        // save operator list
-
-        //
-
-#endif
         std::ofstream out(outpath, std::ios::binary | std::ios::trunc | std::ios::out);
         return save(out, outpath.c_str());
     }

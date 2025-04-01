@@ -27,7 +27,7 @@
 
 
 /// <summary>
-/// Calculates the expectation values
+/// Calculates the expectation values of an energy eigenstate
 /// </summary>
 /// <param name="calc">HyperfineCalculator: contains operator matrix elements
 /// and states</param> <param name="E_idx">the index of Energy level to
@@ -114,11 +114,11 @@ static inline double diff_states(aef::universal_diatomic_basis_vec v1, aef::univ
 }
 
 /// <summary>
-/// Finds the diagonlized eignestate "closest" to the basis state with index
+/// Finds the diagonlized eignestate "closest" to the basis state with the provided index
 /// "ket_idx"
 /// </summary>
 /// <param name="calc">System basis and operator elements</param>
-/// <param name="ket_idx">basis state</param>
+/// <param name="ket_idx">the index of the desired basis state</param>
 /// <param name="exclude_Eidx">(optional) an energy eigenstate to "exclude" from
 /// being the closest state.  Intended to fix the </param> <returns></returns>
 int32_t closest_state(aef::MolecularSystem& calc, int32_t ket_idx,
@@ -207,12 +207,6 @@ void output_state_info(std::ostream& output, aef::MolecularSystem& calc
 
 int main(int argc, char **argv) {
     ///////////////////// constants
-
-    /// <summary>
-    /// WARNING: the wrong value was originally used in the conversion factor
-    /// This was supposed to be 50 kV/cm but is actually 500 kV/cm.
-    /// </summary>
-    constexpr double E_z_orig = unit_conversion::MHz_D_per_V_cm * 500 * 1000;
     /// <summary>
     /// 50 kV/cm = 25170 MHz/D is the field strength used to calculate H_stk.
     /// DO NOT CHANGE THIS.
@@ -342,16 +336,6 @@ int main(int argc, char **argv) {
 #endif
 
     init_rng();
-#ifdef _OLD_CUDA
-#ifndef DONT_USE_CUDA
-    constexpr bool diag_use_cuda = true;
-    std::cout << "Initializing CUDA" << std::endl;
-    aef::init_cuda(argc, (const char**)argv);
-    std::cout << "Successfully initialized CUDA" << std::endl;
-#else
-    constexpr bool diag_use_cuda = false;
-#endif
-#else
 #ifndef DONT_USE_CUDA
     constexpr bool diag_use_cuda = true;
     std::cout << "Initializing matrix backend" << std::endl;
@@ -360,7 +344,6 @@ int main(int argc, char **argv) {
 #else
     constexpr bool diag_use_cuda = false;
     aef::matrix::init(aef::matrix::BackendType::EigenCPU, argc, argv);
-#endif
 #endif
 
     // maximum value of the n quantum number.  There will be 8*(nmax**2) states
@@ -373,7 +356,6 @@ int main(int argc, char **argv) {
     }
 
     aef::MolecularSystem sys(pCalc, nmax, calc_E_z, K);
-    //HyperfineCalculator calc(nmax, calc_E_z, K);
 
     std::cout << fmt::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({})",
         nmax, calc_E_z, K, devstatus) << std::endl;
@@ -464,7 +446,7 @@ int main(int argc, char **argv) {
     }
     oEs << std::endl;
 
-    aef::universal_diatomic_basis_vec gnd = pCalc->get_basis_ket(0);///aef::universal_diatomic_basis_vec::from_index(0);
+    aef::universal_diatomic_basis_vec gnd = pCalc->get_basis_ket(0);
     aef::universal_diatomic_basis_vec f00 = gnd;
     int32_t if00 = pCalc->get_index(f00);
     // n = 0, j = 0.5, f = 1 hyperfine triplet
@@ -478,8 +460,7 @@ int main(int argc, char **argv) {
     std::cout << "if1t=" << if1t << " if10=" << if10 << " if11=" << if11 << std::endl;
     std::cout << fmt::format("f00={}; f1t={}, f10={}, f11={}", f00, f1t, f10, f11) << std::endl;
 
-    // oStk << "E-field (V/cm), Stark-shifted Energy of " << gnd.ket_string() << "
-    // (MHz)";
+    // oStk << "E-field (V/cm), Stark-shifted Energy of " << gnd.ket_string() << "(MHz)";
     oStk << "E-field (V/cm), dE_gnd" << ", dE_f1t, dE_f10, dE_f11" << std::endl;
     assert(sys.H_tot.rows() == sys.H_stk.rows());
 

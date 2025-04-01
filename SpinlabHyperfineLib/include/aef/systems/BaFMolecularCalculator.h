@@ -27,7 +27,7 @@ namespace aef {
         // hamiltonian
         virtual ResultCode calculate_H_rot(Eigen::DiagonalMatrix<dcomplex, Eigen::Dynamic>& H);
         virtual ResultCode calculate_H_hfs(Eigen::MatrixXcd& H);
-        virtual ResultCode calculate_H_dev(Eigen::MatrixXcd& H);
+        virtual ResultCode calculate_H_dev(Eigen::MatrixXcd& H, double K=1.0);
         virtual ResultCode calculate_H_stk(Eigen::MatrixXcd& H, double E_z=1.0);
 
 
@@ -41,6 +41,7 @@ namespace aef {
         // IO
         virtual void load(std::istream& in);
         virtual void save(std::ostream& out);
+        virtual const char* get_calc_type();
     };
 
 }

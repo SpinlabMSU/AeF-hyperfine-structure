@@ -13,11 +13,11 @@ aef::RaFMolecularCalculator::RaFMolecularCalculator(spin nmax_) : nmax(nmax_) {
 aef::RaFMolecularCalculator::~RaFMolecularCalculator() {}
 
 ResultCode aef::RaFMolecularCalculator::get_parameter(std::string id, double& out) {
-    return ResultCode();
+    return ResultCode::Unimplemented;
 }
 
 ResultCode aef::RaFMolecularCalculator::set_parameter(std::string id, double value) {
-    return ResultCode();
+    return ResultCode::Unimplemented;
 }
 
 spin aef::RaFMolecularCalculator::get_nmax() {
@@ -68,11 +68,11 @@ ResultCode aef::RaFMolecularCalculator::calculate_H_hfs(Eigen::MatrixXcd& H) {
     return ResultCode::Success;
 }
 
-ResultCode aef::RaFMolecularCalculator::calculate_H_dev(Eigen::MatrixXcd& H) {
+ResultCode aef::RaFMolecularCalculator::calculate_H_dev(Eigen::MatrixXcd& H, double K) {
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         // operators are hermitian matricies
         for (size_t jdx = 0; jdx <= idx; jdx++) {
-            dcomplex melt = basis[idx].H_hfs(basis[jdx]);
+            dcomplex melt = basis[idx].H_dev(basis[jdx], K);
             H(idx, jdx) = melt;
             H(jdx, idx) = std::conj(melt);
         }
@@ -84,7 +84,7 @@ ResultCode aef::RaFMolecularCalculator::calculate_H_stk(Eigen::MatrixXcd& H, dou
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         // operators are hermitian matricies
         for (size_t jdx = 0; jdx <= idx; jdx++) {
-            dcomplex melt = E_z * basis[idx].H_hfs(basis[jdx]);
+            dcomplex melt = basis[idx].H_st(basis[jdx], E_z);
             H(idx, jdx) = melt;
             H(jdx, idx) = std::conj(melt);
         }
@@ -151,4 +151,8 @@ void aef::RaFMolecularCalculator::load(std::istream& in) {
 
 void aef::RaFMolecularCalculator::save(std::ostream& out) {
     return;
+}
+
+const char* aef::RaFMolecularCalculator::get_calc_type() {
+    return "225RaF,2Sigma+,I1=half,I2=half";
 }

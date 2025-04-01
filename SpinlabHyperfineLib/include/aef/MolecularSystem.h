@@ -141,7 +141,7 @@ namespace aef {
         // hamiltonian
         virtual ResultCode calculate_H_rot(Eigen::DiagonalMatrix<dcomplex, Eigen::Dynamic>& H) = 0;
         virtual ResultCode calculate_H_hfs(Eigen::MatrixXcd& H) = 0;
-        virtual ResultCode calculate_H_dev(Eigen::MatrixXcd& H) = 0;
+        virtual ResultCode calculate_H_dev(Eigen::MatrixXcd& H, double K=1) = 0;
         virtual ResultCode calculate_H_stk(Eigen::MatrixXcd& H, double E_z=1) = 0;
         
         
@@ -155,6 +155,7 @@ namespace aef {
         // load/save any state
         virtual void load(std::istream& in) = 0;
         virtual void save(std::ostream& out) = 0;
+        virtual const char* get_calc_type() = 0;
         
 
     public:
@@ -213,7 +214,6 @@ namespace aef {
 
         void set_nmax(spin nmax_); // 
         void calculate_matrix_elts();
-        void calculate_dkq(); // 
         aef::ResultCode diagonalize(); // always uses aef::matrix now
 
 
@@ -235,6 +235,8 @@ namespace aef {
         MolecularSystem();
         aef::ResultCode write_chunk(std::ostream& out, void* chdr, void* data);
         aef::ResultCode read_chunk(std::istream &in, void *chdr, void *dst);
+        aef::ResultCode write_matrix(std::ostream& out, Eigen::MatrixXcd* mat);
+        aef::ResultCode write_vector(std::ostream& out, Eigen::VectorXcd* vec);
 
     /// <summary>
     /// This section contains code for PTFW2
