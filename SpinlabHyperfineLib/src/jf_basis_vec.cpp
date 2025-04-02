@@ -19,7 +19,7 @@
 #include <aef/aef.h>
 #include "aef/jf_basis_vec.h"
 namespace aef {
-    namespace hfs_coeff = raf_constants;
+    namespace hfs_coeff = raf_constants::test;
 
 
     int jf_basis_vec::index() {

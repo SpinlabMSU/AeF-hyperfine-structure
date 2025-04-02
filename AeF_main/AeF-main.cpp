@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
     constexpr double calc_E_z = unit_conversion::MHz_D_per_V_cm * 50 * 1000;
 
 #ifndef _MAKEFILE_PROVIDES_DEVFLAG
-#define USE_DEVONSHIRE
+//#define USE_DEVONSHIRE
 #endif
 
 #ifdef USE_DEVONSHIRE
@@ -311,7 +311,7 @@ int main(int argc, char **argv) {
         std::string status(aef_git_status);
         bool bdirty = status.contains('M') || status.contains('d');
         std::string dirty = bdirty ? "dirty" : "clean";
-        std::cout << "AeF-Hyperfine-Structure main spectrum calculation program, version compiled on " << __DATE__ << " "
+        std::cout << "AeF-Hyperfine-Structure main spectrum calculation program (MolecularSystem enhanced), version compiled on " << __DATE__ << " "
             << __TIME__ << ", git commit " << aef_git_commit << ", main program file " __FILE__ << std::endl;
         std::cout << "Git status is " << dirty << " string {" << status << "}" << std::endl;
         std::cout << fmt::format("Start time is {}", start_time) << std::endl;
@@ -352,13 +352,14 @@ int main(int argc, char **argv) {
 
     {
         // TODO initialize molecular calculator
-        pCalc = new aef::BaFMolecularCalculator(nmax);
+        //pCalc = new aef::BaFMolecularCalculator(nmax);
+        pCalc = new aef::RaFMolecularCalculator(nmax);
     }
 
     aef::MolecularSystem sys(pCalc, nmax, calc_E_z, K);
 
-    std::cout << fmt::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({})",
-        nmax, calc_E_z, K, devstatus) << std::endl;
+    std::cout << fmt::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({}), calculator is {}",
+        nmax, calc_E_z, K, devstatus, pCalc->get_calc_type()) << std::endl;
 
     if (load_from_file) {
         std::string logstr = fmt::format("Loading matrix elements from {}", loadname);

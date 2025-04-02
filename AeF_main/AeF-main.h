@@ -19,6 +19,7 @@
 
 #include <aef/MolecularSystem.h>
 #include <aef/systems/BaFMolecularCalculator.h>
+#include <aef/systems/RaFMolecularCalculator.h>
 
 using namespace std::chrono;
 namespace fs = std::filesystem;
