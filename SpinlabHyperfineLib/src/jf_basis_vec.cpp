@@ -67,20 +67,20 @@ namespace aef {
         const double w3j_n2np = w3j(n, 2, np, 0, 0, 0);
         const double w9j_nnpsspjjp = w9j(n, np, 2, S, S, 1, j, jp, 1);
 
-        // H_hfs = hfs_light_nucleus + hfs_heavy_nucleus + hfs_I1dotI2
+        // H_hfs = hfs_heavy_nucleus + hfs_light_nucleus + hfs_I1dotI2
 
-        // hyperfine structure resulting from the light nucleus $^{19}F$
-        dcomplex hfs_F = this->H_hfs_fermi_1(other, w6j_jpsnsj, w6j_f1jpj) +
+        // hyperfine structure resulting from the heavy nucleus $^{225}Ra$
+        dcomplex hfs_Ra = this->H_hfs_fermi_1(other, w6j_jpsnsj, w6j_f1jpj) +
             this->H_hfs_dipole_1(other, w3j_n2np, w6j_f1jpj, w9j_nnpsspjjp) +
             this->H_hfs_nsr_1(other, w6j_jpsnsj, w6j_f1jpj);
-        // hyperfine structure resulting from the heavy nucleus $^{225}Ra$
-        dcomplex hfs_Ra = this->H_hfs_fermi_2(other, w6j_jpsnsj, w6j_f1pjpjf1, w6j_ff1pf1) +
+        // hyperfine structure resulting from the light nucleus $^{19}F$
+        dcomplex hfs_F = this->H_hfs_fermi_2(other, w6j_jpsnsj, w6j_f1pjpjf1, w6j_ff1pf1) +
             this->H_hfs_dipole_2(other, w3j_n2np, w6j_f1pjpjf1, w6j_ff1pf1, w9j_nnpsspjjp) +
             this->H_hfs_nsr_2(other, w6j_jpnsnj, w6j_f1pjpjf1, w6j_ff1pf1);
         // note: all sources I have seen ignore the nuclear spin-nuclear spin term
         // it's probably too small to matter under this approximation anyways
         dcomplex hfs_I1dotI2 = 0;
-        return hfs_F + hfs_Ra + hfs_I1dotI2;
+        return hfs_Ra + hfs_F + hfs_I1dotI2;
     }
 
     dcomplex jf_basis_vec::H_st(jf_basis_vec other, double E_z) {
@@ -240,11 +240,11 @@ namespace aef {
     dcomplex jf_basis_vec::H_hfs_fermi_1(jf_basis_vec other) {
         // Formulas here taken from J. Chem Phys 71, 389 (1982) [https://doi.org/10.1016/0301-0104(82)85045-3]
         if (n != other.n || f1 != other.f1 || f != other.f) return 0;
-        constexpr double b_Fermi_F = hfs_coeff::b_F + hfs_coeff::c_F / 3.0;
+        constexpr double b_Fermi_Ra = hfs_coeff::b_Ra + hfs_coeff::c_Ra / 3.0;
         const double jp = other.j;
         spin t = n + S + j + jp + I_1 + f1 + 1;
         constexpr double mag_coeff = 3.0 / 2.0; // = q_mag(S)* q_mag(I_1); // switched to avoid numerical error
-        double coeff = b_Fermi_F * mag_coeff * xi_prime(j, jp);
+        double coeff = b_Fermi_Ra * mag_coeff * xi_prime(j, jp);
         double angular = w6j(jp, S, n, S, j, 1) * w6j(f1, jp, I_1, 1, I_1, j);
         return parity(t) * coeff * angular;
     }
@@ -257,9 +257,9 @@ namespace aef {
         using namespace hfs_coeff;
 
         if (n != np || f1 != f1p || f != fp) return 0.0;
-        constexpr double b_Fermi_F = b_F + c_F / 3.0;
+        constexpr double b_Fermi_Ra = b_Ra + c_Ra / 3.0;
         spin t = n + S + j + jp + I_1 + f1 + 1;
-        constexpr double mag_coeff = b_Fermi_F * q_mag(S) * q_mag(I_1);
+        constexpr double mag_coeff = b_Fermi_Ra * q_mag(S) * q_mag(I_1);
         double coeff = mag_coeff * xi_prime(j, jp);
         return parity(t) * coeff * w6j_jpsn * w6j_f1jpj;
     }
@@ -286,7 +286,7 @@ namespace aef {
         using namespace hfs_coeff;
 
         if (f1 != f1p || f != fp) return 0.0;
-        constexpr double coeff = c_F * constexpr_sqrt(10.0 / 3.0) * q_mag(S) * q_mag(I_1);
+        constexpr double coeff = c_Ra * constexpr_sqrt(10.0 / 3.0) * q_mag(S) * q_mag(I_1);
         double mag = coeff * xi_prime(n, np) * xi_prime(j, jp);
         const spin t = n + jp + I_1 + f1 + 1;
         return mag * parity(t) * w3j_n2np * w6j_f1jpj * w9j_nnpsspjjp;
@@ -313,7 +313,7 @@ namespace aef {
 
         if (n != np || f1 != f1p || f != fp) return 0.0;
         const spin t = n + S + 2 * jp + I_1 + f1 + 1;
-        const double mag = constexpr_sqrt(10.0 / 3.0) * c_I_F * xi_prime(j, jp) * q_mag(n) * q_mag(I_1);
+        const double mag = constexpr_sqrt(10.0 / 3.0) * c_I_Ra * xi_prime(j, jp) * q_mag(n) * q_mag(I_1);
 
         return parity(t) * mag * w6j_jpnsnj * w6j_f1jpj;
     }
@@ -343,9 +343,9 @@ namespace aef {
 
         if (n != np || f != fp) return 0;
 
-        constexpr double b_Fermi_Ra = b_Ra + c_Ra / 3.0;
+        constexpr double b_Fermi_F = b_F + c_F / 3.0;
         spin t = n + S + 2 * j + I_1 + I_2 + 2 * f1p + f;
-        constexpr double mag_coeff = b_Fermi_Ra * q_mag(S) * q_mag(I_2);
+        constexpr double mag_coeff = b_Fermi_F * q_mag(S) * q_mag(I_2);
         double mag = mag_coeff * xi_prime(f1, f1p) * xi_prime(j, jp);
 
         return parity(t) * mag * w6j_jpsn * w6j_f1pjpjf1 * w6j_ff1pf1;
@@ -360,7 +360,7 @@ namespace aef {
 
         if (f != fp) return 0.0;
         const spin t = n + j + 2 * f1p + I_1 + I_2 + f;
-        constexpr double mag_coeff = c_Ra * constexpr_sqrt(10.0 / 3.0) * q_mag(S) * q_mag(I_2);
+        constexpr double mag_coeff = c_F * constexpr_sqrt(10.0 / 3.0) * q_mag(S) * q_mag(I_2);
         const double mag = mag_coeff * xi_prime(n, np) * xi_prime(j, jp) * xi_prime(f1, f1p);
 
         return parity(t) * w3j_n2np * w6j_f1pjpjf1 * w6j_ff1pf1 * w9j_nnpsspjjp;
@@ -407,7 +407,7 @@ namespace aef {
 
         if (n != np || f != fp) return 0;
         const spin t = n + S + j + jp + I_1 + I_2 + 2 * f1p + f;
-        const double mag = c_I_Ra * q_mag(I_2) * q_mag(n) * xi_prime(j, jp) * xi_prime(f1, f1p);
+        const double mag = c_I_F * q_mag(I_2) * q_mag(n) * xi_prime(j, jp) * xi_prime(f1, f1p);
 
         return parity(t) * mag * w6j_jpnsnj * w6j_f1pjpjf1 * w6j_ff1pf1;
     }

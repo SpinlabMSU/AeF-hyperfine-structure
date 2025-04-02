@@ -279,9 +279,6 @@
     <ClInclude Include="include\aef\aef_utils.h">
       <Filter>Header Files\aef</Filter>
     </ClInclude>
-    <ClInclude Include="include\aef\baf_constants.hpp">
-      <Filter>Header Files\aef</Filter>
-    </ClInclude>
     <ClInclude Include="include\aef\HyperfineCalculator.hpp">
       <Filter>Header Files\aef</Filter>
     </ClInclude>
@@ -307,9 +304,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\aef\jf_basis_vec.h">
-      <Filter>Header Files\aef</Filter>
-    </ClInclude>
-    <ClInclude Include="include\aef\raf_constants.h">
       <Filter>Header Files\aef</Filter>
     </ClInclude>
     <ClInclude Include="include\aef\plaf_utils.hpp">
@@ -403,6 +397,15 @@
       <Filter>Header Files\aef\io</Filter>
     </ClInclude>
     <ClInclude Include="include\aef\systems\RaFMolecularCalculator.h">
+      <Filter>Header Files\aef\systems</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\raf_constants.h">
+      <Filter>Header Files\aef\systems</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\baf_constants.hpp">
+      <Filter>Header Files\aef\systems</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\ybf_constants.hpp">
       <Filter>Header Files\aef\systems</Filter>
     </ClInclude>
   </ItemGroup>

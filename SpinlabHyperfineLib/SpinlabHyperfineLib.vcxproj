@@ -274,6 +274,7 @@
     <ClInclude Include="include\aef\systems\RaFMolecularCalculator.h" />
     <ClInclude Include="include\aef\teestream.hpp" />
     <ClInclude Include="include\aef\xiffstream.h" />
+    <ClInclude Include="include\aef\ybf_constants.hpp" />
     <ClInclude Include="include\gcem.hpp" />
     <ClInclude Include="include\gcem_incl\abs.hpp" />
     <ClInclude Include="include\gcem_incl\acos.hpp" />
