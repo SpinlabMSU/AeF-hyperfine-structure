@@ -51,7 +51,7 @@ int aef::RaFMolecularCalculator::get_index(universal_diatomic_basis_vec v) {
 
 ResultCode aef::RaFMolecularCalculator::calculate_H_rot(Eigen::DiagonalMatrix<dcomplex, Eigen::Dynamic>& H) {
     for (size_t idx = 0; idx < nBasisElts; idx++) {
-        H.diagonal()(idx, idx) = basis[idx].H_rot();
+        H.diagonal()[idx] = basis[idx].H_rot();
     }
     return ResultCode::Success;
 }
