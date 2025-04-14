@@ -109,6 +109,7 @@ namespace aef {
     aef::ResultCode MolecularSystem::diagonalize() {
         //using aef::ResultCode;
         auto rc = aef::ResultCode::Success;
+        assert(nBasisElts <= std::numeric_limits<int>::max());
         rc = aef::matrix::set_max_size(nBasisElts);
         if (aef::failed(rc)) return rc;
         if (enableDev) {
@@ -162,10 +163,92 @@ namespace aef {
             // if this flag is set, then the file contains the MDA spherical tensor operators
             FLAG_DKQ_INIT = 4,
         };
+
+        enum mtrx_flags : uint16_t {
+            FLAG_VECTOR = 1,
+            FLAG_COMPLEX = 2,
+            FLAG_DIAGONAL_MATRIX = 4,
+        };
+    };
+
+
+    namespace io_detail {
+        using aef::chunk::fourcc;
+        struct matrix_id_ifo {
+            aef::chunk::fourcc id;
+            uint16_t flags;
+            uint16_t pad;
+            ptrdiff_t offset;
+
+            inline uintptr_t get_eff_addr(aef::MolecularSystem* sys) {
+                return ((uintptr_t)sys) + offset;
+            }
+
+
+            inline Eigen::MatrixXcd* getMatrix(aef::MolecularSystem* sys) {
+                return (Eigen::MatrixXcd*)get_eff_addr(sys);
+            }
+
+            Eigen::VectorXcd* getVector(aef::MolecularSystem* sys) {
+                typedef Eigen::DiagonalMatrix<dcomplex, Eigen::Dynamic> diag_mat;
+                if (flags & FLAG_DIAGONAL_MATRIX) {
+                    // this is actually a diagonal matrix, 
+                    diag_mat* mat = (diag_mat*)get_eff_addr(sys);
+                    return &(mat->diagonal());
+                }
+                return (Eigen::VectorXcd*)get_eff_addr(sys);
+            }
+
+            bool isVector() {
+                return flags & FLAG_VECTOR;
+            }
+
+            bool isMatrix() {
+                return !isVector();
+            }
+        };
+
+        static const fourcc Hrot({ 'H', 'r', 'o', 't'});
+        static const fourcc Hhfs({ 'H', 'h', 'f', 's' });
+        static const fourcc Hstk({ 'H', 's', 't', 'k'});
+        static const fourcc Hdev({ 'H', 'd', 'e', 'v' });
+        static const fourcc Htot({ 'H', 't', 'o', 't' });
+
+        static const fourcc EEs({ 'E', 'E', 's', ' ' });
+        static const fourcc EVs({ 'E', 'V', 's', ' ' });
+
+        static const fourcc Od1t({ 'O', 'd', '1', 't' });
+        static const fourcc Od10({ 'O', 'd', '1', '0' });
+        static const fourcc Od11({ 'O', 'd', '1', '1' });
+        static const fourcc F_z({ 'F', '_', 'z', ' ' });
+
+
+        constexpr uint16_t fv = FLAG_VECTOR | FLAG_COMPLEX;
+        constexpr uint16_t fm = FLAG_COMPLEX;
+        constexpr uint16_t fd = FLAG_VECTOR | FLAG_COMPLEX | FLAG_DIAGONAL_MATRIX;
+#define X(H, ...) {H, {H, __VA_ARGS__ }}
+        std::unordered_map<aef::chunk::fourcc, matrix_id_ifo> offsetMap = {
+            // Hamiltonian matricies
+            X(Hrot, fd, 0, offsetof(MolecularSystem, H_rot)),
+            X(Hstk, fm, 0, offsetof(MolecularSystem, H_hfs)),
+            X(Hstk, fm, 0, offsetof(MolecularSystem, H_stk)),
+            X(Hdev, fm, 0, offsetof(MolecularSystem, H_dev)),
+            X(Htot, fm, 0, offsetof(MolecularSystem, H_tot)),
+
+            // energy eigenstate information
+            X(Hstk, fv, 0, offsetof(MolecularSystem, Es)),
+            X(Hstk, fm, 0, offsetof(MolecularSystem, Vs)),
+
+            // embedded operators
+            X(Od1t, fm, 0, offsetof(MolecularSystem, d1t)),
+            X(Od10, fm, 0, offsetof(MolecularSystem, d10)),
+            X(Od11, fm, 0, offsetof(MolecularSystem, d11)),
+        };
+#undef X
     };
 
     aef::ResultCode MolecularSystem::write_chunk(std::ostream& out, void* chdr, void* data) {
-        return aef::ResultCode();
+        return aef::ResultCode::Unimplemented;
     }
 
     aef::ResultCode MolecularSystem::read_chunk(std::istream& in, void* chdr_, void *dst) {
@@ -173,73 +256,95 @@ namespace aef {
         auto &chdr = *pChdr;
         in.read((char*)&chdr, sizeof(chdr));
         switch (chdr.type) {
-        case aef::chunk::hamiltonian_chunk:
-            // hamiltonian_chunk
-            std::cout << "[aef::MolecularSystem] reading hamiltonian chunk" << std::endl;
-            aef::chunk::chunk_hdr mhdr;
-            read_chunk(in, (void*)&mhdr, (void*)&H_rot.diagonal());
-            read_chunk(in, (void*)&mhdr, (void*)&H_hfs);
-            read_chunk(in, (void*)&mhdr, (void*)&H_stk);
-            read_chunk(in, (void*)&mhdr, (void*)&H_dev);
-            break;
         case aef::chunk::matrix:
         {
-            if (dst == nullptr) {
-                std::clog << "[aef::MolecularSystem] read_chunk error, no destination provided for matrix chunk" << std::endl;
-                return aef::ResultCode::InvalidArgument;
-            }
+            aef::chunk::general_matrix_chunk gmchunk = {.hdr = chdr};
+            in.read((char*)&gmchunk.matnam, sizeof(aef::chunk::fourcc));
 
-            ptrdiff_t offset = chdr.version | (chdr.flags & 0xff) << 8;
-            char* dst_ = ((char*)this) + offset;
-            if (chdr.flags & (1 << 15)) {
-                dst = dst_;
-            }
             // flags indicates the datatype
-            bool is_vector = chdr.flags & 1;
-            bool is_complex = chdr.flags & 2;
+            bool is_vector = chdr.flags & FLAG_VECTOR;
+            bool is_complex = chdr.flags & FLAG_COMPLEX;
 
-            if (is_complex) {
+            if (gmchunk.matnam != aef::chunk::general_matrix_chunk::nameless) {
+                if (!io_detail::offsetMap.contains(gmchunk.matnam)) {
+                    std::clog << fmt::format("[aef::MolecularSystem] read_chunk error, unrecognized matrix chunk {}",  gmchunk.matnam.ucode)<< std::endl;
+                    return aef::ResultCode::InvalidFormat;
+                }
+                io_detail::matrix_id_ifo ifo = io_detail::offsetMap[gmchunk.matnam];
+                if (is_vector) {
+                    Eigen::read_binary(in, *ifo.getVector(this));
+                } else {
+                    Eigen::read_binary(in, *ifo.getMatrix(this));
+                }
+                return aef::ResultCode::Success;
+            } else {
+                bool dstflag = chdr.flags & (1 << 15);
+                if (dst == nullptr && !dstflag) {
+                    std::clog << "[aef::MolecularSystem] read_chunk error, no destination provided for matrix chunk" << std::endl;
+                    return aef::ResultCode::InvalidArgument;
+                }
+
+                ptrdiff_t offset = chdr.version | (ptrdiff_t)((chdr.flags & 0xff) << 8);
+                char* dst_ = ((char*)this) + offset;
+                if (dstflag) {
+                    dst = dst_;
+                }
+
+                if (!is_complex) {
+                    std::clog << "[aef::MolecularSystem] read_chunk error: non-complex matrix chunks are not supported." << std::endl;
+                    return aef::ResultCode::InvalidFormat;
+                }
                 if (is_vector) {
                     auto* v = (Eigen::VectorXcd*)dst;
                     Eigen::read_binary(in, *v);
                 } else {
                     auto* v = (Eigen::MatrixXcd*)dst;
-                    Eigen::read_binary(in, *v); 
+                    Eigen::read_binary(in, *v);
                 }
+                return aef::ResultCode::Success;
             }
-            return aef::ResultCode::Success;
+
         }
         case aef::chunk::oplist:
-            // note: oplist stores version in upper byte of flags
             std::clog << "[aef::MolecularSystem] loading perturbative operator map" << std::endl;
             {
                 std::vector<std::string> ops;
-                int version = chdr.flags >> 8;
-                int nops = (chdr.flags & 0xff) | chdr.version;
-                char opId[max_op_id_len];
-                memset(opId, 0, max_op_id_len);
+                size_t nops = 0;
+                in.read((char*)&nops, sizeof(nops));
+                std::string opId;
+                
                 for (int idxOp = 0; idxOp < nops; idxOp++) {
-                    int len = 0;
+                    size_t len = 0;
                     in.read((char*)&len, sizeof(len));
-                    assert(len < max_op_id_len);
-                    in.read(opId, len);
-                    // TODO figure out how to load IOperator
+                    opId.reserve(len + 1);
+                    in.read(opId.data(), len);
+
+                    // construct IOperator
+                    aef::operators::IOperator* op = aef::operators::IOperator::makeOperatorOfType(opId);
+                    opMap[opId] = op;
+
+                    // read in matrix if it exists
+                    aef::chunk::chunk_hdr mhdr = {};
+                    Eigen::MatrixXcd *mat = new Eigen::MatrixXcd;
+                    read_chunk(in, (void*)&mhdr, (void*)mat);
+                    if (mhdr.type != aef::chunk::end0) {
+                        opMatMap[opId] = mat;
+                    } else {
+                        delete mat;
+                    }
                 }
-                //for (int idx)
             };
-            break;
+            return aef::ResultCode::Success;
         default:
             std::clog << "[aef::MolecularSystem] Warning: encountered unknown tag during loading" << std::endl;
-            // handle end tag
-            [[fallthrough]];
+            break;
         case aef::chunk::end0:
-            std::cout << "[aef::MolecularSystem] load complete, hit end tag" << std::endl;
+            std::cout << "[aef::MolecularSystem] hit end tag" << std::endl;
             return aef::ResultCode::Success;
         }
 
-        return aef::ResultCode();
+        return (aef::ResultCode)1;
     }
-
 
     /////// IO code
     // aefchunk load code
@@ -314,7 +419,7 @@ namespace aef {
             std::string calcType(curr, pay->calcTypeLen);
             curr += pay->calcTypeLen;
 
-            // use a seperate input stream to try to prevent 
+            // use a seperate input stream to try to prevent corruption
             std::ispanstream calcIn(std::span(curr, pay->cbCalcData));
 
             this->calc = aef::IMolecularCalculator::makeCalculatorOfType(calcType);
@@ -333,7 +438,7 @@ namespace aef {
         do {
             this->read_chunk(in, (void*)&chdr, nullptr);
         } while (chdr.type != aef::chunk::end0);
-
+        std::cout << "[aef::MolecularSystem] Load complete" << std::endl;
         // finish
         if (pIn != &in_) {
             delete pIn; pIn = nullptr;
@@ -344,12 +449,13 @@ namespace aef {
 
 
     aef::ResultCode MolecularSystem::save(std::ostream& out_, const char *path) {
-        // TODO implement
+        // note that the save method is substantially less 
+        using aef::chunk::fourcc;
         // write file header
         std::ostream* out = &out_;
         aef::chunk::file_hdr hdr = {};
         {
-            // always compress 
+            // always compress molsys files
             uint16_t flags = (uint16_t)molsys_flags::compress;
             hdr.hdr = { .type = aef::chunk::file_magic, .version = (uint16_t)CURRENT_SAVE_VERSION, .flags = flags };
             hdr.filetype = aef::chunk::mol_sys;
@@ -383,17 +489,69 @@ namespace aef {
             out->write(buf.data(), buf.length());
         }
         // write matricies
-        write_vector(*out, &this->H_rot.diagonal());
-        write_matrix(*out, &this->H_hfs);
-        // write operators
-        return aef::ResultCode::Unimplemented;
-    }
+        for (auto &id_val_pair : io_detail::offsetMap) {
+            fourcc id = id_val_pair.first;
+            auto& val = id_val_pair.second;
 
-    aef::ResultCode aef::MolecularSystem::write_matrix(std::ostream& out, Eigen::MatrixXcd* mat) {
+            if (val.isVector()) {
+                write_vector(*out, val.getVector(this), id.ucode);
+            } else { // ! vector == matrix
+                write_matrix(*out, val.getMatrix(this), id.ucode);
+            }
+        }
+
+        // write pt ops
+        {
+            chdr = {};
+            chdr.type = aef::chunk::oplist;
+            size_t nops = opMap.size();
+            
+            chdr.version = 0;
+            chdr.flags = 0;
+
+            out->write((char*)&chdr, sizeof(chdr));
+            out->write((char*)&nops, sizeof(nops));
+
+            aef::chunk::chunk_hdr ehdr = { .type = aef::chunk::end0 };
+
+            for (auto &id_op_pair : opMap) {
+                // todo
+                const char* name = id_op_pair.first.c_str();
+                size_t namelen = id_op_pair.first.length();
+                out->write((char*)&namelen, sizeof(namelen));
+                out->write(name, namelen);
+
+                if (opMatMap.contains(id_op_pair.first)) {
+                    write_matrix(*out, opMatMap[id_op_pair.first], aef::chunk::general_matrix_chunk::nameless);
+                } else {
+                    out->write((char*)&ehdr, sizeof(ehdr));
+                }
+
+            }
+        }
+
         return aef::ResultCode::Success;
     }
 
-    aef::ResultCode aef::MolecularSystem::write_vector(std::ostream& out, Eigen::VectorXcd* vec) {
+    aef::ResultCode aef::MolecularSystem::write_matrix(std::ostream& out, Eigen::MatrixXcd* mat, uint32_t matnam_) {
+        aef::chunk::general_matrix_chunk hdr = {};
+        hdr.hdr.type = aef::chunk::general_matrix_chunk::cc;
+        hdr.hdr.flags = FLAG_VECTOR | FLAG_COMPLEX;
+        hdr.hdr.version = 1;
+        hdr.matnam.ucode = matnam_;
+        out.write((char*) & hdr, sizeof(hdr));
+        Eigen::write_binary(out, mat);
+        return aef::ResultCode::Success;
+    }
+
+    aef::ResultCode aef::MolecularSystem::write_vector(std::ostream& out, Eigen::VectorXcd* vec, uint32_t matnam_) {
+        aef::chunk::general_matrix_chunk hdr = {};
+        hdr.hdr.type = aef::chunk::general_matrix_chunk::cc;
+        hdr.hdr.flags = FLAG_VECTOR | FLAG_COMPLEX;
+        hdr.hdr.version = 1;
+        hdr.matnam.ucode = matnam_;
+        out.write((char*)&hdr, sizeof(hdr));
+        Eigen::write_binary(out, vec);
         return aef::ResultCode::Success;
     }
 

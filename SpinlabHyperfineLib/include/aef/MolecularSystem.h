@@ -235,8 +235,9 @@ namespace aef {
         MolecularSystem();
         aef::ResultCode write_chunk(std::ostream& out, void* chdr, void* data);
         aef::ResultCode read_chunk(std::istream &in, void *chdr, void *dst);
-        aef::ResultCode write_matrix(std::ostream& out, Eigen::MatrixXcd* mat);
-        aef::ResultCode write_vector(std::ostream& out, Eigen::VectorXcd* vec);
+
+        aef::ResultCode write_matrix(std::ostream& out, Eigen::MatrixXcd* mat, uint32_t matnam);
+        aef::ResultCode write_vector(std::ostream& out, Eigen::VectorXcd* vec, uint32_t matnam);
 
     /// <summary>
     /// This section contains code for PTFW2

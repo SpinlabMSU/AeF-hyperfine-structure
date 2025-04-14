@@ -23,8 +23,9 @@
 #include <stddef.h>
 
 /*
- * AeFChunk is a tagged chunk-based format that I've decided to create to replace the
- *
+ * AeFChunk is a tagged chunk-based format that I've decided to create to replace the old AeFDat format.
+ * It should be substantially more flexible, make it easier for external code to generate files, and make
+ * versioning/changes easier.
  */
 namespace aef::chunk {
     /*
@@ -67,6 +68,7 @@ namespace aef::chunk {
     /// This fourcc 
     /// </summary>
     constexpr fourcc matrix = fourcc({ 'M', 't', 'r', 'X' });
+
     /// <summary>
     /// Chunks with this tag store a self-adjoint operator
     /// </summary>
@@ -100,6 +102,9 @@ namespace aef::chunk {
     struct general_matrix_chunk {
         static constexpr fourcc cc = fourcc({ 'M', 't', 'r', 'X' });
         struct chunk_hdr hdr;
+        fourcc matnam;
+
+        static constexpr fourcc nameless = { .ucode=0xFF0F'F0FF };
     };
 
 };
