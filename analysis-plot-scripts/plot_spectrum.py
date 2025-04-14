@@ -44,11 +44,24 @@ df = pd.read_csv(starkpath)
 Ez = df.keys()[1]
 states = df.keys()[2:]
 
+zero_ground = False
+
+if len(sys.argv) > 2:
+    zero_ground = sys.argv[2].lower().startswith('-z')
+
 # Including a legend isn't particularly useful past a certain number of states
 # since it runs off the edge of the plot and the colors repeat anyways
 use_legend = True
 if len(df[Ez]) > 15:
     use_legend = False
+
+
+if zero_ground:
+    print(df[states])
+    zero_field_Es = df.iloc[0, 2:]
+    print(zero_field_Es)
+    for state in states:
+        df.loc[:, state] -= zero_field_Es
 
 fig = plt.figure(figsize=(13.66, 9.00))
 plt.title(f"Energy Spectrum for run {run}")

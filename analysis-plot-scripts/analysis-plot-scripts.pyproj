@@ -33,6 +33,7 @@
     <Compile Include="plot_Evecs.C" />
     <Compile Include="plot_orientation.py" />
     <Compile Include="plot_orientation_comparison.py" />
+    <Compile Include="plot_gas_spect.py" />
     <Compile Include="plot_state_coeffs.py">
       <SubType>Code</SubType>
     </Compile>

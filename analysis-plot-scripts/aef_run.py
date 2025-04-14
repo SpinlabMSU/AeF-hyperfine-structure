@@ -56,6 +56,7 @@ class aef_run(object):
         self.log_path = os.path.join(self.path, 'out.log')
 
         self.valid = self.check_valid()
+        self.calc_type = ""
         self.dev_en = False
         self.dev_K = math.nan
         self.nmax = -1 # n is the orbitorotational quantum number
