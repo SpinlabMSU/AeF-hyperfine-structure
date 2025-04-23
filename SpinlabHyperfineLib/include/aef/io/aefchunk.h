@@ -109,5 +109,12 @@ namespace aef::chunk {
 
 };
 
+namespace std {
+    template <> struct hash<aef::chunk::fourcc> {
+        std::size_t operator()(const aef::chunk::fourcc &fcc) const {
+            return fcc.ucode;
+        }
+    };
+};
 
 #endif
