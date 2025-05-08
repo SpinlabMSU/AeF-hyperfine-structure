@@ -38,6 +38,17 @@ namespace aef {
 
         set_nmax(nmax_);
     }
+
+    MolecularSystem::MolecularSystem() {
+        calc = nullptr;
+        E_z = 0;
+        K = 0;
+        init = false;
+        dkq_init = false;
+        enableDev = 0;
+        nmax = -1;
+    }
+
     void MolecularSystem::set_nmax(spin nmax_) {
         // nmax must be a non-negative half-integer
         assert(nmax >= 0 && floor(nmax * 2) == (nmax * 2));
@@ -372,12 +383,12 @@ namespace aef {
         // check version is in-range
         uint16_t version = fhdr.hdr.version;
         if (version < (uint16_t)MINIMUM_LOAD_VERSION) {
-            std::clog << fmt::format("[MolecularSystem aefchunk loader] Error file \"{}\" uses unsupported version {} (too old)", path, version) << std::endl;
+            std::clog << fmt::format("[MolecularSystem aefchunk loader] Error: file \"{}\" uses unsupported version {} (too old)", path, version) << std::endl;
             return aef::ResultCode::InvalidFormat;
         }
 
         if (version > (uint16_t)MAXIMUM_LOAD_VERSION) {
-            std::clog << fmt::format("[MolecularSystem aefchunk loader] Error file \"{}\" uses unsupported version {} (too old)", path, version) << std::endl;
+            std::clog << fmt::format("[MolecularSystem aefchunk loader] Error: file \"{}\" uses unsupported version {} (too new)", path, version) << std::endl;
             return aef::ResultCode::InvalidFormat;
         }
         
@@ -395,7 +406,7 @@ namespace aef {
         // the params block must come first
         in.read((char*)&chdr, sizeof(chdr));
         if (chdr.type != aef::chunk::prms) {
-            std::clog << "[aef::MolecularSystem] Error: molsys file {} is malformed" << std::endl;
+            std::clog << fmt::format("[aef::MolecularSystem] Error: molsys file {} is malformed", path) << std::endl;
             return aef::ResultCode::InvalidFormat;
         }
         this->init = flags & FLAG_INIT;
@@ -540,7 +551,7 @@ namespace aef {
         hdr.hdr.version = 1;
         hdr.matnam.ucode = matnam_;
         out.write((char*) & hdr, sizeof(hdr));
-        Eigen::write_binary(out, mat);
+        Eigen::write_binary(out, *mat);
         return aef::ResultCode::Success;
     }
 
@@ -551,7 +562,7 @@ namespace aef {
         hdr.hdr.version = 1;
         hdr.matnam.ucode = matnam_;
         out.write((char*)&hdr, sizeof(hdr));
-        Eigen::write_binary(out, vec);
+        Eigen::write_binary(out, *vec);
         return aef::ResultCode::Success;
     }
 

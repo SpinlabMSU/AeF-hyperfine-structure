@@ -42,6 +42,11 @@ namespace aef {
         virtual void load(std::istream& in);
         virtual void save(std::ostream& out);
         virtual const char* get_calc_type();
+
+        virtual int get_num_orientations() {
+            return 6;
+        }
+        virtual int get_lowest_rotational_state_size();
     };
 
 }

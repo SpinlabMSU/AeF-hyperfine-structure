@@ -36,25 +36,44 @@
 #include <numeric>
 #include <cxxopts.hpp>
 
+#include <aef/systems/BaFMolecularCalculator.h>
+#include <aef/systems/RaFMolecularCalculator.h>
+#include <aef/MolecularSystem.h>
 using namespace std::chrono;
 namespace fs = std::filesystem;
 using aef::log_time_at_point;
 
 // the number of states in a singlet-triplet group pair (f=0 and f=1)
-constexpr int num_singlet_triplet = 4;
+int num_singlet_triplet = 4;
 // +-X +-Y +-Z
-constexpr int num_orientations = 6;
+int num_orientations = 6;
 // the total number of states in the lowest lying (in energy) "bottom group" of states
-constexpr int bottom_group_size = num_singlet_triplet * num_orientations;
+int bottom_group_size = num_singlet_triplet * num_orientations;
 
 // starting/base index of +Z oriented states
-constexpr int bidx_posz = 0;
+int bidx_posz = 0;
 // starting/base index of -Z oriented states
-constexpr int bidx_negz = bottom_group_size - num_singlet_triplet;
+int bidx_negz = bottom_group_size - num_singlet_triplet;
 // start of +- XY oriented states -- don't know how to distinguish which is which at the present time
-constexpr int bidx_pmxy = num_singlet_triplet;
+int bidx_pmxy = num_singlet_triplet;
 
-void dump_state(HyperfineCalculator& calc, int state, std::ostream &out) {
+
+void calculate_sizes(aef::MolecularSystem &sys) {
+    num_singlet_triplet = sys.get_calc()->get_lowest_rotational_state_size();
+    // +-X +-Y +-Z
+    num_orientations = sys.get_calc()->get_num_orientations();
+    // the total number of states in the lowest lying (in energy) "bottom group" of states
+    bottom_group_size = num_singlet_triplet * num_orientations;
+
+    // starting/base index of +Z oriented states
+    bidx_posz = 0;
+    // starting/base index of -Z oriented states
+    bidx_negz = bottom_group_size - num_singlet_triplet;
+    // start of +- XY oriented states -- don't know how to distinguish which is which at the present time
+    bidx_pmxy = num_singlet_triplet;
+}
+
+void dump_state(aef::MolecularSystem& calc, int state, std::ostream &out) {
     out << state;
     // BUGFIX: states are column vectors not row vectors
     Eigen::VectorXcd state_vec = calc.Vs.col(state);
@@ -81,7 +100,6 @@ int main(int argc, char **argv) {
     bool print_extras = true;
     bool output_Es = true;
     std::vector<double> E_zs;
-    bool k_specified = false;
     double K = 0;
     bool k_enabled = false;
 
@@ -100,8 +118,7 @@ int main(int argc, char **argv) {
         ("d,enable_debug", "Enable debug mode", cxxopts::value<bool>()->default_value("false"))
         ("print_extras", "Print extra information", cxxopts::value<bool>()->default_value("true"))
         ("l,load", "Load molecular system operators from file", cxxopts::value<std::string>())
-        ("o,output", "Set output directory.  Default is coeffs", cxxopts::value<std::string>())
-        ("k", "K value to use in Kelvin -- version 2 AeFDat files don't have this in them, although it is contained in the log]", cxxopts::value<double>());
+        ("o,output", "Set output directory.  Default is coeffs", cxxopts::value<std::string>());
     
     auto result = options.parse(argc, argv);
 
@@ -124,12 +141,6 @@ int main(int argc, char **argv) {
         E_zs.insert(E_zs.end(), begin(vals), end(vals));
     } else {
         E_zs.push_back(500);
-    }
-
-    if (result.count("k")) {
-        k_specified = true;
-        K = result["k"].as<double>() * unit_conversion::MHz_per_Kelvin;
-        k_enabled = K != 0;
     }
     
     fs::path p = fs::absolute(loadname);
@@ -174,8 +185,9 @@ int main(int argc, char **argv) {
 
     std::cout << fmt::format("[Low State dumper] attempting to load matrix elements from {}", p.string()) << std::endl;
     
-    HyperfineCalculator calc(4, 0, K);
-    bool success = calc.load_matrix_elts(loadname);
+    aef::MolecularSystem calc;
+    bool success = aef::succeeded(calc.load(loadname));
+    calculate_sizes(calc);
 
     if (!success) {
         // load failed, attempt to diagnose why & exit
@@ -206,28 +218,7 @@ int main(int argc, char **argv) {
 
     // note: we actually don't need the actual value of K here, since H_dev is stored pre-multiplied by K
     // we only need to know whether K is zero (in-vacuum) or not (in-matrix).
-    if (k_specified) {
-        // Starting with aefdat_version::rawmat_okq_params, aefdat files save E_z and K, thus specifying 
-        if (calc.load_version >= aefdat_version::rawmat_okq_params) {
-            std::cout << fmt::format("Attempt") << std::endl;
-            exit(253);
-        }
-    }
     std::cout << fmt::format("K_enabled = {}", calc.enableDev ? "true" : "false") << std::endl;
-    // XXX this is only needed because AeFDat used to not save K
-    if (!k_specified && calc.load_version <= aefdat_version::rawmat_okq_params) {
-        // attempt to locate out.log
-        fs::path olog_path = dir / "out.log";
-        
-        if (!fs::is_regular_file(olog_path)) {
-            auto str = std::format("K neither specified nor present in AeFDat matrix file, and was unable locate log path {}",
-                olog_path.string());
-            std::cout << str << std::endl;
-            exit(254);
-        }
-        // TODO parse log file???
-
-    }
 
     std::cout << "does H_tot commute with F_z? " << aef::matrix::commutes(calc.H_tot, calc.F_z) << std::endl;
     std::cout << "does H_stk commute with F_z? " << aef::matrix::commutes(calc.H_stk, calc.F_z) << std::endl;
@@ -252,7 +243,7 @@ int main(int argc, char **argv) {
         std::cout << fmt::format("H_stk rows={}, cols={}", calc.H_stk.rows(), calc.H_stk.cols()) << std::endl;
         calc.H_tot = calc.H_rot.toDenseMatrix() + calc.H_hfs + scale * calc.H_stk + calc.H_dev;
 
-        calc.diagonalize_H(diag_use_cuda);
+        calc.diagonalize();
 
         fs::path csvpath = odir / fmt::format("{}.csv", Ez);
         std::ofstream out(csvpath);

@@ -156,6 +156,9 @@ namespace aef {
         virtual void load(std::istream& in) = 0;
         virtual void save(std::ostream& out) = 0;
         virtual const char* get_calc_type() = 0;
+
+        virtual int get_num_orientations() = 0;
+        virtual int get_lowest_rotational_state_size() = 0;
         
 
     public:
@@ -206,8 +209,20 @@ namespace aef {
         Eigen::MatrixXcd d10;
         Eigen::MatrixXcd d11;
         Eigen::MatrixXcd d1t;
-
+        /// <summary>
+        /// Use this constructor to 
+        /// </summary>
+        /// <param name="calc"></param>
+        /// <param name="nmax_"></param>
+        /// <param name="E_z_"></param>
+        /// <param name="K"></param>
         MolecularSystem(IMolecularCalculator* calc, spin nmax_, double E_z_ = 0, double K=0.0);
+        /// <summary>
+        /// Use this constructor to make molecularsystems that you will immediately call load on.
+        /// No operations other than load can be performed on a MolecularSystem constructed by this
+        /// constructor until a load succeeds.
+        /// </summary>
+        MolecularSystem();
         ~MolecularSystem();
 
         IMolecularCalculator* get_calc();
@@ -232,7 +247,6 @@ namespace aef {
         }
 
     private:
-        MolecularSystem();
         aef::ResultCode write_chunk(std::ostream& out, void* chdr, void* data);
         aef::ResultCode read_chunk(std::istream &in, void *chdr, void *dst);
 

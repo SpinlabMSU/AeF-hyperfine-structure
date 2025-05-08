@@ -158,3 +158,7 @@ void aef::BaFMolecularCalculator::save(std::ostream& out) {
 const char* aef::BaFMolecularCalculator::get_calc_type() {
     return "138BaF,2Sigma+,I1=half,I2=0";
 }
+
+int aef::BaFMolecularCalculator::get_lowest_rotational_state_size() {
+    return aef::j_basis_vec::index_of_n(1);
+}
