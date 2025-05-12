@@ -62,12 +62,12 @@ aef::run_params aef::aef_run::parse_params(bool force_reparse) {
     // line-by-line parse
     std::string line;
 
-    constexpr char *n_search = "nmax is";
-    constexpr char *e_search = "E_z is";
-    constexpr char *k_search = "K is";
-    constexpr char *Emax_search = "Electric field strength is";
-    constexpr char *sta_search = "Start time is";
-    constexpr char *dur_search = "have taken";
+    constexpr const char *n_search = "nmax is";
+    constexpr const char *e_search = "E_z is";
+    constexpr const char *k_search = "K is";
+    constexpr const char *Emax_search = "Electric field strength is";
+    constexpr const char *sta_search = "Start time is";
+    constexpr const char *dur_search = "have taken";
 
     memset(&params, 0xff, sizeof(params));
     stk_shifts.clear();
@@ -97,16 +97,16 @@ aef::run_params aef::aef_run::parse_params(bool force_reparse) {
         // invalid
         valid_params = false;
         // what to do??
-        constexpr  char * fmt_str = "log file {} valid but does not contain correct paramater line"; 
-        std::string serr = std::format(fmt_str, get_log_path().native());
+        constexpr const char * fmt_str = "log file {} valid but does not contain correct paramater line"; 
+        std::string serr = std::format(fmt_str, get_log_path().generic_string());
         throw std::runtime_error(serr);
         aef::unreachable();
     }
 
     if (!std::isfinite(params.max_E_z)) {
         valid_params = false;
-        constexpr char *fmt_str = "log file {} valid and has correct parameter line but does not contain max E_z (no diagonalization output?)"; 
-        std::string serr = std::format(fmt_str, get_log_path().native());
+        constexpr const char *fmt_str = "log file {} valid and has correct parameter line but does not contain max E_z (no diagonalization output?)"; 
+        std::string serr = std::format(fmt_str, get_log_path().generic_string());
         throw std::runtime_error(serr);
         aef::unreachable();
     }

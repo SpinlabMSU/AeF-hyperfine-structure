@@ -375,6 +375,12 @@
     <ClInclude Include="include\aef\operators\ZeemanOperator.h">
       <Filter>Header Files\aef\operators</Filter>
     </ClInclude>
+    <ClInclude Include="include\aef\aef_run.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\aef\operators\operators.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\pch.cpp">
@@ -448,6 +454,9 @@
     </ClCompile>
     <ClCompile Include="src\operators\ZeemanOperator.cpp">
       <Filter>Source Files\operators</Filter>
+    </ClCompile>
+    <ClCompile Include="src\aef_run.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
