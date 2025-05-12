@@ -1,4 +1,25 @@
 # AeF-hyperfine-structure: Alkaline-Earth Monofluoride molecular hyperfine structure calculator
+AeF-hyperfine-strucutre is a toolkit for computing the rotational-hyperfine structure of alkaline-earth monofluoride
+molecules in their $^2\Sigma+$ electronic-vibrational ground states.  Instructions on how to compile the  software are
+provided in `COMPILING.MD`, and the license (GPLv3) is provided in `COPYING`
+
+
+## Provided programs
+* AeF-hyperfine-structure: this program does the main energy eigenstate/eigenenergy computations
+* LowStateDumper -- this program outputs selected expectation values and matrix elements of the lowest set of energy eigenstates
+* PerturbationAnalyzer: this program performs first-order perturbative calculations of a selected set of "interaction" operators
+* operator\_visualizer: this program dumps
+* StarkDiagonalizer -- diagona
+* GenerateHamiltonianFiles -- deprecated, do not use
+* NoStark\_HyperfineTester -- this is a "playground" testing program that is only useful for debugging SpinlabHyperfineLib
+
+## Using the AeF-hyperfine-structure toolkit
+The main program
+
+
+
+## A Brief theoretical 
+
 $\newcommand{\ket}[1]{\left|{#1}\right\rangle}$
 $\newcommand{\bra}[1]{\left\langle{#1}\right|}$
 $\newcommand{\abs}[1]{\left\vert{#1}\right\vert}$
