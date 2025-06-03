@@ -78,7 +78,7 @@
     <IncludePath>C:\Users\nusgart\source\AeF-hyperfine-structure\SpinlabHyperfineLib\include;C:\Users\nusgart\source\AeF-hyperfine-structure\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\nusgart\source\AeF-hyperfine-structure\SpinlabHyperfineLib\include;C:\Users\nusgart\source\AeF-hyperfine-structure\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\SpinlabHyperfineLib\include;$(SolutionDir)\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>C:\Users\nusgart\source\AeF-hyperfine-structure\SpinlabHyperfineLib\include;C:\Users\nusgart\source\AeF-hyperfine-structure\include;$(IncludePath)</IncludePath>
