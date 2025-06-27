@@ -1,24 +1,32 @@
 # AeF-hyperfine-structure: Alkaline-Earth Monofluoride molecular hyperfine structure calculator
 AeF-hyperfine-strucutre is a toolkit for computing the rotational-hyperfine structure of alkaline-earth monofluoride
 molecules in their $^2\Sigma+$ electronic-vibrational ground states.  Instructions on how to compile the  software are
-provided in `COMPILING.MD`, and the license (GPLv3) is provided in `COPYING`
+provided in `COMPILING.MD`, and the license (GPLv3) is provided in `COPYING`.  The purpose of this toolkit is
+specifically calculating spectra and matrix elements useful for determining measurement schemes for CP-violation searches
+using alkaline-earth monofluorides in solid noble gas matricies, especially for nuclear schiff moment searches using
+radium-225 monofluoride embedded in a solid argon matrix.  Towards this
 
 
 ## Provided programs
-* AeF-hyperfine-structure: this program does the main energy eigenstate/eigenenergy computations
+* AeF-hyperfine-structure: this program calculates the rotational-hyperfine spectrum of an alkaline-earth monofluoride 
+across a range of electric field strengths either in the gas phase or embedded in a solid medium.  Currently, only 
+$^{138}\mathrm{BaF}$ is supported, but work is ongoing to enable calculations on $^{225}\mathrm{RaF}$ as well.
 * LowStateDumper -- this program outputs selected expectation values and matrix elements of the lowest set of energy eigenstates
 * PerturbationAnalyzer: this program performs first-order perturbative calculations of a selected set of "interaction" operators
 * operator\_visualizer: this program dumps
-* StarkDiagonalizer -- diagona
+* StarkDiagonalizer -- this program performs similar spectrum calculations to AeF-hyperfine-structure but only includes the Stark
+interaction in the Hamiltonian.  Its output is useful for comparison purposes.
 * GenerateHamiltonianFiles -- deprecated, do not use
 * NoStark\_HyperfineTester -- this is a "playground" testing program that is only useful for debugging SpinlabHyperfineLib
 
 ## Using the AeF-hyperfine-structure toolkit
-The main program
+The flow
 
 
 
-## A Brief theoretical 
+## 
+
+## A Brief theoretical overview of the 
 
 $\newcommand{\ket}[1]{\left|{#1}\right\rangle}$
 $\newcommand{\bra}[1]{\left\langle{#1}\right|}$

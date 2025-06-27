@@ -190,26 +190,26 @@ std::array<dcomplex, 3> aef::j_basis_vec::molec_mdm(j_basis_vec other) {
     // including one from the electron magnetic moment, a magnetic moment induced by molecular rotation,
     // and the nuclear magnetic moment
     
-    // electron mag moment
+    // electron mag moment -- since this is proportional to S it just looks like
     dcomplex parity_S = parity(f - m_f);
     dcomplex prf_S = xi(j, jp) * xi(f, fp);
     dcomplex w3j_S = 0;
     dcomplex w6j_S = 1;
-    dcomplex rme_S = g_S * mu_B * parity_S * prf_S * w3j_S * w6j_S;
+    dcomplex rme_S = g_S * constants::mu_bohr * parity_S * prf_S * w3j_S * w6j_S;
 
     // nuclear magnetic moment
     dcomplex parity_I = parity(f - m_f);
     dcomplex prf_I = xi(j, jp) * xi(f, fp);
     dcomplex w3j_I = 0;
     dcomplex w6j_I = 1;
-    dcomplex rme_I = parity_I * prf_I * w3j_I * w6j_I;
+    dcomplex rme_I = g_I * constants::mu_nuclear * parity_I * prf_I * w3j_I * w6j_I;
 
     // rotational magnetic moment
     dcomplex parity_N = parity(f - m_f);
     dcomplex prf_N = xi(j, jp) * xi(f, fp);
     dcomplex w3j_N = 0;
     dcomplex w6j_N = 1;
-    dcomplex rme_N = mu_B * parity_S * prf_S * w3j_S * w6j_S;
+    dcomplex rme_N = g_N * mu_rotational * parity_S * prf_S * w3j_S * w6j_S;
 
     // full reduced matrix element is the sum of the three contributions
     dcomplex reduced_mat_elt = rme_S + rme_I + rme_N;
