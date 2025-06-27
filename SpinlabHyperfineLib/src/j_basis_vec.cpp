@@ -174,6 +174,10 @@ std::array<dcomplex, 3> aef::j_basis_vec::molec_edm(j_basis_vec other) {
     return std::array<dcomplex, 3>({mue_x, mue_y, mue_z});
 }
 
+static double kd(spin x1, spin x2) {
+    return (x1 == x2) ? 1 : 0;
+}
+
 std::array<dcomplex, 3> aef::j_basis_vec::molec_mdm(j_basis_vec other) {
     const spin np = other.n;
     const spin jp = other.j;
@@ -182,6 +186,7 @@ std::array<dcomplex, 3> aef::j_basis_vec::molec_mdm(j_basis_vec other) {
 
     using namespace hfs_constants;
     using namespace std::complex_literals;
+    constexpr double half = 0.5;
 
     double we_factor_t = w3j(f, 1, fp, -m_f, -1, m_f);
     double we_factor_0 = w3j(f, 1, fp, -m_f, 0, m_f);
@@ -190,27 +195,30 @@ std::array<dcomplex, 3> aef::j_basis_vec::molec_mdm(j_basis_vec other) {
     // including one from the electron magnetic moment, a magnetic moment induced by molecular rotation,
     // and the nuclear magnetic moment
     
-    // electron mag moment -- since this is proportional to S it just looks like
-    dcomplex parity_S = parity(f - m_f);
-    dcomplex prf_S = xi(j, jp) * xi(f, fp);
-    dcomplex w3j_S = 0;
-    dcomplex w6j_S = 1;
-    dcomplex rme_S = g_S * constants::mu_bohr * parity_S * prf_S * w3j_S * w6j_S;
-
+    // electron mag moment
+    dcomplex rme_S = 0;
+    if (n == np) {
+        dcomplex parity_S = parity(1 + n - m_f);
+        dcomplex prf_S = constexpr_sqrt(3/2.)*xi(j, jp) * xi(f, fp);
+        dcomplex w6j_S = w6j(f, 1, fp, jp, half, j) * w6j(j, 1, jp, half, n, half);
+        rme_S = g_S * constants::mu_bohr * parity_S * prf_S * w6j_S;
+    }
     // nuclear magnetic moment
-    dcomplex parity_I = parity(f - m_f);
-    dcomplex prf_I = xi(j, jp) * xi(f, fp);
-    dcomplex w3j_I = 0;
-    dcomplex w6j_I = 1;
-    dcomplex rme_I = g_I * constants::mu_nuclear * parity_I * prf_I * w3j_I * w6j_I;
-
+    dcomplex rme_I = 0;
+    if (n == np && j == jp) {
+        dcomplex parity_I = parity(1 + half + j - m_f);
+        dcomplex prf_I = xi(j, jp) * xi(f, fp);
+        dcomplex w6j_I = w6j(f, 1, fp, half, j, half);
+        rme_I = g_I * constants::mu_nuclear * parity_I * prf_I * w6j_I;
+    }
     // rotational magnetic moment
-    dcomplex parity_N = parity(f - m_f);
-    dcomplex prf_N = xi(j, jp) * xi(f, fp);
-    dcomplex w3j_N = 0;
-    dcomplex w6j_N = 1;
-    dcomplex rme_N = g_N * mu_rotational * parity_S * prf_S * w3j_S * w6j_S;
-
+    dcomplex rme_N = 0;
+    if (j == jp && f == fp && n == np) {
+        dcomplex parity_N = parity(1 + n - m_f);
+        dcomplex prf_N = xi(j, jp) * xi(f, fp) * sqrt(n * (n+1) * (2*n+1));
+        dcomplex w6j_N = w6j(j, 1, jp, np, half, n) * w6j(f, 1, fp, jp, half, j);
+        rme_N = mu_rotational * parity_N * prf_N * w6j_N;
+    }
     // full reduced matrix element is the sum of the three contributions
     dcomplex reduced_mat_elt = rme_S + rme_I + rme_N;
     // spherical tensor operator form
