@@ -29,25 +29,30 @@
 #define private public
 //#define class struct
 #include <aef/aef.h>
+#include <aef/MolecularSystem.h>
 
 namespace fs = std::filesystem;
 
 
-TTree *generate_basis_ttree(HyperfineCalculator &calc) {
-    TTree *basis_tree = new TTree("t_jbasis", "J-Basis in Tree form");
-    aef::spin n, j, f, m_f;
+TTree *generate_basis_ttree(aef::MolecularSystem &sys) {
+    TTree *basis_tree = new TTree("t_jfbasis", "JF-Basis in Tree form");
+    aef::spin n, j, f1, f, m_f;
+    aef::IMolecularCalculator *calc = sys.get_calc();
 
     basis_tree->Branch("n", &n, "n/D");
     basis_tree->Branch("j", &j, "j/D");
+    basis_tree->Branch("f1", &f1, "f1/D");
     basis_tree->Branch("f", &f, "f/D");
     basis_tree->Branch("m_f", &m_f, "m_f/D");
 
 
-    for (int idx = 0; idx < calc.nBasisElts; idx++) {
-        n = calc.basis[idx].n;
-        j = calc.basis[idx].j;
-        f = calc.basis[idx].f;
-        m_f = calc.basis[idx].m_f;
+    for (int idx = 0; idx < calc->get_nBasisElts(); idx++) {
+        auto bsket = calc->get_basis_ket(idx);
+        n = bsket.n;
+        j = bsket.j;
+        f1 = bsket.f_1;
+        f = bsket.f;
+        m_f = bsket.m_f;
         basis_tree->Fill();
     }
 
@@ -56,7 +61,7 @@ TTree *generate_basis_ttree(HyperfineCalculator &calc) {
 }
 
 
-TTree *write_matrix_tree(HyperfineCalculator &calc, const char *name, const char *title, Eigen::MatrixXcd &op, double mag_thresh=1.0e-17, bool use_rel_thres=true) {
+TTree *write_matrix_tree(aef::MolecularSystem &calc, const char *name, const char *title, Eigen::MatrixXcd &op, double mag_thresh=1.0e-17, bool use_rel_thres=true) {
     TTree* matrix_tree = new TTree(name, title);
 
     const Eigen::Index nBasisElts = calc.nBasisElts;
@@ -148,8 +153,12 @@ int main(int argc, char **argv) {
         no_stark = result["no_stark"].as<bool>();
     }
 
-    HyperfineCalculator calc;
-    calc.load_matrix_elts(matrix_file_in_name);
+    aef::MolecularSystem calc;
+    auto rc = calc.load(matrix_file_in_name);
+
+    if (aef::failed(rc)) {
+        std::clog << fmt::format("Unable to load file {}, error code {:x}", matrix_file_in_name, static_cast<uint16_t>(rc)) << std::endl;
+    }
 
     if (no_stark) {
         calc.H_tot -= calc.H_stk;

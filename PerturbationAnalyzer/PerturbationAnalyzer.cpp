@@ -37,6 +37,7 @@
 #include <aef/quantum.h>
 #include <aef/aef_run.h>
 #include <aef/operators/operators.h>
+#include <aef/MolecularSystem.h>
 
 
 using namespace std::chrono;
@@ -186,10 +187,10 @@ int main(int argc, char **argv) {
 
     aef::aef_run run(runpath);
 
-    HyperfineCalculator calc;
-    bool succ = calc.load_matrix_elts(run.get_matrix_path());
+    aef::MolecularSystem sys;
+    auto rv = sys.load(run.get_matrix_path());
 
-    if (!succ) {
+    if (aef::failed(rc)) {
         // TODO error
         std::string str_pth = run.get_matrix_path().generic_string();
         std::cerr << fmt::format("[Perturbation Analyzer] Loading matrix file {} from run {} failed!",
@@ -198,22 +199,20 @@ int main(int argc, char **argv) {
         aef::unreachable();
     }
 
-#ifndef DONT_USE_CUDA
     Eigen::MatrixXcd vals;
-    vals.resize(calc.nBasisElts, calc.nBasisElts);
+    vals.resize(sys.nBasisElts, sys.nBasisElts);
     vals.setZero();
 
     std::cout << fmt::format(
         "Setting up matrix backend device-side buffers with nRows={} after creating molecular system",
-        calc.nBasisElts) << std::endl;
-    aef::matrix::set_max_size(calc.nBasisElts);
-#endif
+        sys.nBasisElts) << std::endl;
+    aef::matrix::set_max_size(sys.nBasisElts);
 
     rc = aef::ResultCode::Success;
 
     // make bigmatrix
     prev_time = log_time_at_point("Creating perturbation theory framework", start_time, prev_time);
-    aef::operators::PerturbationFramework pfw(&calc);
+    auto& pfw = sys;
     prev_time = log_time_at_point("Constructing eEDM-like operator", start_time, prev_time);
     pfw.addOperator("eEDM", new aef::operators::eEDMOperator());
     prev_time = log_time_at_point("Constructing 19F NSM-like operator", start_time, prev_time);
@@ -262,14 +261,14 @@ int main(int argc, char **argv) {
 
     // file output
     std::cout << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tDelta E Zeeman Z (MHz)" << std::endl;
-    for (int idx = 0; idx < calc.nBasisElts; idx++) {
+    for (int idx = 0; idx < sys.nBasisElts; idx++) {
         std::cout << fmt::format("{}\t{}\t{}", idx, dEs_eEDM(idx), dEs_f_nsm(idx), dEs_zeez(idx)) << std::endl;
     }
 
     std::ofstream out(dpath / "cpv_energies.tsv");
     out << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tDelta E Z-axis Zeeman (MHz)"
         "\tImaginary Part of dE_EDM(MHz)\tImaginary Part of dE_19F_NSM(MHz)\tImagninary Part of dE_ZeeZ (MHz)" << std::endl;
-    for (int idx = 0; idx < calc.nBasisElts; idx++) {
+    for (int idx = 0; idx < sys.nBasisElts; idx++) {
         dcomplex dE_EDM = dEs_eEDM(idx);
         dcomplex dE_f_NSM = dEs_f_nsm(idx);
         dcomplex dE_zeez = dEs_zeez(idx);

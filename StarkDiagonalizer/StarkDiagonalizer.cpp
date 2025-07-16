@@ -34,6 +34,9 @@
 #include <cxxopts.hpp>
 #include <fmt.hpp>
 #include <aef/quantum.h>
+#include <aef/MolecularSystem.h>
+#include <aef/systems/BaFMolecularCalculator.h>
+#include <aef/systems/RaFMolecularCalculator.h>
 
 namespace fs = std::filesystem;
 using namespace std::chrono;
@@ -44,20 +47,36 @@ using namespace aef::quantum;
 
 
 // the number of states in a singlet-triplet group pair (f=0 and f=1)
-constexpr int num_singlet_triplet = 4;
+int num_singlet_triplet = 4;
 // +-X +-Y +-Z
-constexpr int num_orientations = 6;
+int num_orientations = 6;
 // the total number of states in the lowest lying (in energy) "bottom group" of states
-constexpr int bottom_group_size = num_singlet_triplet * num_orientations;
+int bottom_group_size = num_singlet_triplet * num_orientations;
 
 // starting/base index of +Z oriented states
-constexpr int bidx_posz = 0;
+int bidx_posz = 0;
 // starting/base index of -Z oriented states
-constexpr int bidx_negz = bottom_group_size - num_singlet_triplet;
+int bidx_negz = bottom_group_size - num_singlet_triplet;
 // start of +- XY oriented states -- don't know how to distinguish which is which at the present time
-constexpr int bidx_pmxy = num_singlet_triplet;
+int bidx_pmxy = num_singlet_triplet;
 
-void dump_state(HyperfineCalculator& calc, int state, std::ostream& out) {
+
+void calculate_sizes(aef::MolecularSystem& sys) {
+    num_singlet_triplet = sys.get_calc()->get_lowest_rotational_state_size();
+    // +-X +-Y +-Z
+    num_orientations = sys.get_calc()->get_num_orientations();
+    // the total number of states in the lowest lying (in energy) "bottom group" of states
+    bottom_group_size = num_singlet_triplet * num_orientations;
+
+    // starting/base index of +Z oriented states
+    bidx_posz = 0;
+    // starting/base index of -Z oriented states
+    bidx_negz = bottom_group_size - num_singlet_triplet;
+    // start of +- XY oriented states -- don't know how to distinguish which is which at the present time
+    bidx_pmxy = num_singlet_triplet;
+}
+
+void dump_state(aef::MolecularSystem& calc, int state, std::ostream& out) {
     out << state;
     // BUGFIX: states are column vectors not row vectors
     Eigen::VectorXcd state_vec = calc.Vs.col(state);
@@ -75,7 +94,7 @@ void dump_state(HyperfineCalculator& calc, int state, std::ostream& out) {
 /// </summary>
 /// <param name="output">the stream to output to</param>
 /// <param name="calc"></param>
-void output_state_info(std::ostream& output, HyperfineCalculator& calc
+void output_state_info(std::ostream& output, aef::MolecularSystem& calc
 #ifndef DONT_USE_CUDA
     , Eigen::MatrixXcd& vals
 #endif
@@ -119,7 +138,7 @@ void output_state_info(std::ostream& output, HyperfineCalculator& calc
         dcomplex dz = d10;
 
         // basis operator expectation values
-        j_basis_vec v = expectation_values_jsq(calc, n);
+        aef::universal_diatomic_basis_vec v = expectation_values_jsq(calc, n);
 
         // output
         auto mda_ifo =
@@ -270,7 +289,13 @@ int main(int argc, char **argv) {
     std::cout << "Constructing HyperfineCalculator with nmax = " << param_nmax << std::endl;
     std::cout << fmt::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({})",
         param_nmax, calc_E_z, 0, "disabled") << std::endl;
-    HyperfineCalculator calc(param_nmax, calc_E_z);
+    //HyperfineCalculator calc(param_nmax, calc_E_z);
+    aef::IMolecularCalculator* pCalc = nullptr;
+    {
+        // TODO selection
+        pCalc = new aef::BaFMolecularCalculator();
+    }
+    aef::MolecularSystem calc(pCalc, param_nmax, calc_E_z);
     std::cout << "Finished making HyperfineCalculator with nmax = " << param_nmax << std::endl;
 #ifndef DONT_USE_CUDA
     Eigen::MatrixXcd vals;
@@ -286,17 +311,16 @@ int main(int argc, char **argv) {
 
     prev_time = log_time_at_point("Starting matrix element calculations", start_time, prev_time);
     calc.calculate_matrix_elts();
-    //calc.diagonalize_H(diag_use_cuda);
 
     prev_time = log_time_at_point("Finished matrix elt calcs", start_time, prev_time);
     
     // set H_tot = H_stk
     calc.H_tot = calc.H_stk;
-    calc.diagonalize_H(diag_use_cuda);
+    calc.diagonalize();
     prev_time = log_time_at_point("Diagonalized Stark Potential", start_time, prev_time);
 
     if (param_nmax >= 20) {
-        calc.save_matrix_elts(dpath / "matrix.dat");
+        calc.save(dpath / "matrix.dat");
         prev_time = log_time_at_point("Saved hyprfinecalculator", start_time, prev_time);
     }
 #if 0
