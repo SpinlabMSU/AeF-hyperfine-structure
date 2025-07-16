@@ -265,6 +265,50 @@ namespace aef {
         /// <returns></returns>
         dcomplex H_hfs_nsr_2(jf_basis_vec other);
 
+    public:
+        /// <summary>
+        /// Evaluates the three cartesian matrix elements of the molecular electric dipole moment operator
+        /// between two j-basis states "this" and "other" as &lt;this| \vec{\mu_{E,mol}} |other&gt;
+        /// </summary>
+        /// <param name="other">the "other</param>
+        /// <returns>&lt;this| \vec{\mu_{E,mol}} |other&gt;</returns>
+        std::array<dcomplex, 3> molec_edm(jf_basis_vec other);
+
+        /// <summary>
+        /// Evaluates the three cartesian matrix elements of the molecular magnetic dipole moment operator
+        /// between two j-basis states "this" and "other" as &lt;this| \vec{\mu_{B,mol}} |other&gt;
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns>&lt;this| \vec{\mu_{B,mol}} |other&gt;</returns>
+        std::array<dcomplex, 3> molec_mdm(jf_basis_vec other);
+
+        /// <summary>
+        /// Evaluates the dot product of the electron spin with the internuclear axis.
+        /// The "electron EDM"-like CP-violating energy shift is proportional to this operator.
+        /// Note that "electron EDM"-like includes unpolarized CP-violating nucleus-electron interactions.
+        /// </summary>
+        /// <param name="other">The other state</param>
+        /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
+        dcomplex S_dot_ina(j_basis_vec other);
+
+        /// <summary>
+        /// Evaluates the dot product of the heavy nuclear spin with the internuclear axis.
+        /// The CP-violating "NSM"-like energy shift induced by 225Ra is proportional to this operator.
+        /// Note that "NSM"-like includes spin-polarized CP-violating nucleus-electron interactions.
+        /// </summary>
+        /// <param name="other">The other state</param>
+        /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
+        dcomplex I1_dot_ina(jf_basis_vec other);
+
+        /// <summary>
+        /// Evaluates the dot product of the light nuclear spin with the internuclear axis.
+        /// The CP-violating "NSM"-like energy shift induced by 19F is proportional to this operator.
+        /// Note that "NSM"-like includes spin-polarized CP-violating nucleus-electron interactions.
+        /// </summary>
+        /// <param name="other">The other state</param>
+        /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
+        dcomplex I2_dot_ina(jf_basis_vec other);
+
         // for internal implementation use only --> using these permits not recomputing as many wigner symbols
     private:
         dcomplex H_hfs_fermi_1(jf_basis_vec other, double w6j_jpsn, double w6j_f1jpj);

@@ -411,6 +411,126 @@ namespace aef {
 
         return parity(t) * mag * w6j_jpnsnj * w6j_f1pjpjf1 * w6j_ff1pf1;
     }
+
+
+    /// <summary>
+    /// Evaluates the three cartesian matrix elements of the molecular electric dipole moment operator
+    /// between two j-basis states "this" and "other" as &lt;this| \vec{\mu_{E,mol}} |other&gt;
+    /// </summary>
+    /// <param name="other">the "other</param>
+    /// <returns>&lt;this| \vec{\mu_{E,mol}} |other&gt;</returns>
+    std::array<dcomplex, 3> jf_basis_vec::molec_edm(jf_basis_vec other) {
+        return {0, 0, 0};
+    }
+
+    /// <summary>
+    /// Evaluates the three cartesian matrix elements of the molecular magnetic dipole moment operator
+    /// between two j-basis states "this" and "other" as &lt;this| \vec{\mu_{B,mol}} |other&gt;
+    /// </summary>
+    /// <param name="other"></param>
+    /// <returns>&lt;this| \vec{\mu_{B,mol}} |other&gt;</returns>
+    std::array<dcomplex, 3> jf_basis_vec::molec_mdm(jf_basis_vec other) {
+        return {0, 0, 0};
+    }
+
+    /// <summary>
+    /// Evaluates the dot product of the electron spin with the internuclear axis.
+    /// The "electron EDM"-like CP-violating energy shift is proportional to this operator.
+    /// Note that "electron EDM"-like includes unpolarized CP-violating nucleus-electron interactions.
+    /// </summary>
+    /// <param name="other">The other state</param>
+    /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
+    dcomplex jf_basis_vec::S_dot_ina(j_basis_vec other) {
+        const spin np = other.n;
+        const spin jp = other.j;
+        const spin f1p = other.f_1;
+        const spin fp = other.f;
+        const spin m_fp = other.m_f;
+
+        constexpr spin i = half;
+        constexpr spin s = half;
+        constexpr spin ip = half;
+        constexpr spin sp = half;
+        
+        // TODO implement with correct forms
+        // \vec{S}\cdot\vec{d} is a scalar operator and conserves j
+        if (f != fp || m_f != m_fp || j != jp) {
+            return 0;
+        }
+        
+        dcomplex prf = constexpr_sqrt(s*(s+1)*(2*s+1)) * xi(n, np) * xi(j, jp) * xi(f, fp) / sqrt(2*jp+1);
+        dcomplex phase = parity(1 - m_f);
+        dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
+        dcomplex f6j = w6j(f, 1, fp, jp, i, j) * w6j(n, sp, j, s, n, 1);
+        
+        return prf * phase * f3j * f6j;
+    }
+
+    /// <summary>
+    /// Evaluates the dot product of the heavy nuclear spin with the internuclear axis.
+    /// The CP-violating "NSM"-like energy shift induced by 225Ra is proportional to this operator.
+    /// Note that "NSM"-like includes spin-polarized CP-violating nucleus-electron interactions.
+    /// </summary>
+    /// <param name="other">The other state</param>
+    /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
+    dcomplex jf_basis_vec::I1_dot_ina(jf_basis_vec other) {
+        const spin np = other.n;
+        const spin jp = other.j;
+        const spin f1p = other.f1;
+        const spin fp = other.f;
+        const spin m_fp = other.m_f;
+
+        constexpr spin i = half;
+        constexpr spin s = half;
+        constexpr spin ip = half;
+        constexpr spin sp = half;
+        
+        // TODO implement with correct forms
+        // \vec{S}\cdot\vec{d} is a scalar operator and conserves j
+        if (f != fp || m_f != m_fp || j != jp) {
+            return 0;
+        }
+        
+        dcomplex prf = constexpr_sqrt(s*(s+1)*(2*s+1)) * xi(n, np) * xi(j, jp) * xi(f, fp) / sqrt(2*jp+1);
+        dcomplex phase = parity(1 - m_f);
+        dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
+        dcomplex f6j = w6j(f, 1, fp, jp, i, j) * w6j(n, sp, j, s, n, 1);
+        
+        return prf * phase * f3j * f6j;
+    }
+
+    /// <summary>
+    /// Evaluates the dot product of the light nuclear spin with the internuclear axis.
+    /// The CP-violating "NSM"-like energy shift induced by 19F is proportional to this operator.
+    /// Note that "NSM"-like includes spin-polarized CP-violating nucleus-electron interactions.
+    /// </summary>
+    /// <param name="other">The other state</param>
+    /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
+    dcomplex jf_basis_vec::I2_dot_ina(jf_basis_vec other) {
+        const spin np = other.n;
+        const spin jp = other.j;
+        const spin f1p = other.f1;
+        const spin fp = other.f;
+        const spin m_fp = other.m_f;
+
+        constexpr spin i = half;
+        constexpr spin s = half;
+        constexpr spin ip = half;
+        constexpr spin sp = half;
+        
+        // TODO implement with correct forms
+        // \vec{S}\cdot\vec{d} is a scalar operator and conserves j
+        if (f != fp || m_f != m_fp || j != jp) {
+            return 0;
+        }
+        
+        dcomplex prf = constexpr_sqrt(s*(s+1)*(2*s+1)) * xi(n, np) * xi(j, jp) * xi(f, fp) / sqrt(2*jp+1);
+        dcomplex phase = parity(1 - m_f);
+        dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
+        dcomplex f6j = w6j(f, 1, fp, jp, i, j) * w6j(n, sp, j, s, n, 1);
+        
+        return prf * phase * f3j * f6j;
+    }
 };
 
 std::ostream& operator<<(std::ostream& os, jf_basis_vec& v) {
