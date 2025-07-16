@@ -56,6 +56,7 @@ class aef_run(object):
         self.log_path = os.path.join(self.path, 'out.log')
 
         self.valid = self.check_valid()
+        self.uses_molsys = None # unknown
         self.calc_type = ""
         self.dev_en = False
         self.dev_K = math.nan
@@ -86,11 +87,20 @@ class aef_run(object):
     def parse_log(self):
         f = open(self.log_path, 'r')
         found_param_line = False
+        # process first line
+        if True:
+            line = f.readline()
+            molsys_search = "MolecularSystem enhanced"
+            self.uses_molsys = molsys_search in line
+            use_str = "does" if self.uses_molsys else "does not"
+            print(f"Run {self.run} {use_str} use aef::MolecularSystem")
+
         for line in f:
             n_search = "nmax is"
             e_search = "E_z is" # externally applied
             k_search = "K is" # devonshire coupling constant named K, look for enabled
             Emax_search = "Electric field strength is"
+            calc_search = "calculator is"
             if n_search in line and k_search in line:
                 print(f"Found parameter line \"{line}\"")
 
@@ -102,6 +112,10 @@ class aef_run(object):
 
                 ldx = line.rfind(k_search) + len(k_search)
                 self.dev_K = float(line[ldx+1:].split(' ')[0])
+
+                if calc_search in line:
+                    assert(self.uses_molsys)
+                    self.calc_type = get_ssv_val(line, calc_search, str)
             
                 tdx = line.find('(', ldx) + 1
                 ena_text = 'enabled'
@@ -187,6 +201,12 @@ def find_runs(scandir):
     return runlist
 
 
-
+if __name__ == '__main__':
+    # test code
+    rundir = '.'
+    if len(sys.argv) > 1:
+        rundir = sys.argv[1]
+    run = aef_run(rundir)
+    
 
 
