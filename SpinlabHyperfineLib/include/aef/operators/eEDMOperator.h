@@ -25,7 +25,7 @@
 #include "IOperator.h"
 #include <aef/MolecularSystem.h>
 namespace aef::operators {
-    class eEDMOperator : IOperator {
+    class eEDMOperator : public IOperator {
         OperatorInfo info;
         aef::MolecularSystem& sys;
     public:

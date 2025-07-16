@@ -214,13 +214,13 @@ int main(int argc, char **argv) {
     prev_time = log_time_at_point("Creating perturbation theory framework", start_time, prev_time);
     auto& pfw = sys;
     prev_time = log_time_at_point("Constructing eEDM-like operator", start_time, prev_time);
-    pfw.addOperator("eEDM", new aef::operators::eEDMOperator());
+    pfw.addOperator("eEDM", new aef::operators::eEDMOperator(sys));
     prev_time = log_time_at_point("Constructing 19F NSM-like operator", start_time, prev_time);
-    pfw.addOperator("NSM", new aef::operators::NSMOperator());
+    pfw.addOperator("NSM", new aef::operators::NSMOperator(sys, false));
     prev_time = log_time_at_point("Constructing Z-axis Stark operator", start_time, prev_time);
-    pfw.addOperator("StarkZ", new aef::operators::StarkOperator({0.0,0.0,1.0}));
+    pfw.addOperator("StarkZ", new aef::operators::StarkOperator(sys, {0.0,0.0,1.0}));
     prev_time = log_time_at_point("Constructing Z-xis Zeeman operator", start_time, prev_time);
-    pfw.addOperator("ZeemanZ", new aef::operators::ZeemanOperator({0, 0, 1.0}));
+    pfw.addOperator("ZeemanZ", new aef::operators::ZeemanOperator(sys, {0, 0, 1.0}));
 
     prev_time = log_time_at_point("Evaluating operators", start_time, prev_time);
     pfw.evaluate();

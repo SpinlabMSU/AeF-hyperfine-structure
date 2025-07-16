@@ -23,7 +23,51 @@
 
 #include <aef/aef.h>
 #include "IOperator.h"
+#include <aef/MolecularSystem.h>
+
 namespace aef::operators {
+
+    enum class Direction {
+        X,
+        Y,
+        Z,
+        INVALID
+    };
+    inline const char* dirString(Direction dir) {
+        if (dir == Direction::X) return "X";
+        if (dir == Direction::Y) return "Y";
+        if (dir == Direction::Z) return "Z";
+        else return "Invalid Direction";
+    }
+    class StarkOperator : public IOperator {
+        aef::MolecularSystem &sys;
+        OperatorInfo info;
+        double E;
+        Direction dir;
+        union {
+            std::array<double, 3> E_vec;
+            struct {
+                double E_x;
+                double E_y;
+                double E_z;
+            };
+        };
+    public:
+        StarkOperator(aef::MolecularSystem& sys_, double E_, Direction dir_);
+        StarkOperator(aef::MolecularSystem& sys_, std::array<double, 3> E_vec_);
+        ~StarkOperator();
+
+        virtual dcomplex matrixElement(size_t k1, size_t k2);
+        virtual void fillMatrix(Eigen::SparseMatrix<dcomplex>& matrix);
+        virtual void fillMatrix(Eigen::MatrixXcd& matrix);
+
+        virtual OperatorInfo* getInfo();
+    };
+};
+
+
+
+namespace aef::operators::ket {
 
     enum class Direction {
             X,

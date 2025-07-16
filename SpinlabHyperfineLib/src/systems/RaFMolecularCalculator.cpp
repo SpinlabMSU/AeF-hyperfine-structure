@@ -155,6 +155,47 @@ void aef::RaFMolecularCalculator::calculate_d11(Eigen::MatrixXcd& H) {
     }
 }
 
+std::array<dcomplex, 3> aef::RaFMolecularCalculator::molec_edm(int kdx1, int kdx2) {
+    return basis[kdx1].molec_edm(basis[kdx2]);
+}
+
+std::array<dcomplex, 3> aef::RaFMolecularCalculator::molec_mdm(int kdx1, int kdx2) {
+    return basis[kdx1].molec_mdm(basis[kdx2]);
+}
+
+void aef::RaFMolecularCalculator::calculate_S_dot_ina(Eigen::MatrixXcd& A) {
+    A.setZero();
+    for (int jdx = 0; jdx < nBasisElts; jdx++) {
+        for (int idx = 0; idx <= jdx; idx++) {
+            dcomplex melt = basis[idx].S_dot_ina(basis[jdx]);
+            A(idx, jdx) = melt;
+            A(jdx, idx) = std::conj(melt);
+        }
+    }
+}
+
+void aef::RaFMolecularCalculator::calculate_I1_dot_ina(Eigen::MatrixXcd& A) {
+    A.setZero();
+    for (int jdx = 0; jdx < nBasisElts; jdx++) {
+        for (int idx = 0; idx <= jdx; idx++) {
+            dcomplex melt = basis[idx].I1_dot_ina(basis[jdx]);
+            A(idx, jdx) = melt;
+            A(jdx, idx) = std::conj(melt);
+        }
+    }
+}
+
+void aef::RaFMolecularCalculator::calculate_I2_dot_ina(Eigen::MatrixXcd& A) {
+    A.setZero();
+    for (int jdx = 0; jdx < nBasisElts; jdx++) {
+        for (int idx = 0; idx <= jdx; idx++) {
+            dcomplex melt = basis[idx].I2_dot_ina(basis[jdx]);
+            A(idx, jdx) = melt;
+            A(jdx, idx) = std::conj(melt);
+        }
+    }
+}
+
 void aef::RaFMolecularCalculator::load(std::istream& in) {
     return;
 }

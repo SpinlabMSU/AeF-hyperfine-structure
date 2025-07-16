@@ -173,3 +173,39 @@ int aef::BaFMolecularCalculator::get_lowest_rotational_state_size() {
 std::vector<universal_diatomic_basis_vec> aef::BaFMolecularCalculator::get_lowest_states() {
     return lowest_states;
 }
+
+std::array<dcomplex, 3> aef::BaFMolecularCalculator::molec_edm(int kdx1, int kdx2) {
+    return basis[kdx1].molec_edm(basis[kdx2]);
+}
+
+std::array<dcomplex, 3> aef::BaFMolecularCalculator::molec_mdm(int kdx1, int kdx2) {
+    return basis[kdx1].molec_mdm(basis[kdx2]);
+}
+
+void aef::BaFMolecularCalculator::calculate_S_dot_ina(Eigen::MatrixXcd& A) {
+    A.setZero();
+    for (int jdx = 0; jdx < nBasisElts; jdx++) {
+        for (int idx = 0; idx <= jdx; idx++) {
+            dcomplex melt = basis[idx].S_dot_ina(basis[jdx]);
+            A(idx, jdx) = melt;
+            A(jdx, idx) = std::conj(melt);
+        }
+    }
+}
+
+void aef::BaFMolecularCalculator::calculate_I1_dot_ina(Eigen::MatrixXcd& A) {
+    // I1 corresponds to the heavy nucleus, which has spin zero
+    A.setZero();
+}
+
+void aef::BaFMolecularCalculator::calculate_I2_dot_ina(Eigen::MatrixXcd& A) {
+    // the light nucleus is associated with spin I_2, technically.
+    A.setZero();
+    for (int jdx = 0; jdx < nBasisElts; jdx++) {
+        for (int idx = 0; idx <= jdx; idx++) {
+            dcomplex melt = basis[idx].I_dot_ina(basis[jdx]);
+            A(idx, jdx) = melt;
+            A(jdx, idx) = std::conj(melt);
+        }
+    }
+}

@@ -15,23 +15,26 @@ namespace aef::operators {
 
     dcomplex aef::operators::eEDMOperator::matrixElement(size_t kdx1, size_t kdx2) {
         //auto k1 = sys.get_calc()->
-        return 0;//return k1.S_dot_ina(k2);
+        return nan;//return k1.S_dot_ina(k2); // unsupported
     }
 
-    void aef::operators::eEDMOperator::fillMatrix(Eigen::SparseMatrix<dcomplex>& matrix) {}
+    void aef::operators::eEDMOperator::fillMatrix(Eigen::SparseMatrix<dcomplex>& matrix) {
+        matrix.setZero();
+        constexpr double eps = 1e-8;
+        constexpr double eps_sq = eps * eps;
+        for (int jdx = 0; jdx < matrix.cols(); jdx++) {
+            for (int idx = 0; idx < matrix.rows(); idx++) {
+                dcomplex melt = matrixElement(idx, jdx);
+                // only insert significantly nonzero elements to aid in preserving sparsity
+                if (std::norm(melt) > eps_sq) {
+                    matrix.coeffRef(idx, jdx) = matrixElement(idx, jdx);
+                }
+            }
+        }
+    }
 
     void aef::operators::eEDMOperator::fillMatrix(Eigen::MatrixXcd& matrix) {
-        /*// j first because 
-        for (int j = 0; j < matrix.cols(); j++) {
-            basis_ket kj = basis_ket::from_index(j);
-            for (int i = 0; i < matrix.rows(); i++) {
-                basis_ket ki = basis_ket::from_index(i);
-                dcomplex elt = 0;
-                using namespace std::complex_literals;
-                constexpr double inv_sqrt2 = std::numbers::sqrt2 / 2.0;
-                matrix(i, j) = ki.S_dot_ina(kj);//TODO implement
-            }
-        }*/
+        sys.get_calc()->calculate_S_dot_ina(matrix);
     }
 
     aef::operators::OperatorInfo* aef::operators::eEDMOperator::getInfo() {

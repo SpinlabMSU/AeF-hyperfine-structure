@@ -39,6 +39,12 @@ namespace aef {
         virtual void calculate_d10(Eigen::MatrixXcd& H);
         virtual void calculate_d11(Eigen::MatrixXcd& H);
 
+        virtual std::array<dcomplex, 3> molec_edm(int kdx1, int kdx2);
+        virtual std::array<dcomplex, 3> molec_mdm(int kdx1, int kdx2);
+        virtual void calculate_S_dot_ina(Eigen::MatrixXcd& A);
+        virtual void calculate_I1_dot_ina(Eigen::MatrixXcd& A);
+        virtual void calculate_I2_dot_ina(Eigen::MatrixXcd& A);
+
         // IO
         virtual void load(std::istream& in);
         virtual void save(std::ostream& out);

@@ -23,8 +23,26 @@
 
 #include <aef/aef.h>
 #include "IOperator.h"
+#include <aef/MolecularSystem.h>
 
 namespace aef::operators {
+    class NSMOperator : public IOperator {
+        OperatorInfo info;
+        aef::MolecularSystem& sys;
+        bool on_heavy_nucleus;
+    public:
+        NSMOperator(aef::MolecularSystem& sys, bool on_heavy_nucleus);
+        ~NSMOperator();
+
+        virtual dcomplex matrixElement(size_t kdx1, size_t kdx2);
+        virtual void fillMatrix(Eigen::SparseMatrix<dcomplex>& matrix);
+        virtual void fillMatrix(Eigen::MatrixXcd& matrix);
+
+        virtual OperatorInfo* getInfo();
+    };
+};
+
+namespace aef::operators::ket {
     class NSMOperator : public IKetOperator<aef::j_basis_vec> {
         OperatorInfo info;
     public:

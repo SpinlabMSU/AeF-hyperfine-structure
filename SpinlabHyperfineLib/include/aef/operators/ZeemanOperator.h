@@ -23,8 +23,36 @@
 
 #include <aef/aef.h>
 #include "IOperator.h"
+#include <aef/MolecularSystem.h>
+
 
 namespace aef::operators {
+    class ZeemanOperator : public IOperator {
+        aef::MolecularSystem &sys;
+        OperatorInfo info;
+        double B;
+        union {
+            std::array<double, 3> B_vec;
+            struct {
+                double B_x;
+                double B_y;
+                double B_z;
+            };
+        };
+    public:
+        ZeemanOperator(aef::MolecularSystem &sys_,  double B = 1.0);
+        ZeemanOperator(aef::MolecularSystem &sys_, std::array<double, 3> dir);
+        ~ZeemanOperator();
+
+        virtual dcomplex matrixElement(size_t kdx1, size_t kdx2);
+        virtual void fillMatrix(Eigen::SparseMatrix<dcomplex>& matrix);
+        virtual void fillMatrix(Eigen::MatrixXcd& matrix);
+
+        virtual OperatorInfo* getInfo();
+    };
+};
+
+namespace aef::operators::ket {
     class ZeemanOperator : public IKetOperator<aef::j_basis_vec> {
         OperatorInfo info;
         double B;

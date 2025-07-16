@@ -440,10 +440,10 @@ namespace aef {
     /// </summary>
     /// <param name="other">The other state</param>
     /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
-    dcomplex jf_basis_vec::S_dot_ina(j_basis_vec other) {
+    dcomplex jf_basis_vec::S_dot_ina(jf_basis_vec other) {
         const spin np = other.n;
         const spin jp = other.j;
-        const spin f1p = other.f_1;
+        const spin f1p = other.f1;
         const spin fp = other.f;
         const spin m_fp = other.m_f;
 

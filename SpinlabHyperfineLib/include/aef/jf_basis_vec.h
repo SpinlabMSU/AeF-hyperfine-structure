@@ -289,7 +289,7 @@ namespace aef {
         /// </summary>
         /// <param name="other">The other state</param>
         /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
-        dcomplex S_dot_ina(j_basis_vec other);
+        dcomplex S_dot_ina(jf_basis_vec other);
 
         /// <summary>
         /// Evaluates the dot product of the heavy nuclear spin with the internuclear axis.
