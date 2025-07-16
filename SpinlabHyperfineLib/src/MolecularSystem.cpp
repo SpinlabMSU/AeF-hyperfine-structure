@@ -47,6 +47,8 @@ namespace aef {
         dkq_init = false;
         enableDev = 0;
         nmax = -1;
+        diagonalized = false;
+        nBasisElts = 0;
     }
 
     void MolecularSystem::set_nmax(spin nmax_) {

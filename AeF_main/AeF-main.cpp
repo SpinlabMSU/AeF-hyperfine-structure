@@ -448,18 +448,17 @@ int main(int argc, char **argv) {
     oEs << std::endl;
 
     aef::universal_diatomic_basis_vec gnd = pCalc->get_basis_ket(0);
-    aef::universal_diatomic_basis_vec f00 = gnd;
-    int32_t if00 = pCalc->get_index(f00);
-    // n = 0, j = 0.5, f = 1 hyperfine triplet
-    aef::universal_diatomic_basis_vec f1t(0, 0.5, 1, -1);
-    int32_t if1t = pCalc->get_index(f1t);
-    aef::universal_diatomic_basis_vec f10(0, 0.5, 1, 0);
-    int32_t if10 = pCalc->get_index(f10);
-    aef::universal_diatomic_basis_vec f11(0, 0.5, 1, 1);
-    int32_t if11 = pCalc->get_index(f11);
 
-    std::cout << "if1t=" << if1t << " if10=" << if10 << " if11=" << if11 << std::endl;
-    std::cout << fmt::format("f00={}; f1t={}, f10={}, f11={}", f00, f1t, f10, f11) << std::endl;
+
+    std::vector<aef::universal_diatomic_basis_vec> lowest_states = pCalc->get_lowest_states();
+    const int nLowestStates = lowest_states.size();
+    std::vector<int> lowest_idxs;
+    std::transform(lowest_states.begin(), lowest_states.end(), lowest_idxs.begin(),
+        [pCalc](aef::universal_diatomic_basis_vec b) {return pCalc->get_index(b); });
+
+    for (int idx = 0; idx < nLowestStates; idx++) {
+        std::cout << fmt::format("Lowest state #{}: ket #{}, {}", idx, lowest_idxs[idx], lowest_states[idx]) << std::endl;
+    }
 
     // oStk << "E-field (V/cm), Stark-shifted Energy of " << gnd.ket_string() << "(MHz)";
     oStk << "E-field (V/cm), dE_gnd" << ", dE_f1t, dE_f10, dE_f11" << std::endl;
@@ -473,10 +472,9 @@ int main(int argc, char **argv) {
     typedef dcomplex etype;
 #define EVAL(val) val
 #endif
-    std::vector<etype> E0s(nStarkIterations);
-    std::vector<etype> E1s(nStarkIterations);
-    std::vector<etype> E2s(nStarkIterations);
-    std::vector<etype> E3s(nStarkIterations);
+
+    Eigen::MatrixXcd energies(nStarkIterations, nLowestStates);
+
 #ifndef USE_DEVONSHIRE
     // note: devonshire potential doesn't conserve m_f
     for (int idx = 0; idx < sys.nBasisElts; idx++) {
@@ -513,6 +511,11 @@ int main(int argc, char **argv) {
 
     // Stark loop
     prev_time = log_time_at_point("About to start stark loop", start_time, prev_time);
+
+    std::vector<double> max_devs_vec(nLowestStates, -std::numeric_limits<double>::infinity());
+    std::vector<int> max_devdx_vec(nLowestStates, -1);
+
+
     double max_dev_mf_f00 = -std::numeric_limits<double>::infinity();
     int idx_max_mf_f00 = -1;
     double max_dev_mf_f10 = -std::numeric_limits<double>::infinity();
@@ -557,53 +560,49 @@ int main(int argc, char **argv) {
         double E = std::real(sys.Es[gnd_idx]);
 
         // energy differences for f = 1 triplet
-        int32_t _if1t = closest_state(sys, if1t, _if00);
-        double dE_f1t = std::real(sys.Es[_if1t]) - E;
-        int32_t _if10 = closest_state(sys, if10, _if00);
-        double dE_f10 = std::real(sys.Es[_if10]) - E;
-        int32_t _if11 = closest_state(sys, if11, _if00);
-        double dE_f11 = std::real(sys.Es[_if11]) - E;
+        std::vector<double> dEs(nLowestStates);
+        std::vector<int> idxs;
 
-        // measure deviation of m_f for each n=0,f=0 and n=0,f=1 state
-#define DEC_MDEV(idx) aef::universal_diatomic_basis_vec jb_f##idx = f##idx
-        DEC_MDEV(00);
-        DEC_MDEV(10);
-        DEC_MDEV(11);
-        DEC_MDEV(1t);
-#define MDEV(idx)                                                              \
-  do {                                                                         \
-    double dev_mf_##idx =                                                      \
-        std::abs(expectation_values(sys, _i##idx).m_f - jb_##idx.m_f);           \
-    if (std::abs(dev_mf_##idx) > max_dev_mf_##idx) {                           \
-      max_dev_mf_##idx = dev_mf_##idx;                                         \
-      idx_max_mf_##idx = fdx;                                                  \
-    }                                                                          \
-  } while (0)
+        // measure deviation of m_f for each of the "lowest" states
+        for (int sdx = 0; sdx < nLowestStates; sdx++) {
+            aef::universal_diatomic_basis_vec v = lowest_states[sdx];
+            idxs[sdx] = closest_state(sys, lowest_idxs[sdx], _if00);
+            double dev_mf = std::abs(expectation_values(sys, idxs[sdx]).m_f - v.m_f);
 
-        MDEV(f00);
-        MDEV(f10);
-        MDEV(f1t);
-        MDEV(f11);
-#undef MDEV
+            if (dev_mf > max_devs_vec[sdx]) {
+                max_devs_vec[sdx] = dev_mf;
+                max_devdx_vec[sdx] = fdx;
+            }
+
+            dEs[sdx] = std::real(sys.Es[idxs[sdx]]) - E;
+        }
 
         double stark_scale = Ez_V_cm * hfs_constants::mu_e * unit_conversion::MHz_D_per_V_cm;
 
         std::cout << fmt::format("Electric field strength is {} V/cm, stark scale is {} MHz", Ez_V_cm, stark_scale) << std::endl;
         std::cout << fmt::format("Gnd state expectation values: {}", expectation_values(sys, gnd_idx)) << std::endl;
-        std::cout << fmt::format("f1t state expectation values: {}", expectation_values(sys, _if1t)) << std::endl;
-        std::cout << fmt::format("f10 state expectation values: {}", expectation_values(sys, _if10)) << std::endl;
-        std::cout << fmt::format("f11 state expectation values: {}", expectation_values(sys, _if11)) << std::endl;
+
+        for (int sdx = 0; sdx < nLowestStates; sdx++) {
+            std::cout << fmt::format("#{} state expectation values: {}", sdx, expectation_values(sys, idxs[sdx])) << std::endl;
+        }
 
         std::cout << fmt::format("Closest Energy-estate to 0-E-field gnd state is "
             "{}, with energy {}", gnd_idx, E) << std::endl;
-        oStk << Ez_V_cm << "," << E << "," << dE_f1t << "," << dE_f10 << "," << dE_f11 << std::endl;
-        std::cout << stark_scale << "," << E << "," << dE_f1t << "," << dE_f10 << "," << dE_f11 << std::endl;
+        // write energy differences to stark log and to standard out
+        {
+            oStk << Ez_V_cm << "," << E;
+            std::cout << stark_scale << "," << E;
+            // need to start at 1 to because the lowest state is accounted for by E
+            for (int sdx = 1; sdx < nLowestStates; sdx++) {
+                oStk << "," << dEs[sdx];
+                std::cout << "," << dEs[sdx];
+            }
+        }
 
-        // collect energy of lowest three states
-        E0s[fdx] = EVAL(sys.Es[0]);
-        E1s[fdx] = EVAL(sys.Es[1]);
-        E2s[fdx] = EVAL(sys.Es[2]);
-        E3s[fdx] = EVAL(sys.Es[3]);
+        // collect energy of the lowest group of states
+        for (int sdx = 0; sdx < nLowestStates; sdx++) {
+            energies(fdx, sdx) = EVAL(sys.Es[sdx]);
+        }
 
         auto dev_out_fname = fmt::format("info_Ez_{}.csv", std::lround(Ez_V_cm));
         std::ofstream dout(devpath / dev_out_fname);
@@ -615,10 +614,20 @@ int main(int argc, char **argv) {
     }
 
 #if 1
-    std::cout << "E0, E1, E2, E3" << std::endl;
+    { // print header line
+        const char* sep = "";
+        for (int sdx = 0; sdx < nLowestStates; sdx++) {
+            std::cout << fmt::format("{}E{}", sep, sdx);
+            sep = ", ";
+        }
+        std::cout << std::endl;
+    }
     for (int fdx = 0; fdx < 101; fdx++) {
-        std::cout << E0s[fdx] << ", " << E1s[fdx] << ", " << E2s[fdx] << ", "
-            << E3s[fdx] << std::endl;
+        const char* sep = "";
+        for (int sdx = 0; sdx < nLowestStates; sdx++) {
+            std::cout << fmt::format("{}{}", sep, energies(fdx, sdx));
+            sep = ", ";
+        }
     }
 #endif
 
@@ -626,16 +635,10 @@ int main(int argc, char **argv) {
     prev_time = log_time_at_point("Completed stark loop", start_time, prev_time);
     std::cout << fmt::format("Explicit m_f degeneracy breaking coeff is {:.4} Hz",
         hfs_constants::e_mf_break * 1E6) << std::endl;
-    std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
-        f00, max_dev_mf_f00, idx_max_mf_f00) << std::endl;
-    std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
-        f10, max_dev_mf_f10, idx_max_mf_f10) << std::endl;
-    std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
-        f1t, max_dev_mf_f1t, idx_max_mf_f1t) << std::endl;
-    std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
-        f11, max_dev_mf_f11, idx_max_mf_f11) << std::endl;
-
-    // diagonalize
+    for (int sdx = 0; sdx < nLowestStates; sdx++) {
+        std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
+            lowest_states[sdx], max_devs_vec[sdx], max_devdx_vec[sdx]) << std::endl;
+    }
 
     return 0;
 }

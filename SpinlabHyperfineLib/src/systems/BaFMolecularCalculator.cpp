@@ -33,6 +33,13 @@ void aef::BaFMolecularCalculator::set_nmax(spin nmax_) {
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         basis.emplace_back(j_basis_vec::from_index(idx));
     }
+    using aef::half;
+    lowest_states = {
+        aef::universal_diatomic_basis_vec(0, half, 0,  0),
+        aef::universal_diatomic_basis_vec(0, half, 1, -1),
+        aef::universal_diatomic_basis_vec(0, half, 1,  0),
+        aef::universal_diatomic_basis_vec(0, half, 1, +1),
+    };
 }
 
 #include <numeric>
@@ -161,4 +168,8 @@ const char* aef::BaFMolecularCalculator::get_calc_type() {
 
 int aef::BaFMolecularCalculator::get_lowest_rotational_state_size() {
     return aef::j_basis_vec::index_of_n(1);
+}
+
+std::vector<universal_diatomic_basis_vec> aef::BaFMolecularCalculator::get_lowest_states() {
+    return lowest_states;
 }

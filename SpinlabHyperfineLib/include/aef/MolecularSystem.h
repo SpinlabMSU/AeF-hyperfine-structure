@@ -148,9 +148,12 @@ namespace aef {
         // operators
         virtual void calculate_F_z(Eigen::MatrixXcd& F_z) = 0;
         virtual ResultCode calculate_dkq(Eigen::MatrixXcd& d, int q) = 0;
-        virtual void calculate_d1t(Eigen::MatrixXcd& H) = 0;
-        virtual void calculate_d10(Eigen::MatrixXcd& H) = 0;
-        virtual void calculate_d11(Eigen::MatrixXcd& H) = 0;
+        virtual void calculate_d1t(Eigen::MatrixXcd& A) = 0;
+        virtual void calculate_d10(Eigen::MatrixXcd& A) = 0;
+        virtual void calculate_d11(Eigen::MatrixXcd& A) = 0;
+        virtual void calculate_S_dot_ina(Eigen::MatrixXcd&A) = 0;
+        virtual void calculate_I_dot_ina(Eigen::MatrixXcd& A) = 0;
+        virtual void calculate_Zeeman(Eigen::MatrixXcd& A) = 0;
 
         // load/save any state
         virtual void load(std::istream& in) = 0;
@@ -159,8 +162,9 @@ namespace aef {
 
         virtual int get_num_orientations() = 0;
         virtual int get_lowest_rotational_state_size() = 0;
+        virtual std::vector<universal_diatomic_basis_vec> get_lowest_states() = 0;
         
-
+        //virtual dcomplex calc_mat_elt(char* name, int kdx1, int kdx2) = 0;
     public:
         // convenience function for use as a molcalcmaker
         template<class T> static IMolecularCalculator* createInstance() {

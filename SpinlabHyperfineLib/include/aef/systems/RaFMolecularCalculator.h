@@ -6,6 +6,7 @@ namespace aef {
     private:
         spin nmax;
         size_t nBasisElts;
+        std::vector<aef::universal_diatomic_basis_vec> lowest_states;
     public:
         std::vector<jf_basis_vec> basis;
         RaFMolecularCalculator();
@@ -48,6 +49,7 @@ namespace aef {
             return 6;
         }
         virtual int get_lowest_rotational_state_size();
+        virtual std::vector<universal_diatomic_basis_vec> get_lowest_states();
     };
 
 }
