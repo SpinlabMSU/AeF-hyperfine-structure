@@ -253,6 +253,7 @@ int main(int argc, char **argv) {
     size_t nStarkIterations = 101;
     double min_E_z = 0;
     double max_E_z = calc_E_z;
+    std::string mol_calc_type = aef::RaFMolecularCalculator::calc_type_str;
 
     // todo parse args
     // args should include: E_max, nmax, enable_debug_log
@@ -266,7 +267,8 @@ int main(int argc, char **argv) {
         ("d,enable_debug", "Enable debug mode", cxxopts::value<bool>()->default_value("false"))
         ("print_extras", "Print extra information", cxxopts::value<bool>()->default_value("true"))
         ("l,load", "Load molecular system operators from file", cxxopts::value<std::string>())
-        ("t,stark_iterations", "Number of iterations to perform the stark loop for", cxxopts::value<size_t>());
+        ("t,stark_iterations", "Number of iterations to perform the stark loop for", cxxopts::value<size_t>())
+        ("s,sys", "Molecular system type to use", cxxopts::value<std::string>());
 
     auto result = options.parse(argc, argv);
     
@@ -301,6 +303,10 @@ int main(int argc, char **argv) {
 
     if (result.count("E_min")) {
         min_E_z = result["E_min"].as<double>();
+    }
+
+    if (result.count("sys")) {
+        mol_calc_type = result["sys"].as<std::string>();
     }
 
     // create info log
@@ -353,7 +359,13 @@ int main(int argc, char **argv) {
     {
         // TODO initialize molecular calculator
         //pCalc = new aef::BaFMolecularCalculator(nmax);
-        pCalc = new aef::RaFMolecularCalculator(nmax);
+        pCalc = aef::IMolecularCalculator::makeCalculatorOfType(mol_calc_type); //new aef::RaFMolecularCalculator(nmax);
+        if (!pCalc) {
+            std::cerr << fmt::format("Error: calculator type \"{}\" does not exist", mol_calc_type) << std::endl;
+            exit(-98);
+        } else {
+            std::clog << fmt::format("Using calculator type \"{}\", actual type name \"{}\"", mol_calc_type, pCalc->get_calc_type());
+        }
     }
 
     aef::MolecularSystem sys(pCalc, nmax, calc_E_z, K);
@@ -452,7 +464,7 @@ int main(int argc, char **argv) {
 
     std::vector<aef::universal_diatomic_basis_vec> lowest_states = pCalc->get_lowest_states();
     const int nLowestStates = lowest_states.size();
-    std::vector<int> lowest_idxs;
+    std::vector<int> lowest_idxs(nLowestStates);
     std::transform(lowest_states.begin(), lowest_states.end(), lowest_idxs.begin(),
         [pCalc](aef::universal_diatomic_basis_vec b) {return pCalc->get_index(b); });
 
@@ -515,16 +527,6 @@ int main(int argc, char **argv) {
     std::vector<double> max_devs_vec(nLowestStates, -std::numeric_limits<double>::infinity());
     std::vector<int> max_devdx_vec(nLowestStates, -1);
 
-
-    double max_dev_mf_f00 = -std::numeric_limits<double>::infinity();
-    int idx_max_mf_f00 = -1;
-    double max_dev_mf_f10 = -std::numeric_limits<double>::infinity();
-    int idx_max_mf_f10 = -1;
-    double max_dev_mf_f1t = -std::numeric_limits<double>::infinity();
-    int idx_max_mf_f1t = -1;
-    double max_dev_mf_f11 = -std::numeric_limits<double>::infinity();
-    int idx_max_mf_f11 = -1;
-
     const double scale_Ez = max_E_z - min_E_z;
     const double scale_Ez_mhz = scale_Ez * unit_conversion::MHz_D_per_V_cm;
     const double offset_Ez_mhz = min_E_z;
@@ -561,7 +563,7 @@ int main(int argc, char **argv) {
 
         // energy differences for f = 1 triplet
         std::vector<double> dEs(nLowestStates);
-        std::vector<int> idxs;
+        std::vector<int> idxs(nLowestStates);
 
         // measure deviation of m_f for each of the "lowest" states
         for (int sdx = 0; sdx < nLowestStates; sdx++) {

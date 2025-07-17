@@ -8,6 +8,7 @@ namespace aef {
         size_t nBasisElts;
         std::vector<universal_diatomic_basis_vec> lowest_states;
     public:
+        static constexpr char calc_type_str[] = "138BaF,2Sigma+,I1=half,I2=0";
         std::vector<j_basis_vec> basis;
         BaFMolecularCalculator();
         BaFMolecularCalculator(spin nmax_);

@@ -163,7 +163,7 @@ void aef::BaFMolecularCalculator::save(std::ostream& out) {
 }
 
 const char* aef::BaFMolecularCalculator::get_calc_type() {
-    return "138BaF,2Sigma+,I1=half,I2=0";
+    return calc_type_str;
 }
 
 int aef::BaFMolecularCalculator::get_lowest_rotational_state_size() {

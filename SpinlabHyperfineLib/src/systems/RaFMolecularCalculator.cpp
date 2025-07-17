@@ -205,7 +205,7 @@ void aef::RaFMolecularCalculator::save(std::ostream& out) {
 }
 
 const char* aef::RaFMolecularCalculator::get_calc_type() {
-    return "225RaF,2Sigma+,I1=half,I2=half";
+    return calc_type_str;
 }
 
 int aef::RaFMolecularCalculator::get_lowest_rotational_state_size() {

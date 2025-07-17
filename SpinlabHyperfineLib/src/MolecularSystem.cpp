@@ -735,3 +735,30 @@ bool operator==(const universal_diatomic_basis_vec& v1, const universal_diatomic
 
     return true;
 }
+
+// register default molecular calculator types
+#include "aef/systems/BaFMolecularCalculator.h"
+#include "aef/systems/RaFMolecularCalculator.h"
+
+void aef::IMolecularCalculator::register_default_types() {
+    std::cerr << "Registering default molecular calculator types" << std::endl;
+    // default names
+    IMolecularCalculator::registerMolCalcType(aef::RaFMolecularCalculator::calc_type_str, IMolecularCalculator::createInstance<aef::RaFMolecularCalculator>);
+    IMolecularCalculator::registerMolCalcType(aef::BaFMolecularCalculator::calc_type_str, IMolecularCalculator::createInstance<aef::BaFMolecularCalculator>);
+
+    // aliases
+    IMolecularCalculator::registerMolCalcType("138BaF", IMolecularCalculator::createInstance<aef::BaFMolecularCalculator>);
+    IMolecularCalculator::registerMolCalcType("baf", IMolecularCalculator::createInstance<aef::BaFMolecularCalculator>);
+    IMolecularCalculator::registerMolCalcType("heavy_zero", IMolecularCalculator::createInstance<aef::BaFMolecularCalculator>);
+    IMolecularCalculator::registerMolCalcType("225RaF", IMolecularCalculator::createInstance<aef::RaFMolecularCalculator>);
+    IMolecularCalculator::registerMolCalcType("raf", IMolecularCalculator::createInstance<aef::RaFMolecularCalculator>);
+    IMolecularCalculator::registerMolCalcType("heavy_half", IMolecularCalculator::createInstance<aef::RaFMolecularCalculator>);
+
+}
+
+namespace {
+    bool init = []() {
+        aef::IMolecularCalculator::register_default_types();
+        return true;
+    }();
+}

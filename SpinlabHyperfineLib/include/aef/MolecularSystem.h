@@ -174,6 +174,7 @@ namespace aef {
         typedef IMolecularCalculator* (*pfnMolCalcMaker)();
         static void registerMolCalcType(std::string name, pfnMolCalcMaker ctor);
         static IMolecularCalculator* makeCalculatorOfType(std::string name);
+        static void register_default_types();
     };
 
 #include "io/molsys_io.h"
