@@ -28,7 +28,7 @@ namespace aef {
             offset += (int)(8 * n);
         }
         if (f1 > j) {
-            offset += (int)(4 * j); // guess
+            offset += (int)(4 * j);
         }
 
         if (f > f1) {
@@ -96,11 +96,11 @@ namespace aef {
         // stark scale in MHz
         const double scale = hfs_coeff::mu_e * E_z;
 
-        /// WARNING: f1 factors are currently complete guesses
-        dcomplex xi_factors = xi(f, fp) * xi(j, jp) * xi(n, np) * xi(f1, f1p);
+        // factors have been calculated in Nusgart Logbook Volume 8 pg 50 and pg 51
+        dcomplex xi_factors = xi(n, np) * xi(j, jp) * xi(f1, f1p) * xi(f, fp);
         dcomplex threej_factors = w3j(f, 1, fp, -m_f, 0, m_f) * w3j(n, 1, np, 0, 0, 0);
         dcomplex sixj_factors = w6j(f, 1, fp, f1p, half, f1) * w6j(f1, 1, f1p, jp, half, j) * w6j(j, 1, jp, np, half, n);
-        dcomplex phase = parity(1 - m_f);
+        dcomplex phase = parity(half - m_f);
         dcomplex angular = xi_factors * threej_factors * sixj_factors * phase;
         return scale * angular;
     }
@@ -130,30 +130,25 @@ namespace aef {
 
     // MDA operators
     dcomplex jf_basis_vec::d10(jf_basis_vec other) {
-        // WARNING: update this from H_St once the form is corrected
         const spin np = other.n;
         const spin jp = other.j;
         const spin f1p = other.f1;
         const spin fp = other.f;
         const spin m_fp = other.m_f;
         using namespace hfs_coeff;
-        /*
-        if (m_f != m_fp) {
-            return 0;
-        }
-        */
-        /// WARNING: f1 factors are currently complete guesses
-        dcomplex xi_factors = xi(f, fp) * xi(j, jp) * xi(n, np) * xi(f1, f1p);
-        // The difference between d1q is right here --|
-        // Change that factor to q for d1q            v
+        
+        // // factors have been calculated in Nusgart Logbook Volume 8 pg 50 and pg 51
+        dcomplex xi_factors = xi(f, fp) * xi(f1, f1p) * xi(j, jp) * xi(n, np);
+        // The difference between d1p is right here,--|
+        // change that factor to p for d1p as per the |
+        // Wigner-Eckhart theorem                     v
         dcomplex threej_factors = w3j(f, 1, fp, -m_f, 0, m_f) * w3j(n, 1, np, 0, 0, 0);
         dcomplex sixj_factors = w6j(f, 1, fp, f1p, half, f1) * w6j(f1, 1, f1p, jp, half, j) * w6j(j, 1, jp, np, half, n);
-        dcomplex phase = parity(1 - m_f);
+        dcomplex phase = parity(half - m_f);
         return xi_factors * threej_factors * sixj_factors * phase;
     }
 
     dcomplex jf_basis_vec::d11(jf_basis_vec other) {
-        // WARNING: update this from H_St once the form is corrected
         const spin np = other.n;
         const spin jp = other.j;
         const spin f1p = other.f1;
@@ -161,18 +156,18 @@ namespace aef {
         const spin m_fp = other.m_f;
         using namespace hfs_coeff;
 
-        /// WARNING: f1 factors are currently complete guesses
-        dcomplex xi_factors = xi(f, fp) * xi(j, jp) * xi(n, np) * xi(f1, f1p);
-        // The difference between d1q is right here --|
-        // Change that factor to q for d1q            v
+        // // factors have been calculated in Nusgart Logbook Volume 8 pg 50 and pg 51
+        dcomplex xi_factors = xi(f, fp) * xi(f1, f1p) * xi(j, jp) * xi(n, np);
+        // The difference between d1p is right here,--|
+        // change that factor to p for d1p as per the |
+        // Wigner-Eckhart theorem                     v
         dcomplex threej_factors = w3j(f, 1, fp, -m_f, 1, m_f) * w3j(n, 1, np, 0, 0, 0);
         dcomplex sixj_factors = w6j(f, 1, fp, f1p, half, f1) * w6j(f1, 1, f1p, jp, half, j) * w6j(j, 1, jp, np, half, n);
-        dcomplex phase = parity(1 - m_f);
+        dcomplex phase = parity(half - m_f);
         return xi_factors * threej_factors * sixj_factors * phase;
     }
 
     dcomplex jf_basis_vec::d1t(jf_basis_vec other) {
-        // WARNING: update this from H_St once the form is corrected
         const spin np = other.n;
         const spin jp = other.j;
         const spin f1p = other.f1;
@@ -180,13 +175,14 @@ namespace aef {
         const spin m_fp = other.m_f;
         using namespace hfs_coeff;
 
-        /// WARNING: f1 factors are currently complete guesses
-        dcomplex xi_factors = xi(f, fp) * xi(j, jp) * xi(n, np) * xi(f1, f1p);
-        // The difference between d1q is right here --|
-        // Change that factor to q for d1q            v
+        // // factors have been calculated in Nusgart Logbook Volume 8 pg 50 and pg 51
+        dcomplex xi_factors = xi(f, fp) * xi(f1, f1p) * xi(j, jp) * xi(n, np);
+        // The difference between d1p is right here,--|
+        // change that factor to p for d1p as per the |
+        // Wigner-Eckhart theorem                     v
         dcomplex threej_factors = w3j(f, 1, fp, -m_f, -1, m_f) * w3j(n, 1, np, 0, 0, 0);
         dcomplex sixj_factors = w6j(f, 1, fp, f1p, half, f1) * w6j(f1, 1, f1p, jp, half, j) * w6j(j, 1, jp, np, half, n);
-        dcomplex phase = parity(1 - m_f);
+        dcomplex phase = parity(half - m_f);
         return xi_factors * threej_factors * sixj_factors * phase;
     }
 
@@ -223,7 +219,7 @@ namespace aef {
         if (idx >= 2 * f1) {
             f = f1 + half;
         } else {
-            idx = f1 - half;
+            idx = (int)(f1 - half);
         }
 
         spin m_f = idx - f;
