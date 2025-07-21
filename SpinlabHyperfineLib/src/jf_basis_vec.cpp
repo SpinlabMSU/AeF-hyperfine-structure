@@ -22,7 +22,7 @@ namespace aef {
     namespace hfs_coeff = raf_constants::test;
 
 
-    int jf_basis_vec::index() {
+    int jf_basis_vec::index() const {
         int offset = (int)(8 * n * n);
         if (j > n) {
             offset += (int)(8 * n);
@@ -40,7 +40,7 @@ namespace aef {
         return offset;
     }
 
-    dcomplex jf_basis_vec::H_rot() {
+    dcomplex jf_basis_vec::H_rot() const {
         const double nsq = Nmag();
         const double jsq = Jmag();
         const double nds = n_dot_s();
@@ -49,7 +49,7 @@ namespace aef {
         return B * nsq - D * nsq * nsq + (gamma + delta * nsq) * nds;
     }
 
-    dcomplex jf_basis_vec::H_hfs(jf_basis_vec other) {
+    dcomplex jf_basis_vec::H_hfs(jf_basis_vec other) const {
         if (f != other.f || other.m_f != m_f) return 0;
 
         const double np = other.n;
@@ -57,6 +57,10 @@ namespace aef {
         const double f1p = other.f1;
         const double fp = other.f;
 
+
+        // H_hfs = hfs_heavy_nucleus + hfs_light_nucleus + hfs_I1dotI2
+
+#ifdef SHARE_WIGNER
         // pre-compute wigner symbols
         const double w6j_jpsnsj = w6j(jp, S, n, S, j, 1);
         const double w6j_f1jpj = w6j(f1, jp, I_1, 1, I_1, j);
@@ -67,8 +71,6 @@ namespace aef {
         const double w3j_n2np = w3j(n, 2, np, 0, 0, 0);
         const double w9j_nnpsspjjp = w9j(n, np, 2, S, S, 1, j, jp, 1);
 
-        // H_hfs = hfs_heavy_nucleus + hfs_light_nucleus + hfs_I1dotI2
-
         // hyperfine structure resulting from the heavy nucleus $^{225}Ra$
         dcomplex hfs_Ra = this->H_hfs_fermi_1(other, w6j_jpsnsj, w6j_f1jpj) +
             this->H_hfs_dipole_1(other, w3j_n2np, w6j_f1jpj, w9j_nnpsspjjp) +
@@ -77,13 +79,18 @@ namespace aef {
         dcomplex hfs_F = this->H_hfs_fermi_2(other, w6j_jpsnsj, w6j_f1pjpjf1, w6j_ff1pf1) +
             this->H_hfs_dipole_2(other, w3j_n2np, w6j_f1pjpjf1, w6j_ff1pf1, w9j_nnpsspjjp) +
             this->H_hfs_nsr_2(other, w6j_jpnsnj, w6j_f1pjpjf1, w6j_ff1pf1);
+        dcomplex hfs_I1dotI2 = 0;
+#else
+        dcomplex hfs_Ra = H_hfs_fermi_1(other) + H_hfs_dipole_1(other) + H_hfs_nsr_1(other);
+        dcomplex hfs_F = H_hfs_fermi_2(other) + H_hfs_dipole_2(other) + H_hfs_nsr_2(other);
+        dcomplex hfs_I1dotI2 = 0;
+#endif
         // note: all sources I have seen ignore the nuclear spin-nuclear spin term
         // it's probably too small to matter under this approximation anyways
-        dcomplex hfs_I1dotI2 = 0;
-        return hfs_Ra + hfs_F + hfs_I1dotI2;
+        return hfs_Ra;// +hfs_F + hfs_I1dotI2;
     }
 
-    dcomplex jf_basis_vec::H_st(jf_basis_vec other, double E_z) {
+    dcomplex jf_basis_vec::H_st(jf_basis_vec other, double E_z) const {
         const spin np = other.n;
         const spin jp = other.j;
         const spin f1p = other.f1;
@@ -105,7 +112,7 @@ namespace aef {
         return scale * angular;
     }
 
-    dcomplex jf_basis_vec::H_dev(jf_basis_vec other, double K) {
+    dcomplex jf_basis_vec::H_dev(jf_basis_vec other, double K) const {
         const spin np = other.n;
         const spin jp = other.j;
         const spin f1p = other.f1;
@@ -114,7 +121,7 @@ namespace aef {
 
         // Prefactor
         // TODO check if this is correct
-        dcomplex prf = K * xi(f, fp) * xi(j, jp) * xi(n, np) * xi(f1, f1p) * parity(-m_f);
+        dcomplex prf = K * xi(f, fp) * xi(j, jp) * xi(n, np) * xi(f1, f1p) * parity(half-m_f);
         constexpr double sqrt_5_14 = constexpr_sqrt(5.0 / 14.0);
         // 3j factors involving f and m_f
         dcomplex f3f = sqrt_5_14 * w3j(f, 4, fp, -m_f, 4, m_fp) + sqrt_5_14 * w3j(f, 4, fp, -m_f, -4, m_fp) + w3j(f, 4, fp, -m_f, 0, m_fp);
@@ -129,7 +136,7 @@ namespace aef {
     }
 
     // MDA operators
-    dcomplex jf_basis_vec::d10(jf_basis_vec other) {
+    dcomplex jf_basis_vec::d10(jf_basis_vec other) const {
         const spin np = other.n;
         const spin jp = other.j;
         const spin f1p = other.f1;
@@ -148,7 +155,7 @@ namespace aef {
         return xi_factors * threej_factors * sixj_factors * phase;
     }
 
-    dcomplex jf_basis_vec::d11(jf_basis_vec other) {
+    dcomplex jf_basis_vec::d11(jf_basis_vec other) const {
         const spin np = other.n;
         const spin jp = other.j;
         const spin f1p = other.f1;
@@ -167,7 +174,7 @@ namespace aef {
         return xi_factors * threej_factors * sixj_factors * phase;
     }
 
-    dcomplex jf_basis_vec::d1t(jf_basis_vec other) {
+    dcomplex jf_basis_vec::d1t(jf_basis_vec other) const {
         const spin np = other.n;
         const spin jp = other.j;
         const spin f1p = other.f1;
@@ -187,11 +194,11 @@ namespace aef {
     }
 
 
-    std::string jf_basis_vec::ket_string() {
+    std::string jf_basis_vec::ket_string() const {
         return fmt::format("|n={}, j={}, f1={}, f={}, m_f={}>", n, j, f1, f, m_f);
     }
 
-    std::string jf_basis_vec::ket_csv_str() {
+    std::string jf_basis_vec::ket_csv_str() const {
         return fmt::format("|n={} j={} f1={} f={} m_f={}>", n, j, f1, f, m_f);
     }
 
@@ -210,16 +217,17 @@ namespace aef {
         spin f1;
         if (idx >= 4 * j) {
             f1 = j + 0.5;
-            idx -= (int)(2 * j);
+            idx -= (int)(4 * j);
         } else {
             f1 = j - 0.5;
         }
-        spin f = 0;
+        spin f;
 
         if (idx >= 2 * f1) {
             f = f1 + half;
+            idx -= (int)(2 * f1);
         } else {
-            idx = (int)(f1 - half);
+            f = f1 - half;
         }
 
         spin m_f = idx - f;
@@ -233,7 +241,7 @@ namespace aef {
 
     // HFS parts
     // Formulas here taken from J. Chem Phys 71, 389 (1982) [https://doi.org/10.1016/0301-0104(82)85045-3]
-    dcomplex jf_basis_vec::H_hfs_fermi_1(jf_basis_vec other) {
+    dcomplex jf_basis_vec::H_hfs_fermi_1(jf_basis_vec other) const {
         // Formulas here taken from J. Chem Phys 71, 389 (1982) [https://doi.org/10.1016/0301-0104(82)85045-3]
         if (n != other.n || f1 != other.f1 || f != other.f) return 0;
         constexpr double b_Fermi_Ra = hfs_coeff::b_Ra + hfs_coeff::c_Ra / 3.0;
@@ -245,7 +253,7 @@ namespace aef {
         return parity(t) * coeff * angular;
     }
 
-    dcomplex jf_basis_vec::H_hfs_fermi_1(jf_basis_vec other, double w6j_jpsn, double w6j_f1jpj) {
+    dcomplex jf_basis_vec::H_hfs_fermi_1(jf_basis_vec other, double w6j_jpsn, double w6j_f1jpj) const {
         const double np = other.n;
         const double jp = other.j;
         const double f1p = other.f1;
@@ -260,7 +268,7 @@ namespace aef {
         return parity(t) * coeff * w6j_jpsn * w6j_f1jpj;
     }
 
-    dcomplex jf_basis_vec::H_hfs_dipole_1(jf_basis_vec other) {
+    dcomplex jf_basis_vec::H_hfs_dipole_1(jf_basis_vec other) const {
         const double np = other.n;
         const double jp = other.j;
         const double f1p = other.f1;
@@ -274,7 +282,7 @@ namespace aef {
         return this->H_hfs_dipole_1(other, w3j_n2np, w6j_f1jpj, w9j_nnpsspjjp);
     }
 
-    dcomplex jf_basis_vec::H_hfs_dipole_1(jf_basis_vec other, double w3j_n2np, double w6j_f1jpj, double w9j_nnpsspjjp) {
+    dcomplex jf_basis_vec::H_hfs_dipole_1(jf_basis_vec other, double w3j_n2np, double w6j_f1jpj, double w9j_nnpsspjjp) const {
         const double np = other.n;
         const double jp = other.j;
         const double f1p = other.f1;
@@ -288,7 +296,7 @@ namespace aef {
         return mag * parity(t) * w3j_n2np * w6j_f1jpj * w9j_nnpsspjjp;
     }
 
-    dcomplex jf_basis_vec::H_hfs_nsr_1(jf_basis_vec other) {
+    dcomplex jf_basis_vec::H_hfs_nsr_1(jf_basis_vec other) const {
         const double np = other.n;
         const double jp = other.j;
         const double f1p = other.f1;
@@ -300,7 +308,7 @@ namespace aef {
         return this->H_hfs_nsr_1(other, w6j_jpnsnj, w6j_f1jpj);
     }
 
-    dcomplex jf_basis_vec::H_hfs_nsr_1(jf_basis_vec other, double w6j_jpnsnj, double w6j_f1jpj) {
+    dcomplex jf_basis_vec::H_hfs_nsr_1(jf_basis_vec other, double w6j_jpnsnj, double w6j_f1jpj) const {
         const double np = other.n;
         const double jp = other.j;
         const double f1p = other.f1;
@@ -315,7 +323,7 @@ namespace aef {
     }
 
     // heavy nucleus
-    dcomplex jf_basis_vec::H_hfs_fermi_2(jf_basis_vec other) {
+    dcomplex jf_basis_vec::H_hfs_fermi_2(jf_basis_vec other) const {
         const double np = other.n;
         const double jp = other.j;
         const double f1p = other.f1;
@@ -330,7 +338,7 @@ namespace aef {
         return this->H_hfs_fermi_2(other, w6j_jpsnsj, w6j_f1pjpjf1, w6j_ff1pf1);
     }
 
-    dcomplex jf_basis_vec::H_hfs_fermi_2(jf_basis_vec other, double w6j_jpsn, double w6j_f1pjpjf1, double w6j_ff1pf1) {
+    dcomplex jf_basis_vec::H_hfs_fermi_2(jf_basis_vec other, double w6j_jpsn, double w6j_f1pjpjf1, double w6j_ff1pf1) const {
         const double np = other.n;
         const double jp = other.j;
         const double f1p = other.f1;
@@ -347,7 +355,7 @@ namespace aef {
         return parity(t) * mag * w6j_jpsn * w6j_f1pjpjf1 * w6j_ff1pf1;
     }
 
-    dcomplex jf_basis_vec::H_hfs_dipole_2(jf_basis_vec other, double w3j_n2np, double w6j_f1pjpjf1, double w6j_ff1pf1, double w9j_nnpsspjjp) {
+    dcomplex jf_basis_vec::H_hfs_dipole_2(jf_basis_vec other, double w3j_n2np, double w6j_f1pjpjf1, double w6j_ff1pf1, double w9j_nnpsspjjp) const {
         const double np = other.n;
         const double jp = other.j;
         const double f1p = other.f1;
@@ -362,7 +370,7 @@ namespace aef {
         return parity(t) * w3j_n2np * w6j_f1pjpjf1 * w6j_ff1pf1 * w9j_nnpsspjjp;
     }
 
-    dcomplex jf_basis_vec::H_hfs_dipole_2(jf_basis_vec other) {
+    dcomplex jf_basis_vec::H_hfs_dipole_2(jf_basis_vec other) const {
         const double np = other.n;
         const double jp = other.j;
         const double f1p = other.f1;
@@ -379,7 +387,7 @@ namespace aef {
         return this->H_hfs_dipole_2(other, w3j_n2np, w6j_f1pjpjf1, w6j_ff1pf1, w9j_nnpsspjjp);
     }
 
-    dcomplex jf_basis_vec::H_hfs_nsr_2(jf_basis_vec other) {
+    dcomplex jf_basis_vec::H_hfs_nsr_2(jf_basis_vec other) const {
         const double np = other.n;
         const double jp = other.j;
         const double f1p = other.f1;
@@ -394,7 +402,7 @@ namespace aef {
         return this->H_hfs_nsr_2(other, w6j_jpnsnj, w6j_f1pjpjf1, w6j_ff1pf1);
     }
 
-    dcomplex jf_basis_vec::H_hfs_nsr_2(jf_basis_vec other, double w6j_jpnsnj, double w6j_f1pjpjf1, double w6j_ff1pf1) {
+    dcomplex jf_basis_vec::H_hfs_nsr_2(jf_basis_vec other, double w6j_jpnsnj, double w6j_f1pjpjf1, double w6j_ff1pf1) const {
         const double np = other.n;
         const double jp = other.j;
         const double f1p = other.f1;
@@ -415,7 +423,7 @@ namespace aef {
     /// </summary>
     /// <param name="other">the "other</param>
     /// <returns>&lt;this| \vec{\mu_{E,mol}} |other&gt;</returns>
-    std::array<dcomplex, 3> jf_basis_vec::molec_edm(jf_basis_vec other) {
+    std::array<dcomplex, 3> jf_basis_vec::molec_edm(jf_basis_vec other) const {
         return {0, 0, 0};
     }
 
@@ -425,7 +433,7 @@ namespace aef {
     /// </summary>
     /// <param name="other"></param>
     /// <returns>&lt;this| \vec{\mu_{B,mol}} |other&gt;</returns>
-    std::array<dcomplex, 3> jf_basis_vec::molec_mdm(jf_basis_vec other) {
+    std::array<dcomplex, 3> jf_basis_vec::molec_mdm(jf_basis_vec other) const {
         return {0, 0, 0};
     }
 
@@ -436,7 +444,7 @@ namespace aef {
     /// </summary>
     /// <param name="other">The other state</param>
     /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
-    dcomplex jf_basis_vec::S_dot_ina(jf_basis_vec other) {
+    dcomplex jf_basis_vec::S_dot_ina(jf_basis_vec other) const {
         const spin np = other.n;
         const spin jp = other.j;
         const spin f1p = other.f1;
@@ -469,7 +477,7 @@ namespace aef {
     /// </summary>
     /// <param name="other">The other state</param>
     /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
-    dcomplex jf_basis_vec::I1_dot_ina(jf_basis_vec other) {
+    dcomplex jf_basis_vec::I1_dot_ina(jf_basis_vec other) const {
         const spin np = other.n;
         const spin jp = other.j;
         const spin f1p = other.f1;
@@ -502,7 +510,7 @@ namespace aef {
     /// </summary>
     /// <param name="other">The other state</param>
     /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
-    dcomplex jf_basis_vec::I2_dot_ina(jf_basis_vec other) {
+    dcomplex jf_basis_vec::I2_dot_ina(jf_basis_vec other) const {
         const spin np = other.n;
         const spin jp = other.j;
         const spin f1p = other.f1;

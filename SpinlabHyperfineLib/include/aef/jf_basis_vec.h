@@ -71,20 +71,20 @@ namespace aef {
         /// This defines a well-ordering on the basis
         /// </summary>
         /// <returns>the index corresponding to this basis element</returns>
-        int index();
+        int index() const;
 
         /// <summary>
         /// Calculates the eigenvalue of \abs{\vec{N}}^2
         /// </summary>
         /// <returns>The squared-magnitude of \vec{N}</returns>
-        inline spin Nmag() {
+        inline spin Nmag() const {
             return n * (n + 1);
         }
         /// <summary>
         /// Calculates the eigenvalue of \abs{\vec{J}}^2
         /// </summary>
         /// <returns>The squared-magnitude of \vec{J}</returns>
-        inline spin Jmag() {
+        inline spin Jmag() const {
             return j * (j + 1);
         }
 
@@ -92,7 +92,7 @@ namespace aef {
         /// Calculates the eigenvalue of \abs{\vec{F_1}}^2
         /// </summary>
         /// <returns>The squared-magnitude of \vec{F_1}</returns>
-        inline spin F1mag() {
+        inline spin F1mag() const {
             return f1 * (f1 + 1);
         }
 
@@ -100,28 +100,28 @@ namespace aef {
         /// Calculates the eigenvalue of \abs{\vec{F}}^2
         /// </summary>
         /// <returns>The squared-magnitude of \vec{F}</returns>
-        inline spin Fmag() {
+        inline spin Fmag() const {
             return f * (f + 1);
         }
         /// <summary>
         /// Calculates the eigenvalue of \abs{\vec{I_1}}^2
         /// </summary>
         /// <returns>The squared-magnitude of \vec{I_1}</returns>
-        constexpr inline spin I1mag() {
+        constexpr inline spin I1mag() const {
             return half * (half + 1);
         }
         /// <summary>
         /// Calculates the eigenvalue of \abs{\vec{I_2}}^2
         /// </summary>
         /// <returns>The squared-magnitude of \vec{I_2}</returns>
-        constexpr inline spin I2mag() {
+        constexpr inline spin I2mag() const {
             return half * (half + 1);
         }
         /// <summary>
         /// Calculates the eigenvalue of \abs{\vec{S}}^2
         /// </summary>
         /// <returns>The squared-magnitude of \vec{S}</returns>
-        constexpr inline spin Smag() {
+        constexpr inline spin Smag() const {
             return I1mag();
         }
 
@@ -129,7 +129,7 @@ namespace aef {
     /// Calculates the eigenvalue of \vec{N}\cdot\vec{S}
     /// </summary>
     /// <returns>\vec{N}\cdot\vec{S}</returns>
-        inline spin n_dot_s() {
+        inline spin n_dot_s() const {
             return half * (Jmag() - Nmag() - Smag());
         }
 
@@ -141,14 +141,14 @@ namespace aef {
         /// zero field (makes sure that E-estates have definite m_f).
         /// </summary>
         /// <returns>The rotaional energy of this state in MHz</returns>
-        dcomplex H_rot();
+        dcomplex H_rot() const;
         /// <summary>
         /// Computes the hyperfine Hamiltonian matrix element between two |njfm_f> basis kets.
         /// The hyperfine Hamiltonian conserves f and m_f, and only breaks n by a small amount.
         /// </summary>
         /// <param name="other">The other state to compute the matrix element with</param>
         /// <returns>The hyperfine matrix element &lt;other|H_hfs|this&gt; in MHz</returns>
-        dcomplex H_hfs(jf_basis_vec other);
+        dcomplex H_hfs(jf_basis_vec other) const;
         /// <summary>
         /// Computes the Stark shift matrix element between two |njfm_f> basis kets.
         /// This conserves m_f, mixing n, j, and f by an amount depending on the electric field.
@@ -156,7 +156,7 @@ namespace aef {
         /// <param name="other">The other state</param>
         /// <param name="E_z">Electric field strength in MHz/Debye</param>
         /// <returns>The stark shift matrix element &lt;other|H_st|this&gt; in MHz</returns>
-        dcomplex H_st(jf_basis_vec other, double E_z = 1.0);
+        dcomplex H_st(jf_basis_vec other, double E_z = 1.0) const;
 
         /// <summary>
         /// Computes the T^1_0 matrix element of the orientation-vector operator.
@@ -166,14 +166,14 @@ namespace aef {
         /// </summary>
         /// <param name="other">The other state</param>
         /// <returns>The reduced matrix element &lt;other||d^1||this&gt; </returns>
-        dcomplex d10(jf_basis_vec other);
+        dcomplex d10(jf_basis_vec other) const;
 
         /// <summary>
         /// Computes the T^1_1 matrix element of the orientation-vector operator.
         /// </summary>
         /// <param name="other">The other state</param>
         /// <returns>The T11 matrix element &lt;other||d^1||this&gt; </returns>
-        dcomplex d11(jf_basis_vec other);
+        dcomplex d11(jf_basis_vec other) const;
 
         /// <summary>
         /// Computes the T^1_{-1} matrix element of the orientation-vector operator.
@@ -183,7 +183,7 @@ namespace aef {
         /// </summary>
         /// <param name="other">The other state</param>
         /// <returns>The reduced matrix element &lt;other||d^1||this&gt; </returns>
-        dcomplex d1t(jf_basis_vec other);
+        dcomplex d1t(jf_basis_vec other) const;
 
         /// <summary>
         /// Evaluates the devonshire potential matrix element between this state and other.
@@ -193,18 +193,18 @@ namespace aef {
         /// <param name="other">The other state</param>
         /// <param name="K">The devonshire coupling constant in MHz</param>
         /// <returns>The devonshire matrix element &lt;other|H_dev|this&gt; in MHz</returns>
-        dcomplex H_dev(jf_basis_vec other, double K);
+        dcomplex H_dev(jf_basis_vec other, double K) const;
 
         /// <summary>
         /// Descibes this state as a ket
         /// </summary>
         /// <returns>A string</returns>
-        std::string ket_string();
+        std::string ket_string() const;
         /// <summary>
         /// Returns a string that can be used in a CSV field without quoting
         /// </summary>
         /// <returns>description suitable for CSV</returns>
-        std::string ket_csv_str();
+        std::string ket_csv_str() const;
 
         /// <summary>
         /// This is the inverse function of jf_basis_vec::index.
@@ -230,40 +230,40 @@ namespace aef {
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        dcomplex H_hfs_fermi_1(jf_basis_vec other);
+        dcomplex H_hfs_fermi_1(jf_basis_vec other) const;
         /// <summary>
         /// Evaluates the rank-2 tensor part of the hyperfine matrix element for the light nucleus (19F).
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        dcomplex H_hfs_dipole_1(jf_basis_vec other);
+        dcomplex H_hfs_dipole_1(jf_basis_vec other) const;
 
         /// <summary>
         /// Evaluates the nuclear spin-rotation part of the hyperfine matrix element for the light nucleus (19F).
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        dcomplex H_hfs_nsr_1(jf_basis_vec other);
+        dcomplex H_hfs_nsr_1(jf_basis_vec other) const;
 
         /// <summary>
         /// Evaluates the scalar part of the hyperfine matrix element for the heavy nucleus (225Ra)
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        dcomplex H_hfs_fermi_2(jf_basis_vec other);
+        dcomplex H_hfs_fermi_2(jf_basis_vec other) const;
         /// <summary>
         /// Evaluates the rank-2 tensor part of the hyperfine matrix element for the heavy nucleus (225Ra).
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        dcomplex H_hfs_dipole_2(jf_basis_vec other);
+        dcomplex H_hfs_dipole_2(jf_basis_vec other) const;
 
         /// <summary>
         /// Evaluates the nuclear spin-rotation part of the hyperfine matrix element for the heavy nucleus (225Ra)
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        dcomplex H_hfs_nsr_2(jf_basis_vec other);
+        dcomplex H_hfs_nsr_2(jf_basis_vec other) const;
 
     public:
         /// <summary>
@@ -272,7 +272,7 @@ namespace aef {
         /// </summary>
         /// <param name="other">the "other</param>
         /// <returns>&lt;this| \vec{\mu_{E,mol}} |other&gt;</returns>
-        std::array<dcomplex, 3> molec_edm(jf_basis_vec other);
+        std::array<dcomplex, 3> molec_edm(jf_basis_vec other) const;
 
         /// <summary>
         /// Evaluates the three cartesian matrix elements of the molecular magnetic dipole moment operator
@@ -280,7 +280,7 @@ namespace aef {
         /// </summary>
         /// <param name="other"></param>
         /// <returns>&lt;this| \vec{\mu_{B,mol}} |other&gt;</returns>
-        std::array<dcomplex, 3> molec_mdm(jf_basis_vec other);
+        std::array<dcomplex, 3> molec_mdm(jf_basis_vec other) const;
 
         /// <summary>
         /// Evaluates the dot product of the electron spin with the internuclear axis.
@@ -289,7 +289,7 @@ namespace aef {
         /// </summary>
         /// <param name="other">The other state</param>
         /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
-        dcomplex S_dot_ina(jf_basis_vec other);
+        dcomplex S_dot_ina(jf_basis_vec other) const;
 
         /// <summary>
         /// Evaluates the dot product of the heavy nuclear spin with the internuclear axis.
@@ -298,7 +298,7 @@ namespace aef {
         /// </summary>
         /// <param name="other">The other state</param>
         /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
-        dcomplex I1_dot_ina(jf_basis_vec other);
+        dcomplex I1_dot_ina(jf_basis_vec other) const;
 
         /// <summary>
         /// Evaluates the dot product of the light nuclear spin with the internuclear axis.
@@ -307,16 +307,16 @@ namespace aef {
         /// </summary>
         /// <param name="other">The other state</param>
         /// <returns>The reduced matrix element &lt;other||\vec{S}\cdot\vec{d}||this&gt; </returns>
-        dcomplex I2_dot_ina(jf_basis_vec other);
+        dcomplex I2_dot_ina(jf_basis_vec other) const;
 
         // for internal implementation use only --> using these permits not recomputing as many wigner symbols
     private:
-        dcomplex H_hfs_fermi_1(jf_basis_vec other, double w6j_jpsn, double w6j_f1jpj);
-        dcomplex H_hfs_dipole_1(jf_basis_vec other, double w3j_n2np, double w6j_f1jpj, double w9j_nnpsspjjp);
-        dcomplex H_hfs_nsr_1(jf_basis_vec other, double w6j_jpnsnj, double w6j_f1jpj);
-        dcomplex H_hfs_fermi_2(jf_basis_vec other, double w6j_jpsn, double w6j_f1pjpjf1, double w6j_ff1pf1);
-        dcomplex H_hfs_dipole_2(jf_basis_vec other, double w3j_n2np, double w6j_f1pjpjf1, double w6j_ff1pf1, double w9j_nnpsspjjp);
-        dcomplex H_hfs_nsr_2(jf_basis_vec other, double w6j_jpnsnj, double w6j_f1pjpjf1, double w6j_ff1pf1);
+        dcomplex H_hfs_fermi_1(jf_basis_vec other, double w6j_jpsn, double w6j_f1jpj) const;
+        dcomplex H_hfs_dipole_1(jf_basis_vec other, double w3j_n2np, double w6j_f1jpj, double w9j_nnpsspjjp) const;
+        dcomplex H_hfs_nsr_1(jf_basis_vec other, double w6j_jpnsnj, double w6j_f1jpj) const;
+        dcomplex H_hfs_fermi_2(jf_basis_vec other, double w6j_jpsn, double w6j_f1pjpjf1, double w6j_ff1pf1) const;
+        dcomplex H_hfs_dipole_2(jf_basis_vec other, double w3j_n2np, double w6j_f1pjpjf1, double w6j_ff1pf1, double w9j_nnpsspjjp) const;
+        dcomplex H_hfs_nsr_2(jf_basis_vec other, double w6j_jpnsnj, double w6j_f1pjpjf1, double w6j_ff1pf1) const;
     };
 };
 

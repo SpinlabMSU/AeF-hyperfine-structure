@@ -30,9 +30,12 @@ void aef::RaFMolecularCalculator::set_nmax(spin nmax_) {
     // construct basis
     basis.clear();
     basis.reserve(nBasisElts);
+    std::cout << "Idx, basis ket" << std::endl;
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         basis.emplace_back(jf_basis_vec::from_index(idx));
+        std::cout << idx << ", " << basis[idx].ket_csv_str() << std::endl;
     }
+    std::cout << std::endl << std::endl;
     using aef::half;
     lowest_states = {
         // f1 = 0, f = 1/2 doublet
@@ -102,11 +105,11 @@ ResultCode aef::RaFMolecularCalculator::calculate_H_dev(Eigen::MatrixXcd& H, dou
 ResultCode aef::RaFMolecularCalculator::calculate_H_stk(Eigen::MatrixXcd& H, double E_z) {
     H.setZero();
     for (size_t idx = 0; idx < nBasisElts; idx++) {
-        // operators are hermitian matricies
-        for (size_t jdx = 0; jdx <= idx; jdx++) {
+        // optimization removed temporarily -- prev: operators are hermitian matricies
+        for (size_t jdx = 0; jdx < nBasisElts; jdx++) {
             dcomplex melt = basis[idx].H_st(basis[jdx], E_z);
             H(idx, jdx) = melt;
-            H(jdx, idx) = std::conj(melt);
+            //H(jdx, idx) = std::conj(melt);
         }
     }
     return ResultCode::Success;;
