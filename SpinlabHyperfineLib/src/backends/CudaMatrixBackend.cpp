@@ -350,7 +350,6 @@ ResultCode aef::matrix::CudaMatrixBackend::diagonalize(Eigen::MatrixXcd& mat, Ei
     const size_t mat_size = sizeof(cuDoubleComplex) * mat.size();
     const size_t ws_size = sizeof(double) * rows;
     const cuDoubleComplex* data = reinterpret_cast<cuDoubleComplex*>(mat.data());
-    double* pW = h_W.data();
     cuDoubleComplex* pV = reinterpret_cast<cuDoubleComplex*>(evecs.data());
     int info = 0;
 
@@ -386,8 +385,9 @@ ResultCode aef::matrix::CudaMatrixBackend::diagonalize(Eigen::MatrixXcd& mat, Ei
         checkCudaErrors(status);
     }
 
+    std::fill(h_W.begin(), h_W.end(), aef::nan);
     checkCudaErrors(cudaMemcpyAsync(pV, d_A, mat_size, cudaMemcpyDeviceToHost, cu_stream));
-    checkCudaErrors(cudaMemcpyAsync(pW, d_W, ws_size, cudaMemcpyDeviceToHost, cu_stream));
+    checkCudaErrors(cudaMemcpyAsync(h_W.data(), d_W, ws_size, cudaMemcpyDeviceToHost, cu_stream));
     std::cout << "[aef::matrix::CudaMatrixBackend] scheduled for data to be copied back to host" << std::endl;
     // wait for all operations to complete
     checkCudaErrors(cudaStreamSynchronize(cu_stream));
@@ -397,6 +397,7 @@ ResultCode aef::matrix::CudaMatrixBackend::diagonalize(Eigen::MatrixXcd& mat, Ei
     // this is necessary because evals is a dcomplex vector
     // but CUDA outputs a real double vector.
     //std::copy(h_W.begin(), h_W.end(), evals.data());
+    evals.setConstant(aef::nan);
     for (int i = 0; i < evals.size(); i++) {
         evals(i) = h_W[i];
     }

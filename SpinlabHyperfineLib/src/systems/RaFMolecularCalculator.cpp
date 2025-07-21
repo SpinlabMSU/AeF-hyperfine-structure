@@ -35,13 +35,19 @@ void aef::RaFMolecularCalculator::set_nmax(spin nmax_) {
     }
     using aef::half;
     lowest_states = {
+        // f1 = 0, f = 1/2 doublet
         aef::universal_diatomic_basis_vec(0, half, 0, half, -half),
         aef::universal_diatomic_basis_vec(0, half, 0, half, +half),
 
-        aef::universal_diatomic_basis_vec(0, half, 0, 3/2., -3/2.),
-        aef::universal_diatomic_basis_vec(0, half, 0, 3/2., -1/2.),
-        aef::universal_diatomic_basis_vec(0, half, 0, 3/2., +1/2.),
-        aef::universal_diatomic_basis_vec(0, half, 0, 3/2., +3/2.),
+        // f1 = 1, f = 1/2 doublet
+        aef::universal_diatomic_basis_vec(0, half, 1, 1/2., -1/2.),
+        aef::universal_diatomic_basis_vec(0, half, 1, 1/2., +1/2.),
+
+        // f1 = 1, f = 3/2 quadruplet
+        aef::universal_diatomic_basis_vec(0, half, 1, 3/2., -3 / 2.),
+        aef::universal_diatomic_basis_vec(0, half, 1, 3/2., -1 / 2.),
+        aef::universal_diatomic_basis_vec(0, half, 1, 3/2., +1 / 2.),
+        aef::universal_diatomic_basis_vec(0, half, 1, 3/2., +3 / 2.),
     };
 }
 
@@ -60,6 +66,7 @@ int aef::RaFMolecularCalculator::get_index(universal_diatomic_basis_vec v) {
 }
 
 ResultCode aef::RaFMolecularCalculator::calculate_H_rot(Eigen::DiagonalMatrix<dcomplex, Eigen::Dynamic>& H) {
+    H.setZero();
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         H.diagonal()[idx] = basis[idx].H_rot();
     }
@@ -67,6 +74,7 @@ ResultCode aef::RaFMolecularCalculator::calculate_H_rot(Eigen::DiagonalMatrix<dc
 }
 
 ResultCode aef::RaFMolecularCalculator::calculate_H_hfs(Eigen::MatrixXcd& H) {
+    H.setZero();
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         // operators are hermitian matricies
         for (size_t jdx = 0; jdx <= idx; jdx++) {
@@ -79,6 +87,7 @@ ResultCode aef::RaFMolecularCalculator::calculate_H_hfs(Eigen::MatrixXcd& H) {
 }
 
 ResultCode aef::RaFMolecularCalculator::calculate_H_dev(Eigen::MatrixXcd& H, double K) {
+    H.setZero();
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         // operators are hermitian matricies
         for (size_t jdx = 0; jdx <= idx; jdx++) {
@@ -91,6 +100,7 @@ ResultCode aef::RaFMolecularCalculator::calculate_H_dev(Eigen::MatrixXcd& H, dou
 }
 
 ResultCode aef::RaFMolecularCalculator::calculate_H_stk(Eigen::MatrixXcd& H, double E_z) {
+    H.setZero();
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         // operators are hermitian matricies
         for (size_t jdx = 0; jdx <= idx; jdx++) {
@@ -103,12 +113,14 @@ ResultCode aef::RaFMolecularCalculator::calculate_H_stk(Eigen::MatrixXcd& H, dou
 }
 
 void aef::RaFMolecularCalculator::calculate_F_z(Eigen::MatrixXcd& F_z) {
+    F_z.setZero();
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         F_z(idx, idx) = basis[idx].m_f;
     }
 }
 
 ResultCode aef::RaFMolecularCalculator::calculate_dkq(Eigen::MatrixXcd& d, int q) {
+    d.setZero();
     if (q == -1) {
         calculate_d1t(d);
         return ResultCode::Success;
@@ -123,6 +135,7 @@ ResultCode aef::RaFMolecularCalculator::calculate_dkq(Eigen::MatrixXcd& d, int q
 }
 
 void aef::RaFMolecularCalculator::calculate_d1t(Eigen::MatrixXcd& H) {
+    H.setZero();
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         // operators are hermitian matricies
         for (size_t jdx = 0; jdx <= idx; jdx++) {
@@ -134,6 +147,7 @@ void aef::RaFMolecularCalculator::calculate_d1t(Eigen::MatrixXcd& H) {
 }
 
 void aef::RaFMolecularCalculator::calculate_d10(Eigen::MatrixXcd& H) {
+    H.setZero();
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         // operators are hermitian matricies
         for (size_t jdx = 0; jdx <= idx; jdx++) {
@@ -145,6 +159,7 @@ void aef::RaFMolecularCalculator::calculate_d10(Eigen::MatrixXcd& H) {
 }
 
 void aef::RaFMolecularCalculator::calculate_d11(Eigen::MatrixXcd& H) {
+    H.setZero();
     for (size_t idx = 0; idx < nBasisElts; idx++) {
         // operators are hermitian matricies
         for (size_t jdx = 0; jdx <= idx; jdx++) {

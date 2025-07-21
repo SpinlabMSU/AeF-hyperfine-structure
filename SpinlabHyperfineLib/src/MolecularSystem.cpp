@@ -15,18 +15,12 @@
     AeF-hyperfine-structure. If not, see <https://www.gnu.org/licenses/>.
 */
 #include "pch.h"
-#include "aef/MolecularSystem.h"
+#include <spanstream>
 #include <unordered_map>
+#include <aef/MolecularSystem.h>
 #include <aef/xiffstream.h>
 #include <aef/io/aefchunk.h>
 #include <aef/matrix_io.hpp>
-
-#include <TKey.h>
-#include <TFile.h>
-#include <TTree.h>
-#include <TParameter.h>
-#include <TMap.h>
-#include <spanstream>
 
 namespace aef {
     MolecularSystem::MolecularSystem(IMolecularCalculator *calc_, spin nmax_, double E_z_, double K_) :
@@ -58,9 +52,9 @@ namespace aef {
         calc->set_nmax(nmax);
         nBasisElts = calc->get_nBasisElts();
         std::cout << fmt::format("Resizing aef::MolecularSystem to nmax={}, will have {} basis elements.", nmax_, nBasisElts) << std::endl;
-        H_rot.resize(nBasisElts);
-        H_hfs.resize(nBasisElts, nBasisElts);
-        H_stk.resize(nBasisElts, nBasisElts);
+        H_rot.resize(nBasisElts); H_rot.setZero();
+        H_hfs.resize(nBasisElts, nBasisElts); H_hfs.setZero();
+        H_stk.resize(nBasisElts, nBasisElts); H_stk.setZero();
         H_dev.resize(nBasisElts, nBasisElts);
         H_tot.resize(nBasisElts, nBasisElts);
         F_z.resize(nBasisElts, nBasisElts);
@@ -127,6 +121,7 @@ namespace aef {
         if (aef::failed(rc)) return rc;
         if (enableDev) {
             rc = aef::matrix::diagonalize(H_tot, Es, Vs);
+            assert(aef::succeeded(rc));
         } else {
             // Free-space: m_f is a good quantum number, want to simultaneously
             // diagonalize H_tot and F_z This is done using the method given in
@@ -140,7 +135,9 @@ namespace aef {
             // as our temporary here instead of making a new temporary matrix
             H_dev = H_tot + t * F_z;
             rc = aef::matrix::diagonalize(H_dev, Es, Vs);
+            assert(aef::succeeded(rc));
             rc = aef::matrix::group_action(H_dev, Vs, H_tot);
+            assert(aef::succeeded(rc));
             Es = H_dev.diagonal();
             H_dev.setZero();
         }
@@ -244,13 +241,13 @@ namespace aef {
             // Hamiltonian matricies
             X(Hrot, fd, 0, offsetof(MolecularSystem, H_rot)),
             X(Hstk, fm, 0, offsetof(MolecularSystem, H_hfs)),
-            X(Hstk, fm, 0, offsetof(MolecularSystem, H_stk)),
+            X(Hhfs, fm, 0, offsetof(MolecularSystem, H_stk)),
             X(Hdev, fm, 0, offsetof(MolecularSystem, H_dev)),
             X(Htot, fm, 0, offsetof(MolecularSystem, H_tot)),
 
             // energy eigenstate information
-            X(Hstk, fv, 0, offsetof(MolecularSystem, Es)),
-            X(Hstk, fm, 0, offsetof(MolecularSystem, Vs)),
+            X(EEs , fv, 0, offsetof(MolecularSystem, Es)),
+            X(EVs , fm, 0, offsetof(MolecularSystem, Vs)),
 
             // embedded operators
             X(Od1t, fm, 0, offsetof(MolecularSystem, d1t)),
@@ -462,7 +459,8 @@ namespace aef {
 
 
     aef::ResultCode MolecularSystem::save(std::ostream& out_, const char *path) {
-        // note that the save method is substantially less 
+        // note that the save method is substantially less complex than the load
+        // function permits.
         using aef::chunk::fourcc;
         // write file header
         std::ostream* out = &out_;
