@@ -64,9 +64,9 @@ df = pd.read_csv(starkpath)
 ## csv keys -- note that the spaces in front are intentional
 key_E = 'E-field (V/cm)'
 key_dEgnd = ' dE_gnd'
-key_dEf1t = ' dE_f1t'
-key_dEf10 = ' dE_f10'
-key_dEf11 = ' dE_f11'
+key_dEf1t = ' dE_1'
+key_dEf10 = ' dE_2'
+key_dEf11 = ' dE_3'
 
 df[key_E] /= 1000
 Ezs = df[key_E]

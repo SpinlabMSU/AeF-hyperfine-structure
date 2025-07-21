@@ -45,9 +45,13 @@ Ez = df.keys()[1]
 states = df.keys()[2:]
 
 zero_ground = False
+measure_deviation = False
 
 if len(sys.argv) > 2:
     zero_ground = sys.argv[2].lower().startswith('-z')
+
+if len(sys.argv) > 2:
+    measure_deviation = sys.argv[2].lower().startswith('-m')
 
 # Including a legend isn't particularly useful past a certain number of states
 # since it runs off the edge of the plot and the colors repeat anyways
@@ -55,13 +59,21 @@ use_legend = True
 if len(df[Ez]) > 15:
     use_legend = False
 
+if measure_deviation:
+    print(df[states])
+    zero_field_Es = np.array(df.iloc[0, 2:])
+    print(zero_field_Es)
+    for state in states:
+        df[state] = df[state] - zero_field_Es
+        print(df[state])
 
 if zero_ground:
     print(df[states])
-    zero_field_Es = df.iloc[0, 2:]
+    zero_field_Es = df['E0']
     print(zero_field_Es)
     for state in states:
-        df.loc[:, state] -= zero_field_Es
+        df[state] = df[state] - zero_field_Es
+        print(df[state])
 
 fig = plt.figure(figsize=(13.66, 9.00))
 plt.title(f"Energy Spectrum for run {run}")

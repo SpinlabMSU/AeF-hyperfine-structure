@@ -99,11 +99,12 @@ aef::universal_diatomic_basis_vec expectation_values(aef::MolecularSystem& calc,
 }
 
 static inline double diff_states(aef::universal_diatomic_basis_vec v1, aef::universal_diatomic_basis_vec v2) {
-    constexpr double cn = 1.5;
-    constexpr double cj = 0.5; // 1.0;
+    // parameters need to be tweaked for best results
+    constexpr double cn = 3.5;
+    constexpr double cj = 0.25; // 1.0;
     constexpr double cf1 = 0.5;
-    constexpr double cf = 3.0;
-    constexpr double cm = 4.0; // 100.0;
+    constexpr double cf = 2.5;
+    constexpr double cm = 5.0; // 100.0;
 
     double dn = (v1.n - v2.n);
     double dj = (v1.j - v2.j);
@@ -123,9 +124,13 @@ static inline double diff_states(aef::universal_diatomic_basis_vec v1, aef::univ
 /// being the closest state.  Intended to fix the </param> <returns></returns>
 int32_t closest_state(aef::MolecularSystem& calc, int32_t ket_idx,
     int32_t exclude_Eidx = -1) {
+    int32_t closest_idx = -1;
+//#define USE_EXPECTATION_VALUES
+#define USE_TRIVIAL
+#ifdef USE_EXPECTATION_VALUES
+    // strategy 1: look for the energy eigenstate whose expectation values most closely match the target state
     double chisq = (double)std::numeric_limits<double>::infinity();
     aef::universal_diatomic_basis_vec ket = calc.get_calc()->get_basis_ket(ket_idx);
-    int32_t closest_idx = -1;
 
     for (int32_t Eidx = 0; Eidx < calc.nBasisElts; Eidx++) {
         aef::universal_diatomic_basis_vec expect_ket = expectation_values(calc, Eidx);
@@ -136,7 +141,21 @@ int32_t closest_state(aef::MolecularSystem& calc, int32_t ket_idx,
             closest_idx = Eidx;
         }
     }
-
+#elif defined(USE_TRIVIAL)
+    // strategy 2: just assume the indices stay the same
+    closest_idx = ket_idx;
+#else
+    // strategy 3: assume the best state will have the largest probability of ket_idx
+    Eigen::VectorXcd ket_coeffs = calc.Vs.row(ket_idx); // vector of <E_idx|ket_idx>
+    double max_magsq = -1;
+    for (int32_t Eidx = 0; Eidx < calc.nBasisElts; Eidx++) {
+        double magsq = std::norm(ket_coeffs[Eidx]);
+        if (magsq > max_magsq) {
+            max_magsq = magsq;
+            closest_idx = Eidx;
+        }
+    }
+#endif
     return closest_idx;
 }
 
@@ -356,9 +375,8 @@ int main(int argc, char **argv) {
     int nmax = param_nmax;
     aef::IMolecularCalculator* pCalc = nullptr;
 
-    {
-        // TODO initialize molecular calculator
-        //pCalc = new aef::BaFMolecularCalculator(nmax);
+    constexpr bool enable_dynamic_mol_calc = true;
+    if(enable_dynamic_mol_calc) {
         pCalc = aef::IMolecularCalculator::makeCalculatorOfType(mol_calc_type); //new aef::RaFMolecularCalculator(nmax);
         if (!pCalc) {
             std::cerr << fmt::format("Error: calculator type \"{}\" does not exist", mol_calc_type) << std::endl;
@@ -366,6 +384,9 @@ int main(int argc, char **argv) {
         } else {
             std::clog << fmt::format("Using calculator type \"{}\", actual type name \"{}\"", mol_calc_type, pCalc->get_calc_type());
         }
+        pCalc->set_nmax(nmax);
+    } else {
+        pCalc = new aef::BaFMolecularCalculator(nmax);
     }
 
     aef::MolecularSystem sys(pCalc, nmax, calc_E_z, K);
@@ -424,7 +445,7 @@ int main(int argc, char **argv) {
         std::cout << std::endl << std::endl;
 
         std::cout << "----------- NO STARK -----------" << std::endl;
-        sys.H_tot -= sys.H_stk;
+        sys.H_tot = sys.H_rot.toDenseMatrix() + sys.H_hfs; // -= sys.H_stk;
         sys.diagonalize();
 
         Es = sys.Es;
@@ -465,16 +486,22 @@ int main(int argc, char **argv) {
     std::vector<aef::universal_diatomic_basis_vec> lowest_states = pCalc->get_lowest_states();
     const int nLowestStates = lowest_states.size();
     std::vector<int> lowest_idxs(nLowestStates);
-    std::transform(lowest_states.begin(), lowest_states.end(), lowest_idxs.begin(),
-        [pCalc](aef::universal_diatomic_basis_vec b) {return pCalc->get_index(b); });
 
-    for (int idx = 0; idx < nLowestStates; idx++) {
-        std::cout << fmt::format("Lowest state #{}: ket #{}, {}", idx, lowest_idxs[idx], lowest_states[idx]) << std::endl;
+    for (int sdx = 0; sdx < nLowestStates; sdx++) {
+        lowest_idxs[sdx] = pCalc->get_index(lowest_states[sdx]);
     }
 
     // oStk << "E-field (V/cm), Stark-shifted Energy of " << gnd.ket_string() << "(MHz)";
-    oStk << "E-field (V/cm), dE_gnd" << ", dE_f1t, dE_f10, dE_f11" << std::endl;
     assert(sys.H_tot.rows() == sys.H_stk.rows());
+
+    // output stark.csv header line + lowest states
+    oStk << "E-field (V/cm), dE_gnd";// << ", dE_f1t, dE_f10, dE_f11" << std::endl;
+    for (int sdx = 1; sdx < nLowestStates; sdx++) {
+        std::cout << fmt::format("Lowest state #{}: ket #{}, {}", sdx, lowest_idxs[sdx], lowest_states[sdx]) << std::endl;
+        oStk << ", dE_" << sdx;
+    }
+    oStk << std::endl;
+
 
 #define USE_REAL_Es
 #ifdef USE_REAL_Es
@@ -485,7 +512,7 @@ int main(int argc, char **argv) {
 #define EVAL(val) val
 #endif
 
-    Eigen::MatrixXcd energies(nStarkIterations, nLowestStates);
+    Eigen::MatrixXcd lowest_energies(nStarkIterations, nLowestStates);
 
 #ifndef USE_DEVONSHIRE
     // note: devonshire potential doesn't conserve m_f
@@ -599,11 +626,13 @@ int main(int argc, char **argv) {
                 oStk << "," << dEs[sdx];
                 std::cout << "," << dEs[sdx];
             }
+            oStk << std::endl;
+            std::cout << std::endl;
         }
 
         // collect energy of the lowest group of states
         for (int sdx = 0; sdx < nLowestStates; sdx++) {
-            energies(fdx, sdx) = EVAL(sys.Es[sdx]);
+            lowest_energies(fdx, sdx) = EVAL(sys.Es[idxs[sdx]]);
         }
 
         auto dev_out_fname = fmt::format("info_Ez_{}.csv", std::lround(Ez_V_cm));
@@ -627,7 +656,7 @@ int main(int argc, char **argv) {
     for (int fdx = 0; fdx < 101; fdx++) {
         const char* sep = "";
         for (int sdx = 0; sdx < nLowestStates; sdx++) {
-            std::cout << fmt::format("{}{}", sep, energies(fdx, sdx));
+            std::cout << fmt::format("{}{}", sep, lowest_energies(fdx, sdx));
             sep = ", ";
         }
     }

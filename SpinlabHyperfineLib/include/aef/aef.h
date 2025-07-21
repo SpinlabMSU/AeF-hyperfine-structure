@@ -41,8 +41,8 @@ namespace aef {
 #include "baf_constants.hpp"
 #include "units.hpp"
 #include "HyperfineCalculator.hpp"
-//#include "jf_basis_vec.h"
-//#include "MolecularSystem.h"
+#include "jf_basis_vec.h"
+#include "MolecularSystem.h"
 #include "matrix_utils.h"
 #include "LogRedirector.h"
 

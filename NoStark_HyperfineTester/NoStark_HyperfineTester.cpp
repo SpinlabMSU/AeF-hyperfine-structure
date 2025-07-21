@@ -55,6 +55,21 @@ double energy_of_closest(HyperfineCalculator& calc, int32_t ket_idx) {
 
 int main() {
     std::cout << "Hello World!\n";
+
+    {
+        constexpr int nmax = 40;
+        for (int idx = 0; idx < aef::jf_basis_vec::index_of_n(40); idx++) {
+            jf_basis_vec v = jf_basis_vec::from_index(idx);
+            assert(v.index() == idx);
+            if (v.index() != idx) {
+                std::cerr << "BAD INDEX " << idx << std::endl;
+                throw idx;
+            }
+        }
+    }
+
+
+
     j_basis_vec v(1, .5, 0, 0);
     double E_rot = std::real(v.H_rot());
     dcomplex H_hfs = v.H_hfs(v);

@@ -230,7 +230,7 @@ int main(int argc, char **argv) {
     constexpr double calc_E_z = unit_conversion::MHz_D_per_V_cm * 50 * 1000;
 
 #ifndef _MAKEFILE_PROVIDES_DEVFLAG
-#define USE_DEVONSHIRE
+//#define USE_DEVONSHIRE
 #endif
 
 #ifdef USE_DEVONSHIRE
@@ -426,7 +426,7 @@ int main(int argc, char **argv) {
         prev_time = log_time_at_point("Starting matrix element calculations", start_time, prev_time);
         calc.calculate_matrix_elts();
         calc.diagonalize_H(diag_use_cuda);
-        if (nmax >= 20)
+        if (true)//nmax >= 20)
             calc.save_matrix_elts(dpath / "matrix.dat");
 
         prev_time = log_time_at_point("Finished matrix elt calcs", start_time, prev_time);
