@@ -27,6 +27,7 @@ spin aef::RaFMolecularCalculator::get_nmax() {
 void aef::RaFMolecularCalculator::set_nmax(spin nmax_) {
     nmax = nmax_;
     nBasisElts = jf_basis_vec::index_of_n(nmax_ + 1);
+    std::cout << fmt::format("Using coefficient set \"{}\"", jf_basis_vec::get_coeff_set()) << std::endl;
     // construct basis
     basis.clear();
     basis.reserve(nBasisElts);

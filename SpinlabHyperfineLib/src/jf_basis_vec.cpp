@@ -19,8 +19,11 @@
 #include <aef/aef.h>
 #include "aef/jf_basis_vec.h"
 namespace aef {
+#ifdef _USE_TEST_COEFFS
     namespace hfs_coeff = raf_constants::test;
-
+#else
+    namespace hfs_coeff = raf_constants;
+#endif
 
     int jf_basis_vec::index() const {
         int offset = (int)(8 * n * n);
@@ -237,6 +240,14 @@ namespace aef {
 
     int jf_basis_vec::index_of_n(spin n) {
         return (int)(8 * n * n);
+    }
+
+    std::string jf_basis_vec::get_coeff_set() {
+#ifdef _USE_TEST_COEFFS
+        return "Test coeffs (hfs on nucleus 2 set to zero)";
+#else
+        return "Prod 225RaF coeffs (based on published data)";
+#endif
     }
 
     // HFS parts

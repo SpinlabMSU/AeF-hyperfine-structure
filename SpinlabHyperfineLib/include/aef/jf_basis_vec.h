@@ -220,6 +220,8 @@ namespace aef {
         /// <returns>The smallest index corresponding to a state in the given rotational band</returns>
         static int index_of_n(spin n);
 
+        static std::string get_coeff_set();
+
         /// <summary>
         /// The following memberr functions 
         /// </summary>
