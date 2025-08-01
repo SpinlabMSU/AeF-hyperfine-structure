@@ -14,6 +14,7 @@ namespace aef::raf_constants {
     //// and from ??https://arxiv.org/pdf/1302.5682.pdf??
     //// and from Nat Phys 20, 202-207 (2024)
     //// and from https://arxiv.org/abs/2311.04121
+    //// TODO -- look at using predictions from Phys. Rev. A 102, 062801 for 19F HFS
     // constants for rotational hamiltonian
     constexpr double B = 0.191985 * unit_conversion::MHz_per_inv_cm; // MHz
     constexpr double D = 1.40E-7 * unit_conversion::MHz_per_inv_cm; // kHz --> MHz

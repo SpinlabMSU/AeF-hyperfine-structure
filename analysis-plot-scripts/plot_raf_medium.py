@@ -86,11 +86,20 @@ didx_f1_1 = 2 # delta_idx to reach f_1 = 1
 didx_f1_1_f_half = 2 # delta idx to reach f_1 = 1, f = 1/2
 didx_f1_1_f_thlf = 4 # delta idx to reach f_1 = 1, f = 3/2 -- thlf == 3/2
 
-Es_pz_f1_0 = get_energies(bidx_pz + 0) # doublet f_1 = 0, f = 1/2
+
+## Temporarily hardcode things
+## Translation table between old and new indicies
+## Old index | What it was | new index | what it is now                  |
+##     0     | f=0, m_f = 0|     0     |  f_1 = 0, f = 1/2, m_f = -1/2   |
+##     1     | f=1, m_f = 0|     2     |  f_1 = 1, f = 1/2, m_f = -1/2   |
+##     2     | f=1, m_f =-1|     4     |  f_1 = 1, f = 1/2, m_f = -3/2   |
+##     3     | f=1, m_f = 1|     7     |  f_1 = 1, f = 1/2, m_f = +3/2   |   
+
+Ep0s = get_energies(bidx_pz + 0) # doublet f_1 = 0, f = 1/2
 Ep1s = get_energies(bidx_pz + 1)
-Es_pz_f1_1_f_h = get_energies(bidx_pz + 2) # doublet f_1 = 1, f = 1/2
+Ep2s = get_energies(bidx_pz + 2) # doublet f_1 = 1, f = 1/2
 Ep3s = get_energies(bidx_pz + 3)
-Es_pz_f1_1_f_t = get_energies(bidx_pz + 4) # quadruplet f_1 = 1, f = 3/2
+Ep4s = get_energies(bidx_pz + 4) # quadruplet f_1 = 1, f = 3/2
 Ep5s = get_energies(bidx_pz + 5)
 Ep6s = get_energies(bidx_pz + 6)
 Ep7s = get_energies(bidx_pz + 7)
@@ -113,9 +122,9 @@ En7s = get_energies(bidx_nz + 7)
 if do_extras:
     fig = plt.figure(figsize=(13.66, 9.00))
     plt.title(f"Descending part for run {run}")
-    plt.plot(df[Ez][1:], (Ep1s-Es_pz_f1_0)[1:], label='First Excited state')
-    plt.plot(df[Ez][1:], (Es_pz_f1_1_f_h-Es_pz_f1_0)[1:], label='Second Excited state')
-    plt.plot(df[Ez][1:], (Ep3s-Es_pz_f1_0)[1:], label='Third Excited state')
+    plt.plot(df[Ez][1:], (Ep1s-Ep0s)[1:], label='First Excited state')
+    plt.plot(df[Ez][1:], (Ep2s-Ep0s)[1:], label='Second Excited state')
+    plt.plot(df[Ez][1:], (Ep3s-Ep0s)[1:], label='Third Excited state')
     plt.legend()
     plt.ylabel('Energy (MHz)')
     plt.xlabel("Electric Field (V/cm)")
@@ -137,17 +146,12 @@ if do_extras:
     plt.savefig(os.path.join(rundir, 'spectrum_bottom_posz.png'))
     plt.close(fig)
 
-
-delta_10_fhalf = Es_pz_f1_1_f_h[1] - Es_pz_f1_0[1]
-delta_10_fthlf = Es_pz_f1_1_f_h[1] - Es_pz_f1_0[1]
-delta_10_fnthf = Ep3s[1] - Es_pz_f1_0[1]
-
 if do_extras:
     fig = plt.figure(figsize=(13.66, 9.00))
     plt.title(f"Descending part for run {run}")
-    plt.plot(df[Ez][1:], (Ep1s-Es_pz_f1_0-delta_10_fhalf)[1:]*1000, label='First Excited state')
-    plt.plot(df[Ez][1:], (Es_pz_f1_1_f_h-Es_pz_f1_0-delta_10_fthlf)[1:]*1000, label='Second Excited state')
-    plt.plot(df[Ez][1:], (Ep3s-Es_pz_f1_0-delta_10_fnthf)[1:]*1000, label='Third Excited state')
+    plt.plot(df[Ez][1:], (Ep1s-Ep0s-delta_10_fhalf)[1:]*1000, label='First Excited state')
+    plt.plot(df[Ez][1:], (Ep2s-Ep0s-delta_10_fthlf)[1:]*1000, label='Second Excited state')
+    plt.plot(df[Ez][1:], (Ep3s-Ep0s-delta_10_fnthf)[1:]*1000, label='Third Excited state')
     plt.legend()
     plt.ylabel('Energy (kHz)')
     plt.xlabel("Electric Field (V/cm)")
@@ -156,16 +160,16 @@ if do_extras:
     plt.close(fig)
     #plt.show()
 
-delta_10_pmf1 = Es_pz_f1_1_f_h[1] - Es_pz_f1_0[1]
-delta_10_pmft = Ep3s[1] - Es_pz_f1_0[1]
-delta_10_nmf1 = En2s[1] - En0s[1]
-delta_10_nmft = En3s[1] - En0s[1]
+delta_10_pmf1 = Ep4s[1] - Ep0s[1] # was 2,0
+delta_10_pmft = Ep7s[1] - Ep0s[1] # was 3,0
+delta_10_nmf1 = En4s[1] - En0s[1] # was 2,0
+delta_10_nmft = En7s[1] - En0s[1] # was 3,0
 
 if do_extras:
     fig = plt.figure(figsize=(13.66, 9.00))
     plt.title(f"Equiv of EDM3 RMP Fig 3c for run {run}")
-    plt.plot(df[Ez][1:], (Es_pz_f1_1_f_h-Es_pz_f1_0-delta_10_pmf1)[1:]*1000, label='+Z,f=1,m_f=?1?')
-    plt.plot(df[Ez][1:], (Ep3s-Es_pz_f1_0-delta_10_pmft)[1:]*1000, label='+z,f=1,m_f=?-1?')
+    plt.plot(df[Ez][1:], (Ep2s-Ep0s-delta_10_pmf1)[1:]*1000, label='+Z,f=1,m_f=?1?')
+    plt.plot(df[Ez][1:], (Ep3s-Ep0s-delta_10_pmft)[1:]*1000, label='+z,f=1,m_f=?-1?')
     plt.plot(df[Ez][1:], (En2s-En0s-delta_10_nmf1)[1:]*1000, label='-Z,f=1,m_f=?1?')
     plt.plot(df[Ez][1:], (En3s-En0s-delta_10_nmft)[1:]*1000, label='-Z,f=1,m_f=?-1?')
     plt.legend()
@@ -176,13 +180,13 @@ if do_extras:
     plt.close(fig)
 
 
-dn0 = Ep1s[1] - Es_pz_f1_0[1]#np.average(En1s - En0s)
-dp0 = En1s[1] - En0s[1]#np.average(Ep1s - Ep0s)
+dn0 = Ep2s[1] - Ep0s[1]#np.average(En1s - En0s)
+dp0 = En2s[1] - En0s[1]#np.average(Ep1s - Ep0s)
 
 if do_extras:
     fig = plt.figure(figsize=(13.66, 9.00))
     plt.title(f"Equiv to EDM3 RMP Fig3d for run {run}")
-    plt.plot(df[Ez][1:], (Ep1s-Es_pz_f1_0-dn0)[1:]*1000, label='+Z,f=1,m_f=0')
+    plt.plot(df[Ez][1:], (Ep1s-Ep0s-dn0)[1:]*1000, label='+Z,f=1,m_f=0')
     plt.plot(df[Ez][1:], (En1s-En0s-dp0)[1:]*1000, label='-Z,f=1,m_f=0')
     plt.legend()
     plt.ylabel('Energy (kHz)')
@@ -210,8 +214,8 @@ Ezs_kV = np.array(df[Ez]) / 1000.0
 #df.plot(Ez[:24], states[:24], ylabel = 'Energy (MHz)', ax=plt.gca(), legend = False)
 plt.ylabel('Energy (GHz)')
 #plt.plot(df[Ez][1:], df[states[:24]][1:] / 1000)
-plt.plot(Ezs_kV, Es_pz_f1_0/1000, color='b')
-plt.annotate('$+\hat{Z}$', xy=(Ez_mid, Es_pz_f1_0[mid_idx - 1]/1000), xycoords='data', xytext=(1.5, 1.5), color='b', textcoords='offset points')
+plt.plot(Ezs_kV, Ep0s/1000, color='b')
+plt.annotate('$+\hat{Z}$', xy=(Ez_mid, Ep0s[mid_idx - 1]/1000), xycoords='data', xytext=(1.5, 1.5), color='b', textcoords='offset points')
 plt.plot(Ezs_kV, Em0s/1000, color='g')
 plt.annotate('$+\hat{X},-\hat{X},+\hat{Y},-\hat{Y}$', xy=(Ez_mid, Em0s[mid_idx - 1]/1000), xycoords='data', xytext=(1.5, 2.5), color='g', textcoords='offset points')
 plt.plot(Ezs_kV, En0s/1000, color='r')
@@ -223,25 +227,27 @@ plt.annotate('$-\hat{Z}$', xy=(Ez_mid, En0s[mid_idx - 1]/1000), xycoords='data',
 # part b
 gca = plt.subplot(4, 1, 2)
 gca.tick_params(axis='both', which='both', direction='inout')
-textstr = f'Hyperfine shift of f=1 above f=0 for +Z part of the lowest-energy group'
-gca.text(0.01, 0.15, textstr, transform=gca.transAxes, fontsize=12, verticalalignment='top', bbox=props)
-plt.ylabel('[Energy (f=1) - Energy (f=0)] (MHz)')
-plt.plot(Ezs_kV[1:], (En1s-En0s)[1:], label='$f=1,m_f=0$')
-plt.annotate('$f=1,m_f=0$', xy=(Ez_mid, (En1s-En0s)[mid_idx - 1]), xycoords='data', xytext=(1.5, 5.5), color='k', textcoords='offset points')
-plt.plot(Ezs_kV[1:], (En2s-En0s)[1:], label='$f=1,m_f=1$')
-plt.annotate('$f=1,m_f=\\pm1$', xy=(Ez_mid, (En2s-En0s)[mid_idx - 1]), xycoords='data', xytext=(1.5, -9.5), color='k', textcoords='offset points')
-plt.plot(Ezs_kV[1:], (En3s-En0s)[1:], label='$f=1,m_f=-1$')
+textstr = f'Hyperfine shift of $f_1=1$ above $f_1=0$\nfor +Z part of the lowest-energy group'
+gca.text(0.05, 0.25, textstr, transform=gca.transAxes, fontsize=12, verticalalignment='top', bbox=props)
+plt.ylabel('[Energy ($f_1$=1) - Energy ($f_1$=0)](MHz)')
+s = '$f_1 = 1, f = 1/2$'
+plt.plot(Ezs_kV[1:], (En2s-En0s)[1:], label=s)
+plt.annotate(s, xy=(Ez_mid, (En2s-En0s)[mid_idx - 1]), xycoords='data', xytext=(1.5, 5.5), color='k', textcoords='offset points')
+s = '$f_1 = 1, f = 3/2$'
+plt.plot(Ezs_kV[1:], (En4s-En0s)[1:], label=s)
+plt.annotate(s, xy=(Ez_mid, (En4s-En0s)[mid_idx - 1]), xycoords='data', xytext=(1.5, -9.5), color='k', textcoords='offset points')
+plt.plot(Ezs_kV[1:], (En5s-En0s)[1:], label='$f_1=1,f=3/2,m_f=-1/2$')
 #plt.legend()
 gca.set_ylim([60, 68])
 
 # part c
 gca = plt.subplot(4, 1, 3)
 gca.tick_params(axis='both', which='both', direction='inout')
-textstr = f'$f=1,m_f=\\pm1$'
-plt.ylabel('[E(f=1)-E(f=0)-$\Delta_{10}(0)$] (kHz)')
+textstr = f'$f_1=1,f=3.2$'
+plt.ylabel('[E($f_1$=1)-E($f_1$=0)-$\Delta_{10}(0)$] (kHz)')
 gca.text(0.05, 0.15, textstr, transform=gca.transAxes, fontsize=14, verticalalignment='top', bbox=props)
-pz_avg = ((Es_pz_f1_1_f_h-Es_pz_f1_0-delta_10_pmf1) + (Ep3s-Es_pz_f1_0-delta_10_pmft)) / 2.0
-nz_avg = ((En2s-En0s-delta_10_nmf1) + (En3s-En0s-delta_10_nmft)) / 2.0
+pz_avg = ((Ep4s-Ep0s-delta_10_pmf1) + (Ep7s-Ep0s-delta_10_pmft)) / 2.0
+nz_avg = ((En4s-En0s-delta_10_nmf1) + (En7s-En0s-delta_10_nmft)) / 2.0
 plt.plot(Ezs_kV[1:], pz_avg[1:]*1000, 'b-', label='+Z')
 plt.annotate('+Z', xy=(Ez_mid, pz_avg[mid_idx - 1] * 1000), xycoords='data', xytext=(1.5, 5.5), color='b', textcoords='offset points')
 plt.plot(Ezs_kV[1:], nz_avg[1:]*1000, 'r-', label='-Z')
@@ -252,19 +258,19 @@ plt.legend()
 gca = plt.subplot(4, 1, 4)
 gca.tick_params(axis='both', which='both', direction='inout')
 textstr = f'$f=1,m_f=0$'
-plt.ylabel('[E(f=1)-E(f=0)-$\Delta_{10}(0)$] (kHz)')
+plt.ylabel('[E($f_1$=1)-E($f_1$=0)-$\Delta_{10}(0)$] (kHz)')
 gca.text(0.05, 0.15, textstr, transform=gca.transAxes, fontsize=14, verticalalignment='top', bbox=props)
-pz = (Ep1s-Es_pz_f1_0-dn0)
-nz = (En1s-En0s-dp0)
+pz = (Ep2s-Ep0s-dn0)  # was Ep1-En0
+nz = (En2s-En0s-dp0)  # was En1-En0
 plt.plot(Ezs_kV[1:], pz[1:]*1000, 'b-', label='+Z')
 plt.annotate('+Z', xy=(Ez_mid, pz[mid_idx - 1] * 1000), xycoords='data', xytext=(1.5, 1.5), color='b', textcoords='offset points')
 plt.plot(Ezs_kV[1:], nz[1:]*1000, 'r-', label='-Z')
 plt.annotate('-Z', xy=(Ez_mid, nz[mid_idx - 1] * 1000), xycoords='data', xytext=(1.5, 5.5), color='r', textcoords='offset points')
 plt.legend()
 
-fig.suptitle(f"N=0, F=0,1 Stark shift for run {run}", y=0.999)
+fig.suptitle(f"N=0, $F_1$=0,1 Stark shift for run {run}", y=0.999)
 plt.subplots_adjust(bottom=0.05, right=0.990, top=0.97, left = 0.114, hspace = 0.0)
 plt.xlabel("Externally-Applied Electric field Strength (kV/cm)")
 
-plt.savefig(os.path.join(rundir, 'pra_aspect_deven.png'))
+plt.savefig(os.path.join(rundir, 'doe_plot_pra_aspect_deven.png'))
 plt.show()

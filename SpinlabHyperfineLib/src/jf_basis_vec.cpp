@@ -18,6 +18,9 @@
 #include <aef/raf_constants.h>
 #include <aef/aef.h>
 #include "aef/jf_basis_vec.h"
+
+//#define _USE_TEST_COEFFS
+
 namespace aef {
 #ifdef _USE_TEST_COEFFS
     namespace hfs_coeff = raf_constants::test;

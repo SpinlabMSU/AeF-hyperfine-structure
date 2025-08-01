@@ -39,15 +39,23 @@ if len(sys.argv) > 1:
 rundir = os.path.abspath(rundir)
 x_pix = 1366
 y_pix = 900
+doe_plot = False
 
-if len(sys.argv) > 3:
+if len(sys.argv) > 2 and sys.argv[2].lower().startswith('doe'):
+    doe_plot = True
+    x_pix = 756
+    y_pix = 857
+
+if len(sys.argv) > 3 and not doe_plot:
     x_pix = int(sys.argv[2])
     y_pix = int(sys.argv[3])
 
 out_fname = "stark_shift_gnd.png"
 
+if doe_plot:
+    out_fname = "doe_plot_stark_shift_gnd.eps"
 # default fname for pra aspect ratios
-if x_pix == 756:# and y_pix == 857:
+elif x_pix == 756:# and y_pix == 857:
     out_fname = "stark_shift_gnd_pra_aspect.png"
 
 if len(sys.argv) > 4:
@@ -112,7 +120,10 @@ plt.xlabel("Externally-applied electric field strength (kV/cm)")
 plt.annotate('$m_f=\pm1$', xy=(Ez_mid, dE_f11s[mid_idx - 1]), xycoords='data', xytext=(1.5, -6.5), color='g', textcoords='offset points')
 plt.annotate('$m_f=0$', xy=(Ez_mid, dE_f10s[mid_idx - 1]), xycoords='data', xytext=(1.5, 1.5), color='orange', textcoords='offset points')
 #
-fig.suptitle(f"N=0, F=0,1 Stark shift for run {run}", y=0.999)
+if not doe_plot:
+    fig.suptitle(f"N=0, F=0,1 Stark shift for run {run}", y=0.999)
+else:
+    fig.suptitle(f"Old Code gas-phase N=0, F=0,1 Stark shift", y=0.999)
 plt.subplots_adjust(bottom=0.05, right=0.95, top=0.97, left = 0.114, hspace = 0.0)
 # 
 plt.savefig(os.path.join(rundir, out_fname), bbox_inches="tight")

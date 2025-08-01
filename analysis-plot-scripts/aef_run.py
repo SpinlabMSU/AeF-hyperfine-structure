@@ -63,6 +63,7 @@ class aef_run(object):
         self.nmax = -1 # n is the orbitorotational quantum number
         self.max_E_z = -math.inf
         self.calc_E_z = math.nan
+        self.coeff_set = None
 
         self.stk_lop_dur = -1
         self.mat_elt_dur = -1
@@ -101,6 +102,7 @@ class aef_run(object):
             k_search = "K is" # devonshire coupling constant named K, look for enabled
             Emax_search = "Electric field strength is"
             calc_search = "calculator is"
+            coeff_search = "Using coefficient set"
             if n_search in line and k_search in line:
                 print(f"Found parameter line \"{line}\"")
 
@@ -143,6 +145,10 @@ class aef_run(object):
                 elif lline.startswith('completed stark loop'):
                     self.stk_lop_dur = dur
                     print(f'found stark loop dur {dur}')
+            elif coeff_search in line:
+                coeff_set = line.split('"')[1]
+                print(f'Used coeff set {coeff_set}')
+                self.coeff_set = coeff_set
         f.close()
         if not found_param_line:
             raise RuntimeError(f"Parameter line not found in {self.log_path}")
