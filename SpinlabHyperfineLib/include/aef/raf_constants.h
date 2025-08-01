@@ -15,15 +15,16 @@ namespace aef::raf_constants {
     //// and from [1] Nat Phys 20, 202-207 (2024)
     //// and from [2] https://arxiv.org/abs/2311.04121
     //// and from [3] Phys. Rev. A 102, 062801
-    //// and from [2] https://arxiv.org/pdf/1302.5682.pdf??
+    //// and from [4] https://arxiv.org/pdf/1302.5682.pdf??
 
-    // constants for rotational hamiltonian, taken from 
+    // constants for rotational hamiltonian, taken from [1] where measured and using 138BaF values
+    // from [0] otherwise.
     constexpr double B = 0.191985 * unit_conversion::MHz_per_inv_cm; // MHz, from [1]
     constexpr double D = 1.40E-7 * unit_conversion::MHz_per_inv_cm; // MHz, from [1]
     constexpr double gamma = 0.00585 * unit_conversion::MHz_per_inv_cm; // MHz, from [1]
     constexpr double delta = 0.111 * 1e-3; // kHz --> MHz -- not measured yet, using 138BaF value from [0]
 
-    /// constants for Radium-225 hyperfine shift in 225RaF
+    /// constants for Radium-225 hyperfine shift in 225RaF, taken from [2]
     constexpr double A_para_Ra = -0.5692 * unit_conversion::MHz_per_inv_cm; // MHz, from [2]
     constexpr double A_perp_Ra = -0.5445 * unit_conversion::MHz_per_inv_cm; // MHz, from [2]
     constexpr double b_Ra = A_perp_Ra; // MHz --> used in fermi contact
@@ -32,7 +33,7 @@ namespace aef::raf_constants {
     // no electric quadrupole because I(225Ra) = 1/2
 
     /// constants for fluorine-19 hyperfine shift in 225RaF -- not currently measured,
-    /// using values predicted by Phys. Rev. A 102, 062801
+    /// using values predicted by [3]
     constexpr double A_para_F = 109; // MHz, from [3]
     constexpr double A_perp_F = 90; // MHz, from [3]
     
@@ -45,7 +46,11 @@ namespace aef::raf_constants {
 
     // constants for stark shift
     constexpr double mu_e = 3.170; // D, from [0] for now (BaF number, not RaF)
-
+    // constants for zeeman shift
+    constexpr double mu_rotational = 0;
+    constexpr double g_S = 0; // electron spin
+    constexpr double g_I = 0; // nuclear
+    constexpr double g_N = 0; // rotational
 
     // explicit rotational symmetry breaking term to break m_f degeneracy
     // no longer needed
@@ -84,7 +89,11 @@ namespace aef::raf_constants::old {
 
     // constants for stark shift
     constexpr double mu_e = 3.170; // D
-
+    // constants for zeeman shift
+    constexpr double mu_rotational = 0;
+    constexpr double g_S = 0; // electron spin
+    constexpr double g_I = 0; // nuclear
+    constexpr double g_N = 0; // rotational
 
     // explicit rotational symmetry breaking term to break m_f degeneracy
     // no longer needed
