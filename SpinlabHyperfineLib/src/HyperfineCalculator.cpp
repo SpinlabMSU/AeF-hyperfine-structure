@@ -224,7 +224,7 @@ bool HyperfineCalculator::save_matrix_elts(std::string outpath) {
 bool HyperfineCalculator::load_matrix_elts(fs::path inpath) {
   std::ifstream in(inpath, std::ios::binary);
   if (in.fail()) {
-      std::cerr << fmt::format("Unable to load file \"{}\"", inpath) << std::endl;
+      std::cerr << fmt::format("Unable to load file \"{}\"", inpath.string()) << std::endl;
       assert(!in.fail());
   }
   return load_matrix_elts(in);
