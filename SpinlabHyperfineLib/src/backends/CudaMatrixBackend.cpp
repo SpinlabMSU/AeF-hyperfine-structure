@@ -163,7 +163,7 @@ ResultCode aef::matrix::CudaMatrixBackend::set_max_size(int nMaxDim) {
     CUDA_CHECK(cudaMallocAsync(reinterpret_cast<void**>(&d_info), sizeof(int), cu_stream));
 
     // allocate host-side eigenvalue buffer
-    h_W.reserve(n);
+    h_W.resize(n);
     // pre-allocate workspace: first query how large it needs to be, then allocate
     const auto jobz = CUSOLVER_EIG_MODE_VECTOR;
     const auto uplo = CUBLAS_FILL_MODE_UPPER;
