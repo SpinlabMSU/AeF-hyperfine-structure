@@ -1,30 +1,17 @@
-## AeF-hyprfine-structure makefile
+## AeF-hyperfine-structure makefile
 ## Intended for use on linux only
 AR:=gcc-ar
 CXX:=g++
 LD:=$(CXX)
 
 HOST_COMPILER ?= g++
-NVCC          := $(CUDA_PATH)/bin/nvcc -ccbin $(HOST_COMPILER)
 
-MIN_GCC_VERSION = "13.0"
-GCC_VERSION := "`gcc -dumpversion`"
-IS_GCC_ABOVE_MIN_VERSION := $(shell expr "$(GCC_VERSION)" ">=" "$(MIN_GCC_VERSION)")
-ifeq "$(IS_GCC_ABOVE_MIN_VERSION)" "1"
-    # stuff that requires GCC_VERSION >= VERSION
-    BUG_FLAGS:=
-else
-    BUG_FLAGS:=-freport-bug -save-temps 
-endif
-$(info $$BUG_FLAGS is [${BUG_FLAGS}])
 INCLUDES:=-I./include -I./SpinlabHyperfineLib/include
 ROOT_CFLAGS:=$(shell root-config --cflags | sed 's/-std=.* //g') # note: want a more recent C++ version than root requires
 ROOT_LDFLAGS:=$(shell root-config --ldflags)
 ROOT_LDLIBS:=$(shell root-config --glibs)
 CXX_VSN:=-std=gnu++23 -fmodules-ts -fopenmp
 CXXFLAGS:=$(INCLUDES) $(CXX_VSN) -O4 -fPIC -flto $(BUG_FLAGS) -g -march=native -D_GNU_SOURCE
-NCXXFLAGS:=$(INCLUDES) -std=gnu++20 -O4 -fPIC -flto $(BUG_FLAGS) -g -march=native
-NVCCFLAGS:=$(INCLUDES) -O4 $(BUG_FLAGS) -g $(addprefix -Xcompiler ,$(NCXXFLAGS))
 LDFLAGS=-L. -pthread -fopenmp -flto -static-libstdc++ -static-libgcc -g -march=native -O4
 CUDA_LIBS:=-lcusolver -lcublas -lcublasLt -lcuda -lcudart_static
 LDLIBS:=-l:./libSpinlabHyperfine.a -lgsl -lgslcblas $(CUDA_LIBS) -lz -lm
@@ -38,7 +25,6 @@ libs: libSpinlabHyperfine.a libSpinlabHyperfine.so
 SpinlabHyperfineLib/include/pch.h.gch: SpinlabHyperfineLib/include/pch.h
 	$(CXX) -o $@ -x c++-header $(CXXFLAGS) -c $< 
 LSPHF_OBJ:=$(patsubst %.cpp,%.o,$(wildcard SpinlabHyperfineLib/src/*.cpp))\
-$(patsubst %.cu,%.o,$(wildcard SpinlabHyperfineLib/src/*.cu))\
 $(patsubst %.cpp,%.o,$(wildcard SpinlabHyperfineLib/src/backends/*.cpp))\
 $(patsubst %.cpp,%.o,$(wildcard SpinlabHyperfineLib/src/operators/*.cpp))
 

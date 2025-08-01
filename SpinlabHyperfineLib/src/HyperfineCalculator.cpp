@@ -208,6 +208,10 @@ bool HyperfineCalculator::diagonalize_H(bool use_cuda) {
 
 bool HyperfineCalculator::load_matrix_elts(std::string inpath) {
   std::ifstream in(inpath, std::ios::binary);
+  if (in.fail()) {
+      std::cerr << fmt::format("Unable to load file \"{}\"", inpath) << std::endl;
+      assert(!in.fail());
+  }
   return load_matrix_elts(in);
 }
 
@@ -219,6 +223,10 @@ bool HyperfineCalculator::save_matrix_elts(std::string outpath) {
 
 bool HyperfineCalculator::load_matrix_elts(fs::path inpath) {
   std::ifstream in(inpath, std::ios::binary);
+  if (in.fail()) {
+      std::cerr << fmt::format("Unable to load file \"{}\"", inpath) << std::endl;
+      assert(!in.fail());
+  }
   return load_matrix_elts(in);
 }
 

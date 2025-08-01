@@ -81,12 +81,12 @@ aef::ResultCode aef::operators::PerturbationFramework::delta_E_lo(const std::str
     }
     Eigen::MatrixXcd* op = getOperatorMatrix(id);
     // get expectation values
-    aef::matrix::group_action(*workspace, sys->Vs, *op);
+    ResultCode rc = aef::matrix::group_action(*workspace, sys->Vs, *op);
     output = workspace->diagonal();
     // second order ???
 
     if (internal_workspace) {
         delete workspace;
     }
-    return aef::ResultCode::Success;
+    return rc;
 }

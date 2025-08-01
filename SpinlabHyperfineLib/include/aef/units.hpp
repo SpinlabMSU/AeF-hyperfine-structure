@@ -9,6 +9,9 @@
 #define _UNITS_HPP 1
 #pragma once
 
+/// <summary>
+/// The values of these constants are taken from NIST CODATA 2022
+/// </summary>
 namespace constants {
     constexpr double c = 299792458; // m/s, exact
     constexpr double h = 6.626'070'15E-34; // J*s, exact

@@ -30,7 +30,7 @@
 #include <stdexcept>
 #include <zlib.h>
 #include <fmt.hpp>
-//#include <boost/iostreams/stream.hpp>
+
 extern uint64_t stream_pos;
 
 namespace Eigen {
