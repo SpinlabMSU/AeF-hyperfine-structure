@@ -438,7 +438,43 @@ namespace aef {
     /// <param name="other">the "other</param>
     /// <returns>&lt;this| \vec{\mu_{E,mol}} |other&gt;</returns>
     std::array<dcomplex, 3> jf_basis_vec::molec_edm(jf_basis_vec other) const {
-        return {0, 0, 0};
+        const spin np = other.n;
+        const spin jp = other.j;
+        const spin f1p = other.f1;
+        const spin fp = other.f;
+        const spin m_fp = other.m_f;
+
+        // factors have been calculated in Nusgart Logbook Volume 8 pg 50 and pg 51
+        dcomplex xi_factors = xi(n, np) * xi(j, jp) * xi(f1, f1p) * xi(f, fp);
+        dcomplex threej_factors = w3j(f, 1, fp, -m_f, 0, m_f) * w3j(n, 1, np, 0, 0, 0);
+        dcomplex sixj_factors = w6j(f, 1, fp, f1p, half, f1) * w6j(f1, 1, f1p, jp, half, j) * w6j(j, 1, jp, np, half, n);
+        dcomplex phase = -parity(half - m_f); // add extra negative sign to account for negative in Stark 
+        dcomplex angular = xi_factors * threej_factors * sixj_factors * phase;
+
+        using hfs_coeff::mu_e;
+        using namespace std::complex_literals;
+
+        // technically this isn't the "true" reduced matrix element from the Wigner-Eckhart theorem
+        // using the conventions in Carrington and Brown since it already has the phase factor
+        dcomplex reduced_mat_elt = mu_e * angular;
+
+        double we_factor_t = w3j(f, 1, fp, -m_f, -1, m_f);
+        double we_factor_0 = w3j(f, 1, fp, -m_f, 0, m_f);
+        double we_factor_1 = w3j(f, 1, fp, -m_f, 1, m_f);
+
+        // spherical tensor operator form
+        dcomplex mue_t = we_factor_t * reduced_mat_elt;
+        dcomplex mue_0 = we_factor_0 * reduced_mat_elt;
+        dcomplex mue_1 = we_factor_1 * reduced_mat_elt;
+
+        constexpr double inv_sqrt2 = 1 / std::numbers::sqrt2;
+
+        // cartesian form
+        dcomplex mue_x = (mue_t - mue_1) * inv_sqrt2;
+        dcomplex mue_y = (mue_t + mue_1) * 1i * inv_sqrt2;
+        dcomplex mue_z = mue_0;
+
+        return std::array<dcomplex, 3>({ mue_x, mue_y, mue_z });
     }
 
     /// <summary>
@@ -448,7 +484,71 @@ namespace aef {
     /// <param name="other"></param>
     /// <returns>&lt;this| \vec{\mu_{B,mol}} |other&gt;</returns>
     std::array<dcomplex, 3> jf_basis_vec::molec_mdm(jf_basis_vec other) const {
-        return {0, 0, 0};
+        const spin np = other.n;
+        const spin jp = other.j;
+        const spin f1p = other.f1;
+        const spin fp = other.f;
+        const spin m_fp = other.m_f;
+
+        using namespace hfs_coeff;
+        using namespace std::complex_literals;
+        constexpr double half = 0.5;
+
+        double we_factor_t = w3j(f, 1, fp, -m_f, -1, m_f);
+        double we_factor_0 = w3j(f, 1, fp, -m_f, 0, m_f);
+        double we_factor_1 = w3j(f, 1, fp, -m_f, 1, m_f);
+        // there are multiple possible contributions to the molecular mdm
+        // including one from the electron magnetic moment, a magnetic moment induced by molecular rotation,
+        // and two from the nuclear magnetic moments
+        // TODO evaluate these matrix elements in the jf basis
+
+        // electron mag moment
+        dcomplex rme_S = 0;
+        if (n == np) {
+            dcomplex parity_S = parity(1 + n - m_f);
+            dcomplex prf_S = constexpr_sqrt(3 / 2.) * xi(j, jp) * xi(f, fp);
+            dcomplex w6j_S = 0;
+            rme_S = g_S * constants::mu_bohr * parity_S * prf_S * w6j_S;
+        }
+        // nuclear magnetic moment
+        dcomplex rme_I1 = 0;
+        if (n == np && j == jp) {
+            dcomplex parity_I = parity(1 + half + j - m_f);
+            dcomplex prf_I = xi(j, jp) * xi(f1, f1p) * xi(f, fp);
+            dcomplex w6j_I = 0;
+            rme_I1 = g_I1 * constants::mu_nuclear * parity_I * prf_I * w6j_I;
+        }
+
+        dcomplex rme_I2 = 0;
+        if (n == np && j == jp) {
+            dcomplex parity_I = parity(1 + half + j - m_f);
+            dcomplex prf_I = xi(j, jp) * xi(f, fp);
+            dcomplex w6j_I = 0;
+            rme_I2 = g_I2 * constants::mu_nuclear * parity_I * prf_I * w6j_I;
+        }
+        // rotational magnetic moment
+        dcomplex rme_N = 0;
+        if (j == jp && f == fp && n == np) {
+            dcomplex parity_N = parity(1 + n - m_f);
+            dcomplex prf_N = xi(j, jp) * xi(f, fp) * sqrt(n * (n + 1) * (2 * n + 1));
+            dcomplex w6j_N = 0;
+            rme_N = mu_rotational * parity_N * prf_N * w6j_N;
+        }
+        // full reduced matrix element is the sum of the three contributions
+        dcomplex reduced_mat_elt = rme_S + rme_I1 + rme_N;
+        // spherical tensor operator form
+        dcomplex mub_t = we_factor_t * reduced_mat_elt;
+        dcomplex mub_0 = we_factor_0 * reduced_mat_elt;
+        dcomplex mub_1 = we_factor_1 * reduced_mat_elt;
+
+        constexpr double inv_sqrt2 = 1 / std::numbers::sqrt2;
+
+        // cartesian form
+        dcomplex mub_x = (mub_t - mub_1) * inv_sqrt2;
+        dcomplex mub_y = (mub_t + mub_1) * 1i * inv_sqrt2;
+        dcomplex mub_z = mub_0;
+
+        return std::array<dcomplex, 3>({ mub_x, mub_y, mub_z });
     }
 
     /// <summary>
