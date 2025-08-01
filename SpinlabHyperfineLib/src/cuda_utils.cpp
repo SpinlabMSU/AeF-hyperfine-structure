@@ -27,6 +27,8 @@
 // derived from helper_cuda.h in cuda samples
 
 //#include <pch.h>
+#define _SILENCE_ALL_CXX23_DEPRECATION_WARNINGS
+#define _AEF_WILL_USE_CUDA_HEADERS
 #include "cuda_utils.h"
 #include <iostream>
 #ifndef __CUDACC__
