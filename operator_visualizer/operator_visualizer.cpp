@@ -142,6 +142,7 @@ int main(int argc, char **argv) {
 
     if (result.count("load")) {
         matrix_file_in_name = result["load"].as<std::string>();
+        std::cout << "Loading file \"" << matrix_file_in_name << "\"" << std::endl;
     }
 
     if (result.count("no_stark")) {
