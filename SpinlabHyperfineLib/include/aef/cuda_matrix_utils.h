@@ -1,12 +1,15 @@
 #pragma once
 
 #include "aef_types.h"
-#ifndef __NVCC__
+#if !defined(__NVCC__) && !defined(_AEF_WILL_USE_CUDA_HEADERS)
 #include "aef_utils.h"
 #endif
 #include "gcem.hpp"
 #include <complex>
 #include <numbers>
+#ifdef _MSC_VER
+#define __PRETTY_FUNCTION__ __FUNCSIG__
+#endif
 #include <Eigen/Eigen>
 
 namespace aef {

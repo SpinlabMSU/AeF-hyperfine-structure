@@ -25,11 +25,10 @@ constexpr double c = 8.224;  // MHz
 constexpr double mu_e = 3.170; // D
 
 // constants for zeeman shift
-constexpr double mu_B = 0; // magnetic moment
-constexpr double mu_BN = 0; // nuclear magnetic moment of 19F
-constexpr double g_S = 2; // electron spin
-constexpr double g_N = 1; // nuclear
-constexpr double g_r = 1; // rotational
+constexpr double mu_rotational = 0;
+constexpr double g_S = 0; // electron spin
+constexpr double g_I = 0; // nuclear
+constexpr double g_N = 0; // rotational
 
 // explicit rotational symmetry breaking term to break m_f degeneracy
 // no longer needed
