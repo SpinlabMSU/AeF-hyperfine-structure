@@ -18,6 +18,7 @@ namespace constants {
     constexpr double k_B = 1.380'649E-23; // J/K, exact
     constexpr double mu_bohr = 13'996.244'9171; // MHz/T, +- 44 ulp (0.31 ppb) 
     constexpr double mu_nuclear = 7.622'593'2188; // MHz / T, +- 24 ulp (0.31 ppb)
+    constexpr double e = 1.602176634E-19;// C, exact
 };
 
 namespace unit_conversion {
@@ -47,6 +48,30 @@ namespace unit_conversion {
 
 
     constexpr double MHz_per_inv_cm = constants::c * 1E-6 * 100;
+
+
+#pragma region "Debye conversion"
+    /// <summary>
+    /// Conversion factor from Debye to Coulomb meters
+    /// 1 Debye is defined to be 10^-18 statC*cm, which converts to 1 / c * 10^-21 C*m in SI
+    /// </summary>
+    constexpr double C_m_per_D = (1.0 / constants::c) * 1E-21; // C*m / D
+    /// <summary>
+    /// Conversion factor from Debye to e*cm
+    /// </summary>
+    constexpr double e_cm_per_D = C_m_per_D * 100  / constants::e; // e*cm / D
+    /// <summary>
+    /// Conversion factor from Debye to e*nm
+    /// </summary>
+    constexpr double e_nm_per_D = C_m_per_D * 1E9 / constants::e; // e*nm / D
+    /// <summary>
+    /// Conversion factor either from V/cm to MHz/(C*m) or from C*m to MHz / (V/cm)
+    /// </summary>
+    constexpr double MHz_per_V_cm_per_C_m = 1E-6 * 100/ constants::h; // MHz / (V/cm) / (C*m)
+    /// <summary>
+    /// Conversion factor either from V/cm to MHz/(C*m) or from C*m to MHz / (V/cm)
+    /// </summary>
+    constexpr double MHZ_per_V_cm_per_D = MHz_per_V_cm_per_C_m * C_m_per_D; // MHz / (V/cm) / D
 }; // namespace unit_conversion
 
 #endif //_UNITS_HPP

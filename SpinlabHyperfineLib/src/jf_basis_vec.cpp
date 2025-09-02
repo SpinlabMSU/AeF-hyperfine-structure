@@ -565,7 +565,8 @@ namespace aef {
         const spin fp = other.f;
         const spin m_fp = other.m_f;
 
-        constexpr spin i = half;
+        constexpr spin i1 = half;
+        constexpr spin i2 = half;
         constexpr spin s = half;
         constexpr spin ip = half;
         constexpr spin sp = half;
@@ -576,10 +577,11 @@ namespace aef {
             return 0;
         }
         
-        dcomplex prf = constexpr_sqrt(s*(s+1)*(2*s+1)) * xi(n, np) * xi(j, jp) * xi(f, fp) / sqrt(2*jp+1);
-        dcomplex phase = parity(1 - m_f);
+        constexpr double s_we_mag = constexpr_sqrt(s * (s + 1) * (2 * s + 1));
+        dcomplex prf = s_we_mag * xi(n, np) * xi(j, jp) * xi(f1, f1p) * xi(f, fp) / sqrt(2*jp+1);
+        dcomplex phase = parity(half - m_f);
         dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
-        dcomplex f6j = w6j(f, 1, fp, jp, i, j) * w6j(n, sp, j, s, n, 1);
+        dcomplex f6j = w6j(f, 1, fp, f1p, i2, f1) * w6j(f1, 1, f1p, jp, i1, j) * w6j(n, sp, j, s, n, 1);
         
         return prf * phase * f3j * f6j;
     }
@@ -598,21 +600,22 @@ namespace aef {
         const spin fp = other.f;
         const spin m_fp = other.m_f;
 
-        constexpr spin i = half;
+        constexpr spin i1 = half;
+        constexpr spin i2 = half;
         constexpr spin s = half;
         constexpr spin ip = half;
         constexpr spin sp = half;
         
-        // TODO implement with correct forms
-        // \vec{S}\cdot\vec{d} is a scalar operator and conserves j
-        if (f != fp || m_f != m_fp || j != jp) {
+        // \vec{I_1}\cdot\vec{d} is a scalar operator and conserves f1
+        if (f != fp || m_f != m_fp || f1 != f1p) {
             return 0;
         }
         
-        dcomplex prf = constexpr_sqrt(s*(s+1)*(2*s+1)) * xi(n, np) * xi(j, jp) * xi(f, fp) / sqrt(2*jp+1);
-        dcomplex phase = parity(1 - m_f);
+        constexpr double i1_we_mag = constexpr_sqrt(i1 * (i1 + 1) * (2 * i1 + 1));
+        dcomplex prf = i1_we_mag * xi(n, np) * xi(j, jp) * xi(f1, f1p) * xi(f, fp) / sqrt(2*f1+1);
+        dcomplex phase = parity(half - m_f);
         dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
-        dcomplex f6j = w6j(f, 1, fp, jp, i, j) * w6j(n, sp, j, s, n, 1);
+        dcomplex f6j = w6j(f, 0, fp, f1p, i2, f1) * w6j(i1, jp, f, j, i1, 1) * w6j(j, 1, jp, np, s, n);
         
         return prf * phase * f3j * f6j;
     }
@@ -631,7 +634,8 @@ namespace aef {
         const spin fp = other.f;
         const spin m_fp = other.m_f;
 
-        constexpr spin i = half;
+        constexpr spin i1 = half;
+        constexpr spin i2 = half;
         constexpr spin s = half;
         constexpr spin ip = half;
         constexpr spin sp = half;
@@ -642,10 +646,11 @@ namespace aef {
             return 0;
         }
         
-        dcomplex prf = constexpr_sqrt(s*(s+1)*(2*s+1)) * xi(n, np) * xi(j, jp) * xi(f, fp) / sqrt(2*jp+1);
-        dcomplex phase = parity(1 - m_f);
-        dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
-        dcomplex f6j = w6j(f, 1, fp, jp, i, j) * w6j(n, sp, j, s, n, 1);
+        constexpr double i2_we_mag = constexpr_sqrt(i2 * (i2 + 1) * (2 * i2 + 1)); // = sqrt(3/2)
+        dcomplex prf = i2_we_mag * xi(n, np) * xi(j, jp) * xi(f1, f1p);
+        dcomplex phase = parity(3.0/2.0 - f);
+        dcomplex f3j = w3j(n, 1, np, 0, 0, 0);
+        dcomplex f6j = w6j(j, 1, jp, np, s, n) * w6j(f1, 1, f1p, jp, i1, j) * w6j(i2, f1p, f, f1, i2, 1);
         
         return prf * phase * f3j * f6j;
     }
