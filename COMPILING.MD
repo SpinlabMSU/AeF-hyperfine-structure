@@ -3,9 +3,9 @@
 This document provides instructions on how to compile the AeF-hyperfine-structure toolkit.  Please note that no
 installation is required -- you can directly run the executables immediately after compiling them.
 
-Specific instructions will be provided for Linux and Windows, but in general .  Please note that Mac OS is not a
-supported platform at the present time due to lacking a macbook to test on and also as a result of CUDA not being
-supported on macOS.
+Specific instructions will be provided for Linux and Windows.  Please note that Mac OS is not a
+supported platform at the present time for two reasons. Firstly, CUDA 11 and later do not support Mac OS. Additionally,
+no mac was available to compile or test on.
 
 ## Dependencies
 * A C++ 23 compliant compiler (G++ 13 and MSVC v19.37 / VS 2022 version 17.7 implement enough of C++ 23 to work)
@@ -25,10 +25,18 @@ option suffices. Make sure to install the "Desktop development with C++" option.
 instructions at https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/. It is suggested to use vcpkg
 to install the other dependencies.
 
+For CERN ROOT specifically, there several extra considerations.  You will need to make sure the version of ROOT you're
+using matches your visual studio compiler version and architecture.  Then, you also need to make sure to set the ROOTSYS
+environmental variable to to the path of your ROOT installation.
+
 ## Compiling on Linux
 
 Install all of the required dependencies.  On debian-based distributions, most dependencies can be installed by
 ```
 sudo apt install build-essential libgsl-dev zlib1g-dev
 ```
-You will then need to install NVIDIA's CUDA toolkit following the instructions at https://docs.nvidia.com/cuda/cuda-installation-guide-linux/
+You will then need to install NVIDIA's CUDA toolkit following the instructions at
+https://docs.nvidia.com/cuda/cuda-installation-guide-linux/.  Then install CERN ROOT following the instructions at
+https://root.cern/install.  Before compiling or running AeF-hyperfine-structure, you will need to "source" the
+`thisroot.sh` script to set environmental variables correctly.  Once this is all done you should be able to compile
+AeF-hyperfine-structure using `make`.

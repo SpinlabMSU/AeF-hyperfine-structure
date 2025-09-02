@@ -82,13 +82,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(Projectdir)include;$(IncludePath)</IncludePath>
-    <ExternalIncludePath>C:\root_v6.32.02\include;$(ExternalIncludePath)</ExternalIncludePath>
-    <LibraryPath>C:\root_v6.32.02\lib;$(LibraryPath)</LibraryPath>
+    <ExternalIncludePath>$(ROOTSYS)\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>$(ROOTSYS)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(Projectdir)include;$(IncludePath)</IncludePath>
-    <ExternalIncludePath>C:\root_v6.32.02\include;$(ExternalIncludePath)</ExternalIncludePath>
-    <LibraryPath>C:\root_v6.32.02\lib;$(LibraryPath)</LibraryPath>
+    <ExternalIncludePath>$(ROOTSYS)\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>$(ROOTSYS)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
