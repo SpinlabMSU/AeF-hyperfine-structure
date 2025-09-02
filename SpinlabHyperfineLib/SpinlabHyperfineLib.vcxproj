@@ -87,7 +87,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(ProjectDir)include;$(SolutionDir)include;$(IncludePath)</IncludePath>
     <PublicIncludeDirectories>$(ProjectDir)include;$(PublicIncludeDirectories)</PublicIncludeDirectories>
-    <ExternalIncludePath>C:\Program Files %28x86%29\Intel\oneAPI\mkl\2023.0.0\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>$(ROOTSYS)\include;C:\Program Files %28x86%29\Intel\oneAPI\mkl\2023.0.0\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>$(ROOTSYS)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(ProjectDir)include;$(SolutionDir)include;$(IncludePath)</IncludePath>
@@ -97,7 +98,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(ProjectDir)include;$(SolutionDir)include;$(IncludePath)</IncludePath>
     <PublicIncludeDirectories>$(ProjectDir)include;$(PublicIncludeDirectories)</PublicIncludeDirectories>
-    <ExternalIncludePath>C:\Program Files %28x86%29\Intel\oneAPI\mkl\2023.0.0\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <ExternalIncludePath>$(ROOTSYS)\include;C:\Program Files %28x86%29\Intel\oneAPI\mkl\2023.0.0\include;$(ExternalIncludePath)</ExternalIncludePath>
+    <LibraryPath>$(ROOTSYS)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
