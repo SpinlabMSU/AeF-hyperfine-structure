@@ -47,10 +47,10 @@ namespace aef::raf_constants {
     // constants for stark shift
     constexpr double mu_e = 3.170; // D, from [0] for now (BaF number, not RaF)
     // constants for zeeman shift
-    constexpr double mu_rotational = 0;
-    constexpr double g_S = 0; // electron spin
-    constexpr double g_I1 = 0; // nuclear
-    constexpr double g_I2 = 0; // nuclear
+    constexpr double mu_rotational = 0; // need to find estimate or measurement of this
+    constexpr double g_S = 2; // electron spin, guess based on free electron
+    constexpr double g_I1 = -0.7338; // nuclear magnetic moment of 225Ra, taken from the ENSDF
+    constexpr double g_I2 = +2.628321; // nuclear magnetic moment of 19F, taken from IAEA's NDS nuclear electromagnetic moment database
     constexpr double g_N = 0; // rotational
 
     // explicit rotational symmetry breaking term to break m_f degeneracy

@@ -490,9 +490,15 @@ namespace aef {
         const spin fp = other.f;
         const spin m_fp = other.m_f;
 
+        constexpr spin i1 = half;
+        constexpr spin i2 = half;
+        constexpr spin s = half;
+        constexpr spin i1p = half;
+        constexpr spin i2p = half;
+        constexpr spin sp = half;
+
         using namespace hfs_coeff;
         using namespace std::complex_literals;
-        constexpr double half = 0.5;
 
         double we_factor_t = w3j(f, 1, fp, -m_f, -1, m_f);
         double we_factor_0 = w3j(f, 1, fp, -m_f, 0, m_f);
@@ -505,37 +511,42 @@ namespace aef {
         // electron mag moment
         dcomplex rme_S = 0;
         if (n == np) {
-            dcomplex parity_S = parity(1 + n - m_f);
-            dcomplex prf_S = constexpr_sqrt(3 / 2.) * xi(j, jp) * xi(f, fp);
-            dcomplex w6j_S = 0;
+            dcomplex parity_S = parity(half + n - m_f);
+            constexpr double s_we_mag = constexpr_sqrt(s * (s + 1) * (2 * s + 1));
+            dcomplex prf_S = s_we_mag * xi(j, jp) * xi(f1, f1p) * xi(f, fp);
+            dcomplex w6j_S = w6j(j, 1, jp, s, n, sp) * w6j(f1, 1, f1p, jp, i1, j) * w6j(f, 1, fp, f1p, i2, f1);
             rme_S = g_S * constants::mu_bohr * parity_S * prf_S * w6j_S;
         }
         // nuclear magnetic moment
         dcomplex rme_I1 = 0;
         if (n == np && j == jp) {
-            dcomplex parity_I = parity(1 + half + j - m_f);
-            dcomplex prf_I = xi(j, jp) * xi(f1, f1p) * xi(f, fp);
-            dcomplex w6j_I = 0;
+            constexpr double i1_we_mag = constexpr_sqrt(i1 * (i1 + 1) * (2 * i1 + 1));
+            dcomplex parity_I = parity(1 + j - m_f);
+            dcomplex prf_I = xi(f1, f1p) * xi(f, fp);
+            dcomplex w6j_I = w6j(f1, 1, f1p, i1, j, i1p) * w6j(f, 1, fp, f1p, i2, f1);
             rme_I1 = g_I1 * constants::mu_nuclear * parity_I * prf_I * w6j_I;
         }
 
         dcomplex rme_I2 = 0;
-        if (n == np && j == jp) {
-            dcomplex parity_I = parity(1 + half + j - m_f);
-            dcomplex prf_I = xi(j, jp) * xi(f, fp);
-            dcomplex w6j_I = 0;
+        if (n == np && j == jp && f1 == f1p) {
+            constexpr double i2_we_mag = constexpr_sqrt(i2 * (i2 + 1) * (2 * i2 + 1));
+            dcomplex parity_I = parity(1 + i2 + f1 - m_f);
+            dcomplex prf_I = xi(f, fp);
+            dcomplex w6j_I = w6j(f, 1, fp, i2p, f1, i2);
             rme_I2 = g_I2 * constants::mu_nuclear * parity_I * prf_I * w6j_I;
         }
         // rotational magnetic moment
         dcomplex rme_N = 0;
         if (j == jp && f == fp && n == np) {
-            dcomplex parity_N = parity(1 + n - m_f);
-            dcomplex prf_N = xi(j, jp) * xi(f, fp) * sqrt(n * (n + 1) * (2 * n + 1));
-            dcomplex w6j_N = 0;
+            constexpr double thlf = 3 * half;
+            double n_we_mag = sqrt(n * (n + 1) * (2 * n + 1));
+            dcomplex parity_N = parity(thlf + n - m_f);
+            dcomplex prf_N = n_we_mag * xi(n, np) * xi(j, jp) * xi(f, fp);
+            dcomplex w6j_N = 0 * w6j(f1, 1, f1p, jp, i1, j) * w6j(f, 1, fp, f1p, i2, f1);;
             rme_N = mu_rotational * parity_N * prf_N * w6j_N;
         }
         // full reduced matrix element is the sum of the three contributions
-        dcomplex reduced_mat_elt = rme_S + rme_I1 + rme_N;
+        dcomplex reduced_mat_elt = rme_S + rme_I1 + rme_I2 + rme_N;
         // spherical tensor operator form
         dcomplex mub_t = we_factor_t * reduced_mat_elt;
         dcomplex mub_0 = we_factor_0 * reduced_mat_elt;
@@ -571,7 +582,6 @@ namespace aef {
         constexpr spin ip = half;
         constexpr spin sp = half;
         
-        // TODO implement with correct forms
         // \vec{S}\cdot\vec{d} is a scalar operator and conserves j
         if (f != fp || m_f != m_fp || j != jp) {
             return 0;
@@ -579,7 +589,7 @@ namespace aef {
         
         constexpr double s_we_mag = constexpr_sqrt(s * (s + 1) * (2 * s + 1));
         dcomplex prf = s_we_mag * xi(n, np) * xi(j, jp) * xi(f1, f1p) * xi(f, fp) / sqrt(2*jp+1);
-        dcomplex phase = parity(half - m_f);
+        dcomplex phase = parity(3*half - m_f);
         dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
         dcomplex f6j = w6j(f, 1, fp, f1p, i2, f1) * w6j(f1, 1, f1p, jp, i1, j) * w6j(n, sp, j, s, n, 1);
         
