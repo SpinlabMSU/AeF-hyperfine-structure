@@ -48,6 +48,7 @@ zero_ground = False
 measure_deviation = False
 use_volts = False
 do_cut = False
+black_dots = False
 
 ymax = None
 ymin = None
@@ -77,6 +78,7 @@ for idx in range(2, len(sys.argv)):
         # scale -- TODO really implement
         scale = sys.argv[idx + 1]
         idx += 1
+    if lrg.startswith('-b'): black_dots = True
 
 # Including a legend isn't particularly useful past a certain number of states
 # since it runs off the edge of the plot and the colors repeat anyways
@@ -125,11 +127,19 @@ if not use_volts:
     df[Ez] /= 1000 
     xlab = "Externally-applied electric field strength (kV/cm)"
 
+plot_kind = "line" if not black_dots else "scatter"
+color = None if not black_dots else "black"
 # do plot
 fig = plt.figure(figsize=(13.66, 9.00))
 plt.title(f"Energy Spectrum for run {run}")
-df.plot(Ez, states, xlabel=xlab, ylabel = f'Energy ({scale_label})', ax=plt.gca(), legend = use_legend)
+if not black_dots:
+    df.plot(Ez, states, xlabel=xlab, ylabel = f'Energy ({scale_label})', ax=plt.gca(), legend = use_legend)
+else:
+    df.plot(Ez, states, xlabel=xlab, ylabel = f'Energy ({scale_label})', ax=plt.gca(), legend = use_legend, color=color, linestyle='', marker='o')
 if ymax != None:
     plt.ylim(bottom=ymin, top=ymax)
-plt.savefig(os.path.join(rundir, 'spectrum_plot.png'))
+if not black_dots:
+    plt.savefig(os.path.join(rundir, 'spectrum_plot.png'))
+else:
+    plt.savefig(os.path.join(rundir, 'spectrum_plot_no_state.png'))
 plt.show()
