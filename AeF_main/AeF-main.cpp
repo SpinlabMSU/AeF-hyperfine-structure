@@ -26,6 +26,65 @@
 
 
 
+////// Stateful dot-product state tracking: spinlab memebers see elog:EDM3/680
+Eigen::MatrixXcd prev_Vs_H; // store previous eigenvectors in hermition conjugate form
+Eigen::VectorXcd prev_Es;
+std::vector<size_t> sdx_from_edx_map; // sdx_from_edx_map[energy eigenstate idx] == state idx
+std::vector<size_t> edx_from_sdx_map; // edx_from_sdx_map[state idx] = energy eigenstate idx
+
+void init_state_tracking(aef::MolecularSystem& sys, double stk_scale=1.0) {
+    // construct as
+    sys.H_tot = sys.H_rot.toDenseMatrix() + sys.H_hfs + stk_scale * sys.H_stk + sys.H_dev;
+    sys.diagonalize();
+    prev_Vs_H = sys.Vs.adjoint();
+    prev_Es = sys.Es;
+    const size_t nBasisElts = sys.nBasisElts;
+    // initial mapping will be the identity mapping
+    sdx_from_edx_map.resize(sys.nBasisElts);
+    edx_from_sdx_map.resize(sys.nBasisElts);
+    for (size_t idx = 0; idx < nBasisElts; idx++) {
+        sdx_from_edx_map[idx] = idx;
+        edx_from_sdx_map[idx] = idx;
+    }
+}
+
+void update_tracking(aef::MolecularSystem& sys, Eigen::MatrixXcd &scratch) {
+    // tracks new against old
+    const size_t nBasisElts = sys.nBasisElts;
+    Eigen::MatrixXcd& Vs = sys.Vs;
+    Eigen::VectorXcd& Es = sys.Es;
+
+    // Probability matrix is an matrix W_{ij} = || < E_old_i | E_new_j > ||^2
+    aef::matrix::multiply(prev_Vs_H, Vs, scratch);
+    Eigen::MatrixXcd& probs = scratch;
+    probs = probs.array().abs2();
+
+    std::unordered_set<size_t> used_values;
+
+    /// This implementation is completely unoptimized
+    for (size_t sdx = 0; sdx < nBasisElts; sdx++) {
+        // evaluate "best" match
+        double max_prob = -std::numeric_limits<double>::infinity();
+        Eigen::Index max_edx = -1;
+        for (size_t edx = 0; edx < nBasisElts; edx++) {
+            double prob = std::real(probs(sdx, edx)); // discard imaginary part, it should be zero
+            if (prob > max_prob && !used_values.contains(edx)) {
+                max_edx = edx;
+                max_prob = prob;
+            }
+        }
+        assert(max_edx != -1, "Unable to find best match (this should be mathematically impossible)");
+        edx_from_sdx_map[sdx] = max_edx;
+        sdx_from_edx_map[max_edx] = sdx;
+    }
+
+    // finish by setting the previous values to the current values so we can update the current values
+    prev_Vs_H = sys.Vs.adjoint();
+    prev_Es = sys.Es;
+}
+
+
+
 /// <summary>
 /// Calculates the expectation values of an energy eigenstate
 /// </summary>
@@ -127,7 +186,10 @@ int32_t closest_state(aef::MolecularSystem& calc, int32_t ket_idx,
     int32_t closest_idx = -1;
 //#define USE_EXPECTATION_VALUES
 #define USE_TRIVIAL
-#ifdef USE_EXPECTATION_VALUES
+#define USE_STATE_TRACKING
+#if defined(USE_STATE_TRACKING)
+    closest_idx = sdx_from_edx_map[ket_idx];
+#elif defined(USE_EXPECTATION_VALUES
     // strategy 1: look for the energy eigenstate whose expectation values most closely match the target state
     double chisq = (double)std::numeric_limits<double>::infinity();
     aef::universal_diatomic_basis_vec ket = calc.get_calc()->get_basis_ket(ket_idx);
@@ -271,7 +333,7 @@ int main(int argc, char **argv) {
     bool output_Es = true;
     size_t nStarkIterations = 101;
     double min_E_z = 0;
-    double max_E_z = calc_E_z;
+    double max_E_z = calc_E_z / unit_conversion::MHz_D_per_V_cm; // units of max_E_z are V/cm
     std::string mol_calc_type = aef::RaFMolecularCalculator::calc_type_str;
 
     // todo parse args
@@ -546,7 +608,9 @@ int main(int argc, char **argv) {
     std::cout << "Is d1t  all zero " << sys.d1t.isZero(1E-6) << std::endl;
     std::cout << "Is Hdev all zero " << sys.H_dev.isZero(1E-6) << std::endl;
 
-
+    // Initialize state tracking
+    prev_time = log_time_at_point("Initializing State Tracking", start_time, prev_time);
+    init_state_tracking(sys, max_E_z * unit_conversion::MHz_D_per_V_cm / calc_E_z);
 
     // Stark loop
     prev_time = log_time_at_point("About to start stark loop", start_time, prev_time);
@@ -558,7 +622,8 @@ int main(int argc, char **argv) {
     const double scale_Ez_mhz = scale_Ez * unit_conversion::MHz_D_per_V_cm;
     const double offset_Ez_mhz = min_E_z;
 
-    for (int fdx = 0; fdx < nStarkIterations; fdx++) {
+    // note: we now need to go backwards to track from calc_E_z
+    for (int fdx = nStarkIterations - 1; fdx >= 0; fdx--) {
         double field_divisor = nStarkIterations - 1.0;
         double Ez_fdx_mhz = (scale_Ez_mhz) * (fdx / field_divisor) + offset_Ez_mhz;
 #ifdef MATRIX_ELT_DEBUG
@@ -574,6 +639,7 @@ int main(int argc, char **argv) {
         sys.H_tot += sys.H_dev;
 #endif
         sys.diagonalize();
+        update_tracking(sys, vals);
 
         double Ez_V_cm = Ez_fdx_mhz / unit_conversion::MHz_D_per_V_cm;
         // energy output
