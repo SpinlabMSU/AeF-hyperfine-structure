@@ -316,14 +316,14 @@ int main(int argc, char **argv) {
     ///////////////////////// main code
 
     // output file --> automatically make output based on current datetime
-    // 2023-07-12: change output dir to output instead of oana
     auto dpath = fs::path("output");
     std::chrono::time_point<std::chrono::system_clock> start_time =
         std::chrono::system_clock::now();
     std::string stime = fmt::format("{0:%F}-{0:%H%M}{0:%S}", start_time);
     std::chrono::time_point<std::chrono::system_clock> prev_time = start_time;
     dpath /= stime;
-    fs::create_directories(dpath);
+    // fs::create_directories(dpath); // don't perform the directory creation until after parsing arguments
+    // this prevents running --help from creating empty useless directories
 
     int param_nmax = 20;
     bool enable_debug_log = false;
@@ -390,7 +390,8 @@ int main(int argc, char **argv) {
         mol_calc_type = result["sys"].as<std::string>();
     }
 
-    // create info log
+    // Create output directory and info log now that arguments have been parsed
+    fs::create_directories(dpath);
     std::ofstream oLog(dpath / "out.log", std::ios::trunc | std::ios::out);
     aef::LogRedirector lredir(oLog, enable_debug_log, true);
     // info lines
