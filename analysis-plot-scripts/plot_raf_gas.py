@@ -47,6 +47,8 @@ x_pix = 1366
 y_pix = 900
 doe_plot = False
 
+going_backwards = False
+
 if len(sys.argv) > 2 and sys.argv[2].lower().startswith('doe'):
     doe_plot = True
     x_pix = 756
@@ -95,12 +97,23 @@ dE_f1ts = df[key_dE2]
 dE_f10s = df[key_dE3]
 dE_f11s = df[key_dE4]
 
-new_gas_plots = prod_coeffs and False ## Disable for now
+new_gas_plots = prod_coeffs and True ## Disable for now
+
+## Dot-product state tracking starts at the E-field
+## Furthest away from zero and goes "backwards" towards zero
+if abs(Ezs[0]) > abs(Ezs[1]):
+    going_backwards = True
+    # flip 
+    #Ezs = Ezs[::-1]
+    #dE_gnds
+
 
 if new_gas_plots:
-    dE_f1ts = df[key_dE4] - df[key_dE6]
-    dE_f11s = df[key_dE5] - df[key_dE6]
-    dE_f10s = df[key_dE2] - df[key_dE6]
+    E_sums = df[key_dE1] + df[key_dE2] + df[key_dE3] + df[key_dE4] + df[key_dE5]
+    E_avgs = E_sums / 5.0
+    dE_f10s = (df[key_dE1] - E_avgs)
+    dE_f1ts = (df[key_dE4] - E_avgs)
+    dE_f11s = (df[key_dE5] - E_avgs)
 
 
 mid_idx = len(Ezs) // 2
@@ -110,6 +123,11 @@ Ez_mid = Ezs[mid_idx]
 ## make linear fit
 Ez_uhalf = Ezs[mid_idx:]
 Eg_uhalf = dE_gnds[mid_idx:]
+
+if going_backwards:
+    Ez_uhalf = Ezs[:mid_idx]
+Eg_uhalf = dE_gnds[:mid_idx]
+
 lresult = scistat.linregress(Ez_uhalf, Eg_uhalf)
 
 def line(Ez):
@@ -151,7 +169,8 @@ if not new_gas_plots:
 else:
     plt.plot(df[key_E], dE_f1ts, 'g')
     plt.plot(df[key_E], dE_f10s, 'y')
-    plt.axhline(y=dE_f10s[0], linestyle='dashed', color='blue')
+    firstidx = 0 if not going_backwards else len(dE_f10s)-1
+    plt.axhline(y=dE_f10s[firstidx], linestyle='dashed', color='blue')
     print("NEWNENWNENW")
     gca.yaxis.set_label('Energy below $f_1$=0 states (MHz)')
 plt.xlabel("Externally-applied electric field strength (kV/cm)")
