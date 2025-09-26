@@ -14,7 +14,7 @@ namespace aef::raf_constants {
     ///// sourced from [0] PRA 98, 032513 (2018) --> these are for BaF not RaF
     //// and from [1] Nat Phys 20, 202-207 (2024)
     //// and from [2] https://arxiv.org/abs/2311.04121
-    //// and from [3] Phys. Rev. A 102, 062801
+    //// and from [3] Phys. Rev. A 102, 062801 (2020)
     //// and from [4] https://arxiv.org/pdf/1302.5682.pdf??
 
     // constants for rotational hamiltonian, taken from [1] where measured and using 138BaF values
