@@ -20,6 +20,7 @@
 #include <aef/MolecularSystem.h>
 #include <aef/systems/BaFMolecularCalculator.h>
 #include <aef/systems/RaFMolecularCalculator.h>
+#include <assert.h>
 
 using namespace std::chrono;
 namespace fs = std::filesystem;
