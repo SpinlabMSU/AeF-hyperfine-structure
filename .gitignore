@@ -17,6 +17,9 @@
 /stark_diagonalizer
 /deven_cpu_hf
 /nodev_cpu_hf
+/nodev_aef_mn
+/deven_aef_mn
+/aef_main
 /operatorVisualizer
 /core*
 /*.pdf

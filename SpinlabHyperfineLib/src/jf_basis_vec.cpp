@@ -336,7 +336,7 @@ namespace aef {
         return parity(t) * mag * w6j_jpnsnj * w6j_f1jpj;
     }
 
-    // heavy nucleus
+    // light nucleus
     dcomplex jf_basis_vec::H_hfs_fermi_2(jf_basis_vec other) const {
         const double np = other.n;
         const double jp = other.j;

@@ -60,6 +60,8 @@ void update_tracking(aef::MolecularSystem& sys, Eigen::MatrixXcd &scratch) {
     probs = probs.array().abs2();
 
     std::unordered_set<size_t> used_values;
+    double worst_max_prob = std::numeric_limits<double>::infinity();
+    Eigen::Index worst_edx = -1, worst_sdx = -1;
 
     /// This implementation is completely unoptimized
     for (size_t sdx = 0; sdx < nBasisElts; sdx++) {
@@ -73,17 +75,36 @@ void update_tracking(aef::MolecularSystem& sys, Eigen::MatrixXcd &scratch) {
                 max_prob = prob;
             }
         }
-        assert(max_edx != -1, "Unable to find best match (this should be mathematically impossible)");
+        assert((max_edx != -1) && "Unable to find best match (this should be mathematically impossible)");
         edx_from_sdx_map[sdx] = max_edx;
         sdx_from_edx_map[max_edx] = sdx;
+        used_values.insert(max_edx);
+
+        if (worst_max_prob >= max_prob) {
+            worst_max_prob = max_prob;
+            worst_edx = max_edx;
+            worst_sdx = sdx;
+        }
     }
+
+    std::cout << fmt::format("Worst max probability was {} at edx = {}, sdx = {}", worst_max_prob, worst_edx,
+                worst_sdx) << std::endl;
 
     // finish by setting the previous values to the current values so we can update the current values
     prev_Vs_H = sys.Vs.adjoint();
     prev_Es = sys.Es;
 }
 
-
+/// <summary>
+/// This writes a CSV file that holds both 
+/// </summary>
+void output_tracking_info(std::ostream &out) {
+    out << "Index,State Idx From Energy E-state Index,Energy E-state Index from State Index" << std::endl;
+    for (size_t idx = 0; idx < edx_from_sdx_map.size(); idx++) {
+        out << fmt::format("{},{},{}", idx, sdx_from_edx_map[idx], edx_from_sdx_map[idx]) << std::endl;
+    }
+    out.flush();
+}
 
 /// <summary>
 /// Calculates the expectation values of an energy eigenstate
@@ -316,14 +337,14 @@ int main(int argc, char **argv) {
     ///////////////////////// main code
 
     // output file --> automatically make output based on current datetime
-    // 2023-07-12: change output dir to output instead of oana
     auto dpath = fs::path("output");
     std::chrono::time_point<std::chrono::system_clock> start_time =
         std::chrono::system_clock::now();
     std::string stime = fmt::format("{0:%F}-{0:%H%M}{0:%S}", start_time);
     std::chrono::time_point<std::chrono::system_clock> prev_time = start_time;
     dpath /= stime;
-    fs::create_directories(dpath);
+    // fs::create_directories(dpath); // don't perform the directory creation until after parsing arguments
+    // this prevents running --help from creating empty useless directories
 
     int param_nmax = 20;
     bool enable_debug_log = false;
@@ -390,7 +411,8 @@ int main(int argc, char **argv) {
         mol_calc_type = result["sys"].as<std::string>();
     }
 
-    // create info log
+    // Create output directory and info log now that arguments have been parsed
+    fs::create_directories(dpath);
     std::ofstream oLog(dpath / "out.log", std::ios::trunc | std::ios::out);
     aef::LogRedirector lredir(oLog, enable_debug_log, true);
     // info lines
@@ -611,6 +633,8 @@ int main(int argc, char **argv) {
     // Initialize state tracking
     prev_time = log_time_at_point("Initializing State Tracking", start_time, prev_time);
     init_state_tracking(sys, max_E_z * unit_conversion::MHz_D_per_V_cm / calc_E_z);
+    auto track_dir_path = dpath / "tracking_info";
+    fs::create_directories(track_dir_path);
 
     // Stark loop
     prev_time = log_time_at_point("About to start stark loop", start_time, prev_time);
@@ -626,11 +650,8 @@ int main(int argc, char **argv) {
     for (int fdx = nStarkIterations - 1; fdx >= 0; fdx--) {
         double field_divisor = nStarkIterations - 1.0;
         double Ez_fdx_mhz = (scale_Ez_mhz) * (fdx / field_divisor) + offset_Ez_mhz;
-#ifdef MATRIX_ELT_DEBUG
-        // degenerate states will probably break this
-        if (fdx == 0)
-            continue;
-#endif
+        double Ez_V_cm = Ez_fdx_mhz / unit_conversion::MHz_D_per_V_cm;
+        
         // recalaculate H_tot -- from scratch to avoid accumulation of error
         // calc.H_tot.setZero();
         sys.H_tot = sys.H_rot.toDenseMatrix() + /**/ sys.H_hfs + /**/ dcomplex(Ez_fdx_mhz / calc_E_z) * sys.H_stk;
@@ -639,9 +660,13 @@ int main(int argc, char **argv) {
         sys.H_tot += sys.H_dev;
 #endif
         sys.diagonalize();
-        update_tracking(sys, vals);
-
-        double Ez_V_cm = Ez_fdx_mhz / unit_conversion::MHz_D_per_V_cm;
+        // Update tracking and then output new tracking info
+        {
+            update_tracking(sys, vals);
+            auto track_csv_path = track_dir_path / fmt::format("{}.csv", std::lround(Ez_V_cm));
+            std::ofstream os(track_csv_path);
+            output_tracking_info(os);
+        }
         // energy output
         oEs << fmt::format("{},{}", fdx, Ez_V_cm);
         for (size_t idx = 0; idx < sys.nBasisElts; idx++) {
