@@ -62,7 +62,8 @@ scale_map = {
     't' : (1E-06, 'THz')
 }
 
-
+plt.rcParams['font.size'] = 14
+title = None
 ## Actually parse arguments
 for idx in range(2, len(sys.argv)):
     arg = sys.argv[idx]
@@ -79,6 +80,9 @@ for idx in range(2, len(sys.argv)):
         scale = sys.argv[idx + 1]
         idx += 1
     if lrg.startswith('-b'): black_dots = True
+    if lrg.startswith('-t'):
+        title = sys.argv[idx + 1]
+        idx += 1
 
 # Including a legend isn't particularly useful past a certain number of states
 # since it runs off the edge of the plot and the colors repeat anyways
@@ -131,7 +135,9 @@ plot_kind = "line" if not black_dots else "scatter"
 color = None if not black_dots else "black"
 # do plot
 fig = plt.figure(figsize=(13.66, 9.00))
-plt.title(f"Energy Spectrum for run {run}")
+if title == None:
+    title = f"Energy Spectrum for run {run}"
+plt.title(title)
 if not black_dots:
     df.plot(Ez, states, xlabel=xlab, ylabel = f'Energy ({scale_label})', ax=plt.gca(), legend = use_legend)
 else:
