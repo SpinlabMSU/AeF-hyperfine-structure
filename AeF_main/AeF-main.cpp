@@ -352,6 +352,7 @@ int main(int argc, char **argv) {
     std::string loadname = "";
     bool print_extras = true;
     bool output_Es = true;
+    bool force_save = false;
     size_t nStarkIterations = 101;
     double min_E_z = 0;
     double max_E_z = calc_E_z / unit_conversion::MHz_D_per_V_cm; // units of max_E_z are V/cm
@@ -370,7 +371,8 @@ int main(int argc, char **argv) {
         ("print_extras", "Print extra information", cxxopts::value<bool>()->default_value("true"))
         ("l,load", "Load molecular system operators from file", cxxopts::value<std::string>())
         ("t,stark_iterations", "Number of iterations to perform the stark loop for", cxxopts::value<size_t>())
-        ("s,sys", "Molecular system type to use", cxxopts::value<std::string>());
+        ("s,sys", "Molecular system type to use", cxxopts::value<std::string>())
+        ("S,force-save", "Force the Molecular System to always be saved", cxxopts::value<bool>()->default_value("false"));
 
     auto result = options.parse(argc, argv);
     
@@ -409,6 +411,10 @@ int main(int argc, char **argv) {
 
     if (result.count("sys")) {
         mol_calc_type = result["sys"].as<std::string>();
+    }
+
+    if (result.count("force-save")) {
+        force_save = result["force-save"].as<bool>();
     }
 
     // Create output directory and info log now that arguments have been parsed
@@ -505,13 +511,18 @@ int main(int argc, char **argv) {
         aef::matrix::set_max_size(sys.nBasisElts);
         std::cout << "Finished backend device-side buffer setup" << std::endl;
 #endif
+        {
         prev_time = log_time_at_point("Starting matrix element calculations", start_time, prev_time);
         sys.calculate_matrix_elts();
+            auto prev_2 = log_time_at_point("[Not updating global previous time] finished actual matrix element calculations", start_time, prev_time);
         sys.diagonalize();
-        if (nmax >= 20)
+                prev_2 = log_time_at_point("[Not updating global previous time] finished actual matrix element calculations", start_time, prev_2);
+                if (force_save || nmax >= 20) {
             sys.save(dpath / "molsys.dat");
-
+                    prev_2 = log_time_at_point("[Not updating previous time globally] finished saving molecular system", start_time, prev_2);
+                }
         prev_time = log_time_at_point("Finished matrix elt calcs", start_time, prev_time);
+    }
     }
 
     if (print_extras) {
