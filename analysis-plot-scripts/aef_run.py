@@ -70,6 +70,7 @@ class aef_run(object):
 
         self.cdir = os.path.join(self.path, 'state_coeffs')
         self.state_info_dir = os.path.join(self.path, 'state_info')
+        self.tracking_dir = os.path.join(self.path, 'tracking_info')
 
         if not os.path.exists(self.state_info_dir):
             ## old name was devonshire_info because this information was originally only computed when the
@@ -195,6 +196,20 @@ class aef_run(object):
                 csvlist.append(ent.path)
         return csvlist
 
+    def has_tracking_dir(self):
+        return os.path.exists(self.tracking_dir)
+
+    def get_tracking_Ez(self, Ez, *args, **kwargs):
+        csvpath = os.path.join(self.get_state_ifo_dir(), f'{Ez}.csv')
+        return pd.read_csv(csvpath, *args, **kwargs)
+
+    def list_tracking(self):
+        csvlist = []
+        for ent in os.scandir(self.get_state_ifo_dir()):
+            if ent.is_file() and ent.name.lower().endswith('.csv'):
+                csvlist.append(ent.path)
+        return csvlist
+
 def find_runs(scandir):
     runlist = []
     for rundir in os.scandir(scandir):
@@ -206,6 +221,18 @@ def find_runs(scandir):
                 print(e)
     return runlist
 
+class tracking_info:
+    '''
+    This class stores tracking information for __one__ E_z
+    '''
+    def __init__(self, run, E_z):
+        self.E_z = E_z
+        data = run.get_tracking_Ez(E_z)
+        self.sdx_from_edx_arr = None ## TODO Implement
+class state_tracker:
+    def __init__(self, run:aef_run):
+        self.run = run
+        self.csvs = run.list_tracking()
 
 if __name__ == '__main__':
     # test code
