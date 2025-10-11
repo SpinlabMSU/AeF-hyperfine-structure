@@ -512,17 +512,17 @@ int main(int argc, char **argv) {
         std::cout << "Finished backend device-side buffer setup" << std::endl;
 #endif
         {
-        prev_time = log_time_at_point("Starting matrix element calculations", start_time, prev_time);
-        sys.calculate_matrix_elts();
+            prev_time = log_time_at_point("Starting matrix element calculations", start_time, prev_time);
+            sys.calculate_matrix_elts();
             auto prev_2 = log_time_at_point("[Not updating global previous time] finished actual matrix element calculations", start_time, prev_time);
-        sys.diagonalize();
+                sys.diagonalize();
                 prev_2 = log_time_at_point("[Not updating global previous time] finished actual matrix element calculations", start_time, prev_2);
                 if (force_save || nmax >= 20) {
-            sys.save(dpath / "molsys.dat");
+                    sys.save(dpath / "molsys.dat");
                     prev_2 = log_time_at_point("[Not updating previous time globally] finished saving molecular system", start_time, prev_2);
                 }
-        prev_time = log_time_at_point("Finished matrix elt calcs", start_time, prev_time);
-    }
+            prev_time = log_time_at_point("Finished matrix elt calcs", start_time, prev_time);
+        }
     }
 
     if (print_extras) {
