@@ -114,7 +114,13 @@ namespace std {
         std::size_t operator()(const aef::chunk::fourcc &fcc) const {
             return fcc.ucode;
         }
-    };
+    };    
+};
+
+template <> struct fmt::formatter<aef::chunk::fourcc> : fmt::formatter<std::string> {
+    auto format(aef::chunk::fourcc cc, format_context& ctx) const {
+        return formatter<std::string>::format(fmt::format("{}{}{}{}", (char)cc.cc[0], (char)cc.cc[1], (char)cc.cc[2], (char)cc.cc[3]), ctx);
+    }
 };
 
 #endif

@@ -253,8 +253,12 @@ namespace aef {
             X(Od1t, fm, 0, offsetof(MolecularSystem, d1t)),
             X(Od10, fm, 0, offsetof(MolecularSystem, d10)),
             X(Od11, fm, 0, offsetof(MolecularSystem, d11)),
+
+            // 
+
         };
 #undef X
+        constexpr uint32_t eof_flags = 0xEE4E4404;
     };
 
     aef::ResultCode MolecularSystem::write_chunk(std::ostream& out, void* chdr, void* data) {
@@ -264,12 +268,17 @@ namespace aef {
     aef::ResultCode MolecularSystem::read_chunk(std::istream& in, void* chdr_, void *dst) {
         auto *pChdr = static_cast<aef::chunk::chunk_hdr*>(chdr_);
         auto &chdr = *pChdr;
-        in.read((char*)&chdr, sizeof(chdr));
+        if (!in.read((char*)&chdr, sizeof(chdr))) {
+            std::cerr << std::format("IO Error, crash") << std::endl;
+            abort();
+        }
+        std::cout << fmt::format("Got chunk of type {} with flags {:x} version {}", chdr.type, chdr.flags, chdr.version) << std::endl;
         switch (chdr.type) {
         case aef::chunk::matrix:
         {
             aef::chunk::general_matrix_chunk gmchunk = {.hdr = chdr};
             in.read((char*)&gmchunk.matnam, sizeof(aef::chunk::fourcc));
+            std::cout << fmt::format("Reading general matrix chunk name {}", gmchunk.matnam) << std::endl;
 
             // flags indicates the datatype
             bool is_vector = chdr.flags & FLAG_VECTOR;
@@ -281,6 +290,12 @@ namespace aef {
                     return aef::ResultCode::InvalidFormat;
                 }
                 io_detail::matrix_id_ifo ifo = io_detail::offsetMap[gmchunk.matnam];
+
+                if (chdr.version <= 1 && is_vector != ifo.isVector()) {
+                    // bugfix: accidentally set the is_vector flag for matricies during version 1.
+                    is_vector = ifo.isVector();
+                }
+
                 if (is_vector) {
                     Eigen::read_binary(in, *ifo.getVector(this));
                 } else {
@@ -294,10 +309,14 @@ namespace aef {
                     return aef::ResultCode::InvalidArgument;
                 }
 
-                ptrdiff_t offset = chdr.version | (ptrdiff_t)((chdr.flags & 0xff) << 8);
+                ptrdiff_t offset = chdr.version | (ptrdiff_t)((chdr.flags & 0xff) << 8u);
                 char* dst_ = ((char*)this) + offset;
                 if (dstflag) {
                     dst = dst_;
+                }
+
+                if (chdr.version == 1) {
+                    // bugfix
                 }
 
                 if (!is_complex) {
@@ -394,9 +413,10 @@ namespace aef {
         /// flags
         uint16_t flags = fhdr.hdr.flags;
         // handle compression.
-        zstr::istream zin(in_);
+        //zstr::istream zin(in_);
         bool is_stream_compressed = (flags & (uint16_t)molsys_flags::compress);
         std::istream* pIn = is_stream_compressed ? new zstr::istream(in_) : &in_;
+        std::clog << (is_stream_compressed ? "Stream compressed" : "Stream uncompressed") << std::endl;
         std::istream& in = *pIn;
 
         /// Start reading chunks
@@ -407,6 +427,8 @@ namespace aef {
         if (chdr.type != aef::chunk::prms) {
             std::clog << fmt::format("[aef::MolecularSystem] Error: molsys file {} is malformed", path) << std::endl;
             return aef::ResultCode::InvalidFormat;
+        } else {
+            std::cout << fmt::format("[aef::MolecularSystem] Reading parameters chunk") << std::endl;
         }
         this->init = flags & FLAG_INIT;
         this->dkq_init = flags & FLAG_DKQ_INIT;
@@ -415,17 +437,21 @@ namespace aef {
         {
             // handle params chunk "payload".  Here the "version" is actually used to store the payload size
             uint16_t payload_size = chdr.version;
+            if (payload_size == 0 || true) {
+                payload_size = sizeof(prms_payload_fixed);
+            }
             prms_payload_fixed *pay = (prms_payload_fixed*)calloc(payload_size, 1);
             assert(pay);
             in.read((char*)pay, payload_size);
             this->nmax = pay->twice_nmax / 2.0;
-
-            this->set_nmax(nmax);
             this->E_z = pay->E_z;
             this->K = pay->K;
 
             //// read aef::IMolecularCalculator
-            char* curr = ((char*)pay) + sizeof(prms_payload_fixed);
+            size_t cbRemaining = pay->calcTypeLen + pay->cbCalcData;
+            char* curr = (char*)calloc(cbRemaining, 1);
+            in.read(curr, cbRemaining);
+            //char* curr = ((char*)pay) + sizeof(prms_payload_fixed);
             std::string calcType(curr, pay->calcTypeLen);
             curr += pay->calcTypeLen;
 
@@ -443,11 +469,24 @@ namespace aef {
                     path, calcType)<< std::endl;
                 return aef::ResultCode::NotAvailable;
             }
+
+            // must come after setting the IMolecularCalculator we're going to use
+            this->set_nmax(nmax);
         }
         // handle the other chunks in-order using read_chunk
         do {
             this->read_chunk(in, (void*)&chdr, nullptr);
-        } while (chdr.type != aef::chunk::end0);
+        } while (chdr.type != aef::chunk::end0 && in);
+
+        if (in.bad() && !in.eof()) {
+            std::cout << "[aef::MolecularSystem] Warning IO error during load" << std::endl;
+        }
+
+        if (chdr.type != aef::chunk::end0 || chdr.flags != io_detail::eof_flags) {
+            std::cout << fmt::format("[aef::MolecularSystem] Warning: molsys file \"{}\" does not end with a correct"
+                "end0 tag-- last tag has type {}, flags {x}, version {}.", path, chdr.type, chdr.flags, chdr.version) << std::endl;
+        }
+
         std::cout << "[aef::MolecularSystem] Load complete" << std::endl;
         // finish
         if (pIn != &in_) {
@@ -494,10 +533,24 @@ namespace aef {
             calc->save(os);
             auto buf = os.str();
 
+            size_t buflen = buf.length();
+
+            assert(buflen < std::numeric_limits<uint32_t>::max());
+
+            if (buflen > UINT32_MAX) {
+                std::clog << fmt::format("[aef::MolecularSystem] Severe Warning: During save, calculator of type \"{}\" "
+                    "saved to buffer of length {}, which is greater than UINT32_MAX.  This seems unreasonable, expect problems.",
+                    calcType, buflen);
+            }
+
+            pay.cbCalcData = (uint32_t)buflen;
+            uint64_t len = buflen + sizeof(pay) + pay.calcTypeLen;
+            // need to decide if version should store length
+
             out->write((char*)&chdr, sizeof(chdr));
             out->write((char*)&pay, sizeof(pay));
             out->write(calcType.data(), pay.calcTypeLen);
-            out->write(buf.data(), buf.length());
+            out->write(buf.data(), buflen);
         }
         // write matricies
         for (auto &id_val_pair : io_detail::offsetMap) {
@@ -541,14 +594,18 @@ namespace aef {
             }
         }
 
+        // write end of file
+        aef::chunk::chunk_hdr ehdr = { .type = aef::chunk::end0, .version = 0x4EEE, .flags = 0x0444 };
+        out->write((char*)&ehdr, sizeof(ehdr));
+
         return aef::ResultCode::Success;
     }
 
     aef::ResultCode aef::MolecularSystem::write_matrix(std::ostream& out, Eigen::MatrixXcd* mat, uint32_t matnam_) {
         aef::chunk::general_matrix_chunk hdr = {};
         hdr.hdr.type = aef::chunk::general_matrix_chunk::cc;
-        hdr.hdr.flags = FLAG_VECTOR | FLAG_COMPLEX;
-        hdr.hdr.version = 1;
+        hdr.hdr.flags = FLAG_COMPLEX;
+        hdr.hdr.version = 2;
         hdr.matnam.ucode = matnam_;
         out.write((char*) & hdr, sizeof(hdr));
         Eigen::write_binary(out, *mat);
@@ -559,7 +616,7 @@ namespace aef {
         aef::chunk::general_matrix_chunk hdr = {};
         hdr.hdr.type = aef::chunk::general_matrix_chunk::cc;
         hdr.hdr.flags = FLAG_VECTOR | FLAG_COMPLEX;
-        hdr.hdr.version = 1;
+        hdr.hdr.version = 2;
         hdr.matnam.ucode = matnam_;
         out.write((char*)&hdr, sizeof(hdr));
         Eigen::write_binary(out, *vec);
@@ -585,7 +642,7 @@ namespace aef {
 
     aef::ResultCode MolecularSystem::load(std::filesystem::path inpath) {
         std::ifstream in(inpath, std::ios::binary);
-        return load(in);
+        return load(in, inpath.generic_string().c_str());
     }
 
     aef::ResultCode MolecularSystem::save(std::filesystem::path outpath) {
