@@ -184,19 +184,25 @@ int main(int argc, char **argv) {
 
 
     init_rng();
+    std::cout << "Successfully initialized RNG" << std::endl;
 
     aef::aef_run run(runpath);
 
     aef::MolecularSystem sys;
-    auto rv = sys.load(run.get_matrix_path());
+    {
+        auto mpath = run.get_run_path() / "molsys.dat";
+        std::string str_pth = mpath.generic_string();
+        std::cout << fmt::format("Loading matrix file from {}", str_pth) << std::endl;
+        rc = sys.load(mpath); //run.get_matrix_path());
 
-    if (aef::failed(rc)) {
-        // TODO error
-        std::string str_pth = run.get_matrix_path().generic_string();
-        std::cerr << fmt::format("[Perturbation Analyzer] Loading matrix file {} from run {} failed!",
-            str_pth, run.get_run_name()) << std::endl;
-        std::abort();
-        aef::unreachable();
+        if (aef::failed(rc)) {
+            // TODO error
+            std::string str_pth = run.get_matrix_path().generic_string();
+            std::cerr << fmt::format("[Perturbation Analyzer] Loading matrix file {} from run {} failed!",
+                str_pth, run.get_run_name()) << std::endl;
+            std::abort();
+            aef::unreachable();
+        }
     }
 
     Eigen::MatrixXcd vals;
@@ -216,7 +222,9 @@ int main(int argc, char **argv) {
     prev_time = log_time_at_point("Constructing eEDM-like operator", start_time, prev_time);
     pfw.addOperator("eEDM", new aef::operators::eEDMOperator(sys));
     prev_time = log_time_at_point("Constructing 19F NSM-like operator", start_time, prev_time);
-    pfw.addOperator("NSM", new aef::operators::NSMOperator(sys, false));
+    pfw.addOperator("NSM2", new aef::operators::NSMOperator(sys, false));
+    prev_time = log_time_at_point("Constructing 225Ra NSM-like operator", start_time, prev_time);
+    pfw.addOperator("NSM1", new aef::operators::NSMOperator(sys, true));
     prev_time = log_time_at_point("Constructing Z-axis Stark operator", start_time, prev_time);
     pfw.addOperator("StarkZ", new aef::operators::StarkOperator(sys, {0.0,0.0,1.0}));
     prev_time = log_time_at_point("Constructing Z-xis Zeeman operator", start_time, prev_time);
@@ -239,14 +247,24 @@ int main(int argc, char **argv) {
     prev_time = log_time_at_point("1st ord PT eEDM done", start_time, prev_time);
 
     // delta E vector from Fluorine-19 nuclear schiff moment-like operator
-    prev_time = log_time_at_point("1st ord PT NSM start", start_time, prev_time);
-    Eigen::VectorXcd dEs_f_nsm; 
-    rc = pfw.delta_E_lo("NSM", dEs_f_nsm);
+    prev_time = log_time_at_point("1st ord PT NSM 19F start", start_time, prev_time);
+    Eigen::VectorXcd dEs_f_nsm;
+    rc = pfw.delta_E_lo("NSM2", dEs_f_nsm);
     if (!aef::succeeded(rc)) {
         // error
         std::clog << fmt::format("delta-E light NSM calc failed {}", (int)rc);
     }
-    prev_time = log_time_at_point("1st ord PT NSM done", start_time, prev_time);
+    prev_time = log_time_at_point("1st ord PT NSM 19F done", start_time, prev_time);
+
+    // delta E vector from Radium-225 nuclear schiff moment-like operator
+    prev_time = log_time_at_point("1st ord PT NSM 225Ra start", start_time, prev_time);
+    Eigen::VectorXcd dEs_Ra_nsm;
+    rc = pfw.delta_E_lo("NSM2", dEs_Ra_nsm);
+    if (!aef::succeeded(rc)) {
+        // error
+        std::clog << fmt::format("delta-E heavy NSM calc failed {}", (int)rc);
+    }
+    prev_time = log_time_at_point("1st ord PT NSM 225Ra done", start_time, prev_time);
 
     // delta-E vector from Z-axis Zeeman shift
     prev_time = log_time_at_point("1st ord PT ZeemanZ start", start_time, prev_time);
@@ -262,18 +280,19 @@ int main(int argc, char **argv) {
     // file output
     std::cout << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tDelta E Zeeman Z (MHz)" << std::endl;
     for (int idx = 0; idx < sys.nBasisElts; idx++) {
-        std::cout << fmt::format("{}\t{}\t{}", idx, dEs_eEDM(idx), dEs_f_nsm(idx), dEs_zeez(idx)) << std::endl;
+        std::cout << fmt::format("{}\t{}\t{}\t{}", idx, dEs_eEDM(idx), dEs_f_nsm(idx), dEs_Ra_nsm(idx), dEs_zeez(idx)) << std::endl;
     }
 
     std::ofstream out(dpath / "cpv_energies.tsv");
-    out << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tDelta E Z-axis Zeeman (MHz)"
-        "\tImaginary Part of dE_EDM(MHz)\tImaginary Part of dE_19F_NSM(MHz)\tImagninary Part of dE_ZeeZ (MHz)" << std::endl;
+    out << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tDelta E 225Ra NSM (MHz)\tDelta E Z-axis Zeeman (MHz)"
+        "\tImaginary Part of dE_EDM(MHz)\tImaginary Part of dE_19F_NSM(MHz)\tImaginary Part of dE_225Ra_NSM(MHz)\tImagninary Part of dE_ZeeZ (MHz)" << std::endl;
     for (int idx = 0; idx < sys.nBasisElts; idx++) {
         dcomplex dE_EDM = dEs_eEDM(idx);
         dcomplex dE_f_NSM = dEs_f_nsm(idx);
+        dcomplex dE_Ra_NSM = dEs_Ra_nsm(idx);
         dcomplex dE_zeez = dEs_zeez(idx);
-        out << fmt::format("{}\t{}\t{}\t{}\t{}", idx, std::real(dE_EDM), std::real(dE_f_NSM), std::real(dE_zeez),
-            std::imag(dE_EDM), std::imag(dE_f_NSM), std::imag(dE_zeez)) << std::endl;
+        out << fmt::format("{}\t{}\t{}\t{}\t{}", idx, std::real(dE_EDM), std::real(dE_f_NSM), std::real(dE_Ra_NSM), std::real(dE_zeez),
+            std::imag(dE_EDM), std::imag(dE_f_NSM), std::imag(dE_Ra_NSM), std::imag(dE_zeez)) << std::endl;
     }
     out.close();
     prev_time = log_time_at_point("File writes complete4", start_time, prev_time);

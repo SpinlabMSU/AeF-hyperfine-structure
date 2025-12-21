@@ -49,6 +49,9 @@ Ezs = df[Ez]
 mid_idx = len(Ezs) // 2
 Ez_mid = Ezs[mid_idx] / 1000
 
+def parse_translation_tables(dir):
+    tt = np.zeros(())
+
 do_extras = False
 # Including a legend isn't particularly useful past a certain number of states
 # since it runs off the edge of the plot and the colors repeat anyways

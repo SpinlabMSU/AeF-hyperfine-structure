@@ -133,6 +133,8 @@ for entry in os.listdir(dirname):
     arr_Ez.append(Ez)
     arr_Dz.append(dz)
 
+arr_Ez, arr_Dz = zip(*sorted(zip(arr_Ez, arr_Dz), key = lambda k: k[0]))
+
 print(arr_Ez)
 print(arr_Dz)
 

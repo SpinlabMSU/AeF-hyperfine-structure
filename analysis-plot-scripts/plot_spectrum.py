@@ -64,6 +64,7 @@ scale_map = {
 
 plt.rcParams['font.size'] = 14
 title = None
+outname = None
 ## Actually parse arguments
 for idx in range(2, len(sys.argv)):
     arg = sys.argv[idx]
@@ -83,7 +84,12 @@ for idx in range(2, len(sys.argv)):
     if lrg.startswith('-t'):
         title = sys.argv[idx + 1]
         idx += 1
-
+    if lrg.startswith('-o'):
+        outname = sys.argv[idx + 1]
+        idx += 1
+# set default output filename:
+if outname == None:
+    outname = "spectrum_plot.png" if not black_dots else "spectrum_plot_no_state.png"
 # Including a legend isn't particularly useful past a certain number of states
 # since it runs off the edge of the plot and the colors repeat anyways
 use_legend = True
@@ -144,8 +150,9 @@ else:
     df.plot(Ez, states, xlabel=xlab, ylabel = f'Energy ({scale_label})', ax=plt.gca(), legend = use_legend, color=color, linestyle='', marker='o')
 if ymax != None:
     plt.ylim(bottom=ymin, top=ymax)
-if not black_dots:
-    plt.savefig(os.path.join(rundir, 'spectrum_plot.png'))
-else:
-    plt.savefig(os.path.join(rundir, 'spectrum_plot_no_state.png'))
+plt.savefig(os.path.join(rundir, outname))
+#if not black_dots:
+#    plt.savefig(os.path.join(rundir, 'spectrum_plot.png'))
+#else:
+#    plt.savefig(os.path.join(rundir, 'spectrum_plot_no_state.png'))
 plt.show()

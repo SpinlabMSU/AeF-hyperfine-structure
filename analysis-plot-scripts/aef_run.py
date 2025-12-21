@@ -64,9 +64,11 @@ class aef_run(object):
         self.max_E_z = -math.inf
         self.calc_E_z = math.nan
         self.coeff_set = None
+        self.n_basis_elts = -1
 
         self.stk_lop_dur = -1
         self.mat_elt_dur = -1
+        self.n_E_zs = -1 ## 
 
         self.cdir = os.path.join(self.path, 'state_coeffs')
         self.state_info_dir = os.path.join(self.path, 'state_info')
@@ -104,6 +106,7 @@ class aef_run(object):
             Emax_search = "Electric field strength is"
             calc_search = "calculator is"
             coeff_search = "Using coefficient set"
+            nbasis_line_search = "Resizing aef::MolecularSystem to"
             if n_search in line and k_search in line:
                 print(f"Found parameter line \"{line}\"")
 
@@ -150,7 +153,14 @@ class aef_run(object):
                 coeff_set = line.split('"')[1]
                 print(f'Used coeff set {coeff_set}')
                 self.coeff_set = coeff_set
+            elif nbasis_line_search in line:
+                nbasis_search = ", will have"
+                self.n_basis_elts = get_ssv_val(line, nbasis_search, int)
         f.close()
+        stk = self.parse_gnd_stark_shift()
+        self.n_E_zs = stk.shape[0]
+        del stk
+        print(f"Run evaluated {self.n_E_zs} electric field values")
         if not found_param_line:
             raise RuntimeError(f"Parameter line not found in {self.log_path}")
         if not math.isfinite(self.max_E_z):
@@ -196,16 +206,19 @@ class aef_run(object):
                 csvlist.append(ent.path)
         return csvlist
 
+    def get_tracking_dir(self):
+        return self.tracking_dir
+
     def has_tracking_dir(self):
         return os.path.exists(self.tracking_dir)
 
     def get_tracking_Ez(self, Ez, *args, **kwargs):
-        csvpath = os.path.join(self.get_state_ifo_dir(), f'{Ez}.csv')
+        csvpath = os.path.join(self.get_tracking_dir(), f'{Ez}.csv')
         return pd.read_csv(csvpath, *args, **kwargs)
 
     def list_tracking(self):
         csvlist = []
-        for ent in os.scandir(self.get_state_ifo_dir()):
+        for ent in os.scandir(self.get_tracking_dir()):
             if ent.is_file() and ent.name.lower().endswith('.csv'):
                 csvlist.append(ent.path)
         return csvlist
@@ -229,10 +242,45 @@ class tracking_info:
         self.E_z = E_z
         data = run.get_tracking_Ez(E_z)
         self.sdx_from_edx_arr = None ## TODO Implement
-class state_tracker:
+class state_translation_table:
+    '''
+    This class uses the state tracking output information to translate (invariant) state indicies
+    to and from energy eigenstate indicies
+    '''
     def __init__(self, run:aef_run):
         self.run = run
-        self.csvs = run.list_tracking()
+        self.n_E_zs = run.n_E_zs
+        self.Ez_map = {}
+        # arr is E_z, edx --> sdx
+        self.sdx_from_edx_arr = np.zeros((self.n_E_zs, run.n_basis_elts))
+        # arr is E_z, sdx --> edx
+        self.edx_from_sdx_arr = np.zeros((self.n_E_zs, run.n_basis_elts))
+        csvs = run.list_tracking()
+
+        self.E_z_list = np.array([
+            float(os.path.basename(csv_path).split('.')[0])
+            for csv_path in csvs])
+
+        self.E_z_list.sort()
+
+        for Ezdx in range(self.n_E_zs):
+            E_z = self.E_z_list[Ezdx]
+            self.Ez_map[E_z] = Ezdx
+            csv_path = os.path.join(run.get_tracking_dir(), f'{E_z:g}.csv')
+            data = pd.read_csv(csv_path)
+
+
+
+    def get_Ezdx(self, E_z):
+        # make sure we always use a single datatype to prevent future problems
+        E_z = float(E_z)
+        return self.Ez_map[E_z]
+    def sdx_from_edx_Ez(self, E_z, edx):
+        Ezdx = self.get_Ezdx(E_z)
+        return self.sdx_from_edx_arr[Ezdx, edx]
+    def sdx_from_edx_Ez(self, E_z, edx):
+        Ezdx = self.get_Ezdx(E_z)
+        return self.sdx_from_edx_arr[Ezdx, edx]
 
 if __name__ == '__main__':
     # test code
