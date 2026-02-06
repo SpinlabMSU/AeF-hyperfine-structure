@@ -155,7 +155,7 @@ namespace aef {
         // The difference between d1p is right here,--|
         // change that factor to p for d1p as per the |
         // Wigner-Eckhart theorem                     v
-        dcomplex threej_factors = w3j(f, 1, fp, -m_f, 0, m_f) * w3j(n, 1, np, 0, 0, 0);
+        dcomplex threej_factors = w3j(f, 1, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
         dcomplex sixj_factors = w6j(f, 1, fp, f1p, half, f1) * w6j(f1, 1, f1p, jp, half, j) * w6j(j, 1, jp, np, half, n);
         dcomplex phase = parity(half - m_f);
         return xi_factors * threej_factors * sixj_factors * phase;
@@ -174,7 +174,7 @@ namespace aef {
         // The difference between d1p is right here,--|
         // change that factor to p for d1p as per the |
         // Wigner-Eckhart theorem                     v
-        dcomplex threej_factors = w3j(f, 1, fp, -m_f, 1, m_f) * w3j(n, 1, np, 0, 0, 0);
+        dcomplex threej_factors = w3j(f, 1, fp, -m_f, 1, m_fp) * w3j(n, 1, np, 0, 0, 0);
         dcomplex sixj_factors = w6j(f, 1, fp, f1p, half, f1) * w6j(f1, 1, f1p, jp, half, j) * w6j(j, 1, jp, np, half, n);
         dcomplex phase = parity(half - m_f);
         return xi_factors * threej_factors * sixj_factors * phase;
@@ -193,7 +193,7 @@ namespace aef {
         // The difference between d1p is right here,--|
         // change that factor to p for d1p as per the |
         // Wigner-Eckhart theorem                     v
-        dcomplex threej_factors = w3j(f, 1, fp, -m_f, -1, m_f) * w3j(n, 1, np, 0, 0, 0);
+        dcomplex threej_factors = w3j(f, 1, fp, -m_f, -1, m_fp) * w3j(n, 1, np, 0, 0, 0);
         dcomplex sixj_factors = w6j(f, 1, fp, f1p, half, f1) * w6j(f1, 1, f1p, jp, half, j) * w6j(j, 1, jp, np, half, n);
         dcomplex phase = parity(half - m_f);
         return xi_factors * threej_factors * sixj_factors * phase;

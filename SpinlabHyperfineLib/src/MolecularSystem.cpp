@@ -484,7 +484,7 @@ namespace aef {
 
         if (chdr.type != aef::chunk::end0 || chdr.flags != io_detail::eof_flags) {
             std::cout << fmt::format("[aef::MolecularSystem] Warning: molsys file \"{}\" does not end with a correct"
-                "end0 tag-- last tag has type {}, flags {x}, version {}.", path, chdr.type, chdr.flags, chdr.version) << std::endl;
+                "end0 tag-- last tag has type {}, flags {:x}, version {}.", path, chdr.type, chdr.flags, chdr.version) << std::endl;
         }
 
         std::cout << "[aef::MolecularSystem] Load complete" << std::endl;
