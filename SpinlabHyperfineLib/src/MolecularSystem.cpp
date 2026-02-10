@@ -31,6 +31,7 @@ namespace aef {
         enableDev = K != 0;
 
         set_nmax(nmax_);
+        file_version = molsys_save_version::max;
     }
 
     MolecularSystem::MolecularSystem() {
@@ -43,6 +44,7 @@ namespace aef {
         nmax = -1;
         diagonalized = false;
         nBasisElts = 0;
+        file_version = molsys_save_version::invalid;
     }
 
     void MolecularSystem::set_nmax(spin nmax_) {
@@ -240,8 +242,8 @@ namespace aef {
         std::unordered_map<aef::chunk::fourcc, matrix_id_ifo> offsetMap = {
             // Hamiltonian matricies
             X(Hrot, fd, 0, offsetof(MolecularSystem, H_rot)),
-            X(Hstk, fm, 0, offsetof(MolecularSystem, H_hfs)),
-            X(Hhfs, fm, 0, offsetof(MolecularSystem, H_stk)),
+            X(Hhfs, fm, 0, offsetof(MolecularSystem, H_hfs)),
+            X(Hstk, fm, 0, offsetof(MolecularSystem, H_stk)),
             X(Hdev, fm, 0, offsetof(MolecularSystem, H_dev)),
             X(Htot, fm, 0, offsetof(MolecularSystem, H_tot)),
 
@@ -291,10 +293,24 @@ namespace aef {
                 }
                 io_detail::matrix_id_ifo ifo = io_detail::offsetMap[gmchunk.matnam];
 
+                // Bugfixes
                 if (chdr.version <= 1 && is_vector != ifo.isVector()) {
                     // bugfix: accidentally set the is_vector flag for matricies during version 1.
+                    std::clog << fmt::format("    correcting flags to process MtrX {} as a vector", gmchunk.matnam) << std::endl;
                     is_vector = ifo.isVector();
                 }
+
+                if (file_version < molsys_save_version::fix_hfs_stk_swap) {
+                    // H_hfs and H_stk were swapped
+                    if (gmchunk.matnam == io_detail::Hhfs) {
+                        std::clog << fmt::format("    found hfs-stk swap bug, correcting tag: hfs --> stk") << std::endl;
+                        ifo = io_detail::offsetMap[io_detail::Hstk];
+                    } else if (gmchunk.matnam == io_detail::Hstk) {
+                        std::clog << fmt::format("    found hfs-stk swap bug, correcting tag: stk --> hfs") << std::endl;
+                        ifo = io_detail::offsetMap[io_detail::Hhfs];
+                    }
+                }
+
 
                 if (is_vector) {
                     Eigen::read_binary(in, *ifo.getVector(this));
@@ -340,6 +356,7 @@ namespace aef {
                 std::vector<std::string> ops;
                 size_t nops = 0;
                 in.read((char*)&nops, sizeof(nops));
+                std::clog << fmt::format("    loading {} operators", nops) << std::endl;
                 std::string opId;
                 
                 for (int idxOp = 0; idxOp < nops; idxOp++) {
@@ -409,6 +426,9 @@ namespace aef {
             std::clog << fmt::format("[MolecularSystem aefchunk loader] Error: file \"{}\" uses unsupported version {} (too new)", path, version) << std::endl;
             return aef::ResultCode::InvalidFormat;
         }
+
+        file_version = static_cast<molsys_save_version>(version);
+        std::clog << fmt::format("[aef::MolecularSystem aefchunk loader] load file version is {}", version) << std::endl;
         
         /// flags
         uint16_t flags = fhdr.hdr.flags;
@@ -425,7 +445,7 @@ namespace aef {
         // the params block must come first
         in.read((char*)&chdr, sizeof(chdr));
         if (chdr.type != aef::chunk::prms) {
-            std::clog << fmt::format("[aef::MolecularSystem] Error: molsys file {} is malformed", path) << std::endl;
+            std::clog << fmt::format("[aef::MolecularSystem] Error: molsys file {} is malformed, first chunk has type {} not prms", path, chdr.type) << std::endl;
             return aef::ResultCode::InvalidFormat;
         } else {
             std::cout << fmt::format("[aef::MolecularSystem] Reading parameters chunk") << std::endl;

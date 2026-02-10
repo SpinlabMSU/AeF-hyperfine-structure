@@ -194,6 +194,7 @@ namespace aef {
         bool init;
         bool diagonalized;
         bool dkq_init;
+        molsys_save_version file_version;
     public:
         double E_z;
         double K;

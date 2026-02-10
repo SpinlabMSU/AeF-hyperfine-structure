@@ -10,9 +10,12 @@ enum class molsys_save_version : uint16_t {
     //
     initial = 1,
     //
-    max
+    fix_hfs_stk_swap = 2,
+    _maxn,
+    //
+    max = _maxn - 1
 };
 
 constexpr molsys_save_version MINIMUM_LOAD_VERSION = molsys_save_version::initial;
-constexpr molsys_save_version MAXIMUM_LOAD_VERSION = molsys_save_version::initial;
+constexpr molsys_save_version MAXIMUM_LOAD_VERSION = molsys_save_version::max;
 constexpr molsys_save_version CURRENT_SAVE_VERSION = MAXIMUM_LOAD_VERSION;
