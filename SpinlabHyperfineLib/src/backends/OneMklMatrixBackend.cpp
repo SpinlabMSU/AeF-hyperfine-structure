@@ -59,12 +59,14 @@ ResultCode aef::matrix::OneMklMatrixBackend::init(int argc, char** argv) {
 #ifdef _USE_ONEAPI
     ptr->device = new sycl::device(sycl::gpu_selector());
     ptr->queue = new sycl::queue(*(ptr->device));
-#else
-    // need fewer ifdefs by doing this
-    ptr->device = new int;
-    ptr->queue = new int;
-#endif
+    // other stuff
     return ResultCode::Success;
+#else
+    return ResultCode::Unimplemented;
+    // need fewer ifdefs by doing this
+    //ptr->device = new int;
+    //ptr->queue = new int;
+#endif
 }
 
 ResultCode aef::matrix::OneMklMatrixBackend::shutdown() {
