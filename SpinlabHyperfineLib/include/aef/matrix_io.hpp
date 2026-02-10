@@ -99,14 +99,32 @@ namespace Eigen {
 #else
 #define print_stream_position(in) ((void)in)
 #endif
+
+#define XSTR(s) #s
+#define STR(s) XSTR(s)
     template<class Matrix>
     void read_binary(std::istream& in, Matrix& matrix) {
+#ifndef NDEBUG
+        if (in.eof() || in.fail() || in.bad()) {
+            std::cout << "Line " STR(__LINE__) " Error eof=" << in.eof() << " fail=" << in.fail() << " bad=" << in.bad() << " tellg=" << in.tellg() << std::endl;
+            //printf("ERROR eof=%d fail=%d bad=%d, %zu\n", in.eof(), in.fail(), in.bad(), in.tellg());
+            throw std::runtime_error("EOF or FAIL or BAD");
+        }
+#endif
         constexpr uint32_t magic = 0xffddeeff;
         print_stream_position(in);
         uint32_t rmagic = 0;
         in.read((char*)&rmagic, sizeof(rmagic));
         ::stream_pos += 4;
         print_stream_position(in);
+
+#ifndef NDEBUG
+        if (in.eof() || in.fail() || in.bad()) {
+            std::cout << "Line " STR(__LINE__) " Error eof=" << in.eof() << " fail=" << in.fail() << " bad=" << in.bad() << " tellg=" << in.tellg() << std::endl;
+            //printf("ERROR eof=%d fail=%d bad=%d, %zu\n", in.eof(), in.fail(), in.bad(), in.tellg());
+            throw std::runtime_error("EOF or FAIL or BAD");
+        }
+#endif
 
         std::cout << fmt::format("Read magic {:x}", rmagic) << std::endl;
 
@@ -121,11 +139,27 @@ namespace Eigen {
             throw std::runtime_error("BAD MAGIC");
         }
 
+#ifndef NDEBUG
+        if (in.eof() || in.fail() || in.bad()) {
+            std::cout << "Line " STR(__LINE__) " Error eof=" << in.eof() << " fail=" << in.fail() << " bad=" << in.bad() << " tellg=" << in.tellg() << std::endl;
+            //printf("ERROR eof=%d fail=%d bad=%d, %zu\n", in.eof(), in.fail(), in.bad(), in.tellg());
+            throw std::runtime_error("EOF or FAIL or BAD");
+        }
+#endif
+
         typename Matrix::Index rows = 0, cols = 0;
         in.read((char*)(&rows), sizeof(typename Matrix::Index));
         ::stream_pos += sizeof(typename Matrix::Index);
         print_stream_position(in);
-        
+      
+#ifndef NDEBUG
+        if (in.eof() || in.fail() || in.bad()) {
+            std::cout << "Line " STR(__LINE__) " Error eof=" << in.eof() << " fail=" << in.fail() << " bad=" << in.bad() << " tellg=" << in.tellg() << std::endl;
+            //printf("ERROR eof=%d fail=%d bad=%d, %zu\n", in.eof(), in.fail(), in.bad(), in.tellg());
+            throw std::runtime_error("EOF or FAIL or BAD");
+        }
+#endif
+
         in.read((char*)(&cols), sizeof(typename Matrix::Index));
         ::stream_pos += sizeof(typename Matrix::Index);
         print_stream_position(in);
@@ -134,6 +168,14 @@ namespace Eigen {
         auto pre = in.tellg();
 
         size_t size = rows * cols * sizeof(typename Matrix::Scalar);
+
+#ifndef NDEBUG
+        if (in.eof() || in.fail() || in.bad()) {
+            std::cout << "Line " STR(__LINE__) " Error eof=" << in.eof() << " fail=" << in.fail() << " bad=" << in.bad() << " tellg=" << in.tellg() << std::endl;
+            //printf("ERROR eof=%d fail=%d bad=%d, %zu\n", in.eof(), in.fail(), in.bad(), in.tellg());
+            throw std::runtime_error("EOF or FAIL or BAD");
+        }
+#endif
 
         in.read((char*)matrix.data(), size);
         ::stream_pos += rows * cols * sizeof(typename Matrix::Scalar);
@@ -163,7 +205,8 @@ namespace Eigen {
             throw std::runtime_error("BAD END MARKER");
         }
     }
-
+#undef XSTR
+#undef STR
 
 
 } // Eigen::
