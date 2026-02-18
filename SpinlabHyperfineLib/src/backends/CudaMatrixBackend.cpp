@@ -63,6 +63,7 @@ ResultCode aef::matrix::CudaMatrixBackend::ensureWorkCapacity(size_t num_elts) {
     if (!_init) {
         return ResultCode::IllegalState;
     }
+
     if (num_elts <= lWork) {
         return ResultCode::S_NOTHING_PERFORMED;
     }
@@ -201,12 +202,23 @@ ResultCode aef::matrix::CudaMatrixBackend::set_max_size(int nMaxDim) {
     return ResultCode::Success;
 }
 
+ResultCode aef::matrix::CudaMatrixBackend::ensureSize(int nMaxDim) {
+    if (!_init) {
+        return ResultCode::IllegalState;
+    }
+    if (nMaxDim >= saved_n) {
+        return ResultCode::S_NOTHING_PERFORMED;
+    }
+    return set_max_size(nMaxDim);
+}
+
 ResultCode aef::matrix::CudaMatrixBackend::multiply(Eigen::MatrixXcd& A, Eigen::MatrixXcd& B, Eigen::MatrixXcd& out) {
     if (!_init) {
         return ResultCode::IllegalState;
     }
     const size_t As_size = sizeof(cuDoubleComplex) * A.size();
     const int rows = A.rows();
+    ensureSize(rows);
 
     constexpr auto nop = CUBLAS_OP_N;
     constexpr auto oph = CUBLAS_OP_C;
@@ -229,6 +241,7 @@ ResultCode aef::matrix::CudaMatrixBackend::commutator(Eigen::MatrixXcd& A, Eigen
     }
     const size_t As_size = sizeof(cuDoubleComplex) * A.size();
     const int rows = A.rows();
+    ensureSize(rows);
 
     constexpr auto nop = CUBLAS_OP_N;
     constexpr auto oph = CUBLAS_OP_C;
@@ -253,6 +266,7 @@ ResultCode aef::matrix::CudaMatrixBackend::group_action(Eigen::MatrixXcd& out, E
     }
     const size_t As_size = sizeof(cuDoubleComplex) * A.size();
     const int rows = A.rows();
+    ensureSize(rows);
 
     constexpr auto nop = CUBLAS_OP_N;
     constexpr auto oph = CUBLAS_OP_C;
@@ -283,6 +297,7 @@ ResultCode aef::matrix::CudaMatrixBackend::expectation_value(dcomplex& out, Eige
     const size_t As_size = sizeof(cuDoubleComplex) * A.size();
     const size_t vs_size = sizeof(cuDoubleComplex) * v1.size();
     const int dim = A.rows();
+    ensureSize(dim);
 
     constexpr auto nop = CUBLAS_OP_N;
     constexpr auto oph = CUBLAS_OP_C;
@@ -312,6 +327,7 @@ ResultCode aef::matrix::CudaMatrixBackend::matrix_element(dcomplex& out, Eigen::
     const size_t As_size = sizeof(cuDoubleComplex) * A.size();
     const size_t vs_size = sizeof(cuDoubleComplex) * v1.size();
     const int dim = A.rows();
+    ensureSize(dim);
 
     constexpr auto nop = CUBLAS_OP_N;
     constexpr auto oph = CUBLAS_OP_C;
@@ -339,6 +355,8 @@ ResultCode aef::matrix::CudaMatrixBackend::diagonalize(Eigen::MatrixXcd& mat, Ei
         // don't do work on a zero-sized matrix
         return ResultCode::S_NOTHING_PERFORMED;
     }
+
+    ensureSize(rows);
 
     std::cout << "[aef::matrix::CudaMatrixBackend] Diagonalize called" << std::endl;
 
