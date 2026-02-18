@@ -260,7 +260,9 @@ namespace aef {
 
         };
 #undef X
-        constexpr uint32_t eof_flags = 0xEE4E4404;
+        //constexpr uint32_t eof_flags = 0xEE4E4404;
+        constexpr uint16_t eof_flags = 0xEE4E;
+        constexpr uint16_t eof_version = 0x4404;
     };
 
     aef::ResultCode MolecularSystem::write_chunk(std::ostream& out, void* chdr, void* data) {
@@ -502,7 +504,7 @@ namespace aef {
             std::cout << "[aef::MolecularSystem] Warning IO error during load" << std::endl;
         }
 
-        if (chdr.type != aef::chunk::end0 || chdr.flags != io_detail::eof_flags) {
+        if (chdr.type != aef::chunk::end0 || chdr.flags != io_detail::eof_flags || chdr.version != io_detail::eof_version) {
             std::cout << fmt::format("[aef::MolecularSystem] Warning: molsys file \"{}\" does not end with a correct"
                 "end0 tag-- last tag has type {}, flags {:x}, version {}.", path, chdr.type, chdr.flags, chdr.version) << std::endl;
         }
@@ -572,17 +574,23 @@ namespace aef {
             out->write(calcType.data(), pay.calcTypeLen);
             out->write(buf.data(), buflen);
         }
+        std::cout << fmt::format("[aef::MolecularSystem::save] Done writing parameter chunk") << std::endl;
         // write matricies
+        std::cout << fmt::format("[aef::MolecularSystem::save] writing operator matricies") << std::endl;
         for (auto &id_val_pair : io_detail::offsetMap) {
             fourcc id = id_val_pair.first;
             auto& val = id_val_pair.second;
 
             if (val.isVector()) {
+                std::cout << fmt::format("[aef::MolecularSystem::save] writing vector {} with length {}", id, val.getVector(this)->size()) << std::endl;
                 write_vector(*out, val.getVector(this), id.ucode);
             } else { // ! vector == matrix
+                std::cout << fmt::format("[aef::MolecularSystem::save] writing matrix {} with rows {}, cols {}",
+                    id, val.getMatrix(this)->rows(), val.getMatrix(this)->cols()) << std::endl;
                 write_matrix(*out, val.getMatrix(this), id.ucode);
             }
         }
+        std::cout << fmt::format("[aef::MolecularSystem::save] done writing operator matricies") << std::endl;
 
         // write pt ops
         {
@@ -598,25 +606,37 @@ namespace aef {
 
             aef::chunk::chunk_hdr ehdr = { .type = aef::chunk::end0 };
 
+            std::cout << fmt::format("[aef::MolecularSystem::save] writing PT operator map") << std::endl;
             for (auto &id_op_pair : opMap) {
                 // todo
                 const char* name = id_op_pair.first.c_str();
                 size_t namelen = id_op_pair.first.length();
                 out->write((char*)&namelen, sizeof(namelen));
                 out->write(name, namelen);
+                std::cout << fmt::format("Writing operator {} type ", name);
 
                 if (opMatMap.contains(id_op_pair.first)) {
                     write_matrix(*out, opMatMap[id_op_pair.first], aef::chunk::general_matrix_chunk::nameless);
                 } else {
+
                     out->write((char*)&ehdr, sizeof(ehdr));
                 }
-
             }
+            std::cout << fmt::format("[aef::MolecularSystem::save] Done writing PT operator map") << std::endl;
         }
 
+        std::cout << fmt::format("[aef::MolecularSystem::save] Writing End chunk") << std::endl;
         // write end of file
-        aef::chunk::chunk_hdr ehdr = { .type = aef::chunk::end0, .version = 0x4EEE, .flags = 0x0444 };
+        aef::chunk::chunk_hdr ehdr = { .type = aef::chunk::end0, .version = io_detail::eof_version, .flags = io_detail::eof_flags };
         out->write((char*)&ehdr, sizeof(ehdr));
+        out->flush();
+
+        if (out->bad() || out->eof() || out->fail()) {
+            std::cout << fmt::format("[aef::MolecularSystem::save#{} out problem bad={}, eof={}, fail={} (flags={})",
+                __LINE__, out->bad(), out->eof(), out->fail(), out->flags()) << std::endl;
+        }
+        
+        std::cout << fmt::format("[aef::MolecularSystem::save] Save completed") << std::endl;
 
         return aef::ResultCode::Success;
     }
