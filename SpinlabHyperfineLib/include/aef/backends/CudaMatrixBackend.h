@@ -34,6 +34,7 @@ namespace aef::matrix {
         int saved_n = -1;
 
         ResultCode ensureWorkCapacity(size_t nElements);
+        ResultCode ensureSize(int n);
 
     public:
         // Note: constructor does not 

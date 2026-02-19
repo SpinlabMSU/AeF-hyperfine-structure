@@ -113,7 +113,11 @@ namespace cuda {
         if (result) {
             fprintf(stderr, "CUDA error at %s:%d code=%d(%s) \"%s\" \n", file, line,
                 static_cast<unsigned int>(result), cudaGetErrorEnum(result), func);
-            exit(EXIT_FAILURE);
+#ifdef _WIN32
+            DebugBreak();
+#endif
+            abort();
+            //exit(EXIT_FAILURE);
         }
     }
 

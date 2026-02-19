@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
 #ifndef DONT_USE_CUDA
     constexpr bool diag_use_cuda = true;
     std::cout << "Initializing CUDA" << std::endl;
-    aef::matrix::init(aef::matrix::BackendType::Invalid, argc, argv);
+    aef::matrix::init(aef::matrix::BackendType::NvidiaCuda, argc, argv);
     std::cout << "Successfully initialized CUDA" << std::endl;
 #else
     constexpr bool diag_use_cuda = false;
@@ -187,7 +187,6 @@ int main(int argc, char **argv) {
     
     aef::MolecularSystem calc;
     bool success = aef::succeeded(calc.load(loadname));
-    calculate_sizes(calc);
 
     if (!success) {
         // load failed, attempt to diagnose why & exit
@@ -206,6 +205,9 @@ int main(int argc, char **argv) {
         }
         std::exit(255);
     }
+    calculate_sizes(calc);
+    aef::matrix::set_max_size(calc.nBasisElts);
+
 
 #ifndef DONT_USE_CUDA
         std::cout << fmt::format(
