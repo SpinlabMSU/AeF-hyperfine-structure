@@ -523,6 +523,7 @@ namespace aef {
         using aef::chunk::fourcc;
         // write file header
         std::ostream* out = &out_;
+        aef::ResultCode rc = aef::ResultCode::Success;
         aef::chunk::file_hdr hdr = {};
         {
             // always compress molsys files
@@ -578,10 +579,11 @@ namespace aef {
             auto& val = id_val_pair.second;
 
             if (val.isVector()) {
-                write_vector(*out, val.getVector(this), id.ucode);
+                rc = write_vector(*out, val.getVector(this), id.ucode);
             } else { // ! vector == matrix
-                write_matrix(*out, val.getMatrix(this), id.ucode);
+                rc = write_matrix(*out, val.getMatrix(this), id.ucode);
             }
+            assert(SUCCEEDED(rc));
         }
 
         // write pt ops
@@ -618,7 +620,7 @@ namespace aef {
         aef::chunk::chunk_hdr ehdr = { .type = aef::chunk::end0, .version = 0x4EEE, .flags = 0x0444 };
         out->write((char*)&ehdr, sizeof(ehdr));
 
-        return aef::ResultCode::Success;
+        return rc;
     }
 
     aef::ResultCode aef::MolecularSystem::write_matrix(std::ostream& out, Eigen::MatrixXcd* mat, uint32_t matnam_) {

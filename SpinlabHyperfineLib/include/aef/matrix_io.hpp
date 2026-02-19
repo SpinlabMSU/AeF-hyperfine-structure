@@ -96,6 +96,12 @@ namespace Eigen {
         std::streamoff pos = tellg;
         std::cout << fmt::format("Stream position {} = 0x{:x} (estimated is {:#x})", (int64_t)pos, (int64_t)pos, ::stream_pos) << std::endl;
     }
+
+    inline void print_stream_position(std::ostream& out) {
+        auto tellg = out.tellp();
+        std::streamoff pos = tellg;
+        std::cout << fmt::format("Stream position {} = 0x{:x} (estimated is {:#x})", (int64_t)pos, (int64_t)pos, ::stream_pos) << std::endl;
+    }
 #else
 #define print_stream_position(in) ((void)in)
 #endif
