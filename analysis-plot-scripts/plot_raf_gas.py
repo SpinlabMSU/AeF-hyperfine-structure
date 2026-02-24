@@ -126,7 +126,7 @@ Eg_uhalf = dE_gnds[mid_idx:]
 
 if going_backwards:
     Ez_uhalf = Ezs[:mid_idx]
-Eg_uhalf = dE_gnds[:mid_idx]
+    Eg_uhalf = dE_gnds[:mid_idx]
 
 lresult = scistat.linregress(Ez_uhalf, Eg_uhalf)
 
