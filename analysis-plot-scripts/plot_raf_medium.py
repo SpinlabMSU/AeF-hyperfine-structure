@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 import numpy.linalg as npla
 import pandas as pd
 import numba
-
+import aef_run
 
 #rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-18-185338.4873197' #nodev
 #rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-19-181153.8494779' #deven
@@ -36,7 +36,53 @@ rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-09-12-193
 
 if len(sys.argv) > 1:
     rundir = sys.argv[1]
-run = os.path.split(rundir)[1]
+
+zero_ground = False
+measure_deviation = False
+use_volts = False
+do_cut = False
+black_dots = False
+
+ymax = None
+ymin = None
+max_idx = None
+scale = 'm'
+# map to scale from Megahertz to 
+scale_map = {
+    'k' : (1E+03, 'kHz'),
+    'm' : (1E+00, 'MHz'),
+    'g' : (1E-03, 'GHz'),
+    't' : (1E-06, 'THz')
+}
+
+plt.rcParams['font.size'] = 14
+title = None
+outname = None
+## Actually parse arguments
+for idx in range(2, len(sys.argv)):
+    arg = sys.argv[idx]
+    lrg = arg.lower()
+    if lrg.startswith('-z'): zero_ground = True
+    if lrg.startswith('-m'): measure_deviation = True
+    if lrg.startswith('-v'): use_volts = True
+    if lrg.startswith('-c'):
+        do_cut = True
+        max_idx = int(sys.argv[idx + 1])
+        idx += 1 # skip next argument
+    if lrg.startswith('-s'):
+        # scale -- TODO really implement
+        scale = sys.argv[idx + 1]
+        idx += 1
+    if lrg.startswith('-b'): black_dots = True
+    if lrg.startswith('-t'):
+        title = sys.argv[idx + 1]
+        idx += 1
+    if lrg.startswith('-o'):
+        outname = sys.argv[idx + 1]
+        idx += 1
+
+run = aef_run.aef_run(rundir)
+run_str = run.run
 
 starkpath = os.path.join(rundir, 'stark_spectrum.csv')
 df = pd.read_csv(starkpath)
@@ -48,36 +94,27 @@ print(states)
 Ezs = df[Ez]
 mid_idx = len(Ezs) // 2
 Ez_mid = Ezs[mid_idx] / 1000
+going_backwards = False
 
-def parse_translation_tables(dir):
-    tt = np.zeros(())
+## Dot-product state tracking starts at the E-field
+## Furthest away from zero and goes "backwards" towards zero
+if abs(Ezs[0]) > abs(Ezs[1]):
+    going_backwards = True
+    # flip 
+    #Ezs = Ezs[::-1]
+    #dE_gnds
 
-do_extras = False
-# Including a legend isn't particularly useful past a certain number of states
-# since it runs off the edge of the plot and the colors repeat anyways
-use_legend = True
-if len(df[Ez]) > 15:
-    use_legend = False
+trans_table = aef_run.state_translation_table(run)
 
-if do_extras:
-    fig = plt.figure(figsize=(13.66, 9.00))
-    plt.title(f"Energy Spectrum for run {run}")
-    df.plot(Ez, states, ylabel = 'Energy (MHz)', ax=plt.gca(), legend = use_legend)
-    plt.savefig(os.path.join(rundir, 'spectrum_plot.png'))
-    #plt.show()
-    plt.close(fig)
-
-if do_extras:
-    fig = plt.figure(figsize=(13.66, 9.00))
-    plt.title(f"Energy Spectrum for run {run}")
-    df.plot(Ez[:24], states[:24], ylabel = 'Energy (MHz)', ax=plt.gca(), legend = True)
-    plt.savefig(os.path.join(rundir, 'spectrum_bottom_group.png'))
-    #plt.show()
-    plt.close(fig)
-
-##
-def get_energies(n):
-    return df[f'E{n}']
+## This now takes the state transmutation tablet into account
+def get_energies(sdx):
+    n_Ezs = len(Ezs)
+    Es = np.zeros(n_Ezs)
+    for i in range(n_Ezs):
+        E_z = Ezs[i]
+        edx = trans_table.sdx_from_edx_Ez(E_z, sdx)
+        Es[i] = df[f'E{edx}']
+    return Es
 ## 
 ## suspect MDA is actually backwards
 # +Z oriented states start at 0
@@ -122,82 +159,14 @@ En5s = get_energies(bidx_nz + 5)
 En6s = get_energies(bidx_nz + 6)
 En7s = get_energies(bidx_nz + 7)
 
-if do_extras:
-    fig = plt.figure(figsize=(13.66, 9.00))
-    plt.title(f"Descending part for run {run}")
-    plt.plot(df[Ez][1:], (Ep1s-Ep0s)[1:], label='First Excited state')
-    plt.plot(df[Ez][1:], (Ep2s-Ep0s)[1:], label='Second Excited state')
-    plt.plot(df[Ez][1:], (Ep3s-Ep0s)[1:], label='Third Excited state')
-    plt.legend()
-    plt.ylabel('Energy (MHz)')
-    plt.xlabel("Electric Field (V/cm)")
-    #df.plot(Ez, states[:4], ylabel = 'Energy (MHz)', ax=plt.gca(), legend = use_legend)
-    plt.savefig(os.path.join(rundir, 'spectrum_bottom_negz.png'))
-    plt.close(fig)
-    #plt.show()
-
-if do_extras:
-    fig = plt.figure(figsize=(13.66, 9.00))
-    plt.title(f"Energy of bottom ascending part for run {run}")
-    plt.plot(df[Ez][1:], (En1s-En0s)[1:], label='First Excited state')
-    plt.plot(df[Ez][1:], (En2s-En0s)[1:], label='Second Excited state')
-    plt.plot(df[Ez][1:], (En3s-En0s)[1:], label='Third Excited state')
-    plt.legend()
-    plt.ylabel('Energy (MHz)')
-    plt.xlabel("Electric Field (V/cm)")
-    #df.plot(Ez, states[:4], ylabel = 'Energy (MHz)', ax=plt.gca(), legend = use_legend)
-    plt.savefig(os.path.join(rundir, 'spectrum_bottom_posz.png'))
-    plt.close(fig)
-
-if do_extras:
-    fig = plt.figure(figsize=(13.66, 9.00))
-    plt.title(f"Descending part for run {run}")
-    plt.plot(df[Ez][1:], (Ep1s-Ep0s-delta_10_fhalf)[1:]*1000, label='First Excited state')
-    plt.plot(df[Ez][1:], (Ep2s-Ep0s-delta_10_fthlf)[1:]*1000, label='Second Excited state')
-    plt.plot(df[Ez][1:], (Ep3s-Ep0s-delta_10_fnthf)[1:]*1000, label='Third Excited state')
-    plt.legend()
-    plt.ylabel('Energy (kHz)')
-    plt.xlabel("Electric Field (V/cm)")
-    #df.plot(Ez, states[:4], ylabel = 'Energy (MHz)', ax=plt.gca(), legend = use_legend)
-    plt.savefig(os.path.join(rundir, 'spectrum_bottom_stks_d10.png'))
-    plt.close(fig)
-    #plt.show()
-
 delta_10_pmf1 = Ep4s[1] - Ep0s[1] # was 2,0
 delta_10_pmft = Ep7s[1] - Ep0s[1] # was 3,0
 delta_10_nmf1 = En4s[1] - En0s[1] # was 2,0
 delta_10_nmft = En7s[1] - En0s[1] # was 3,0
 
-if do_extras:
-    fig = plt.figure(figsize=(13.66, 9.00))
-    plt.title(f"Equiv of EDM3 RMP Fig 3c for run {run}")
-    plt.plot(df[Ez][1:], (Ep2s-Ep0s-delta_10_pmf1)[1:]*1000, label='+Z,f=1,m_f=?1?')
-    plt.plot(df[Ez][1:], (Ep3s-Ep0s-delta_10_pmft)[1:]*1000, label='+z,f=1,m_f=?-1?')
-    plt.plot(df[Ez][1:], (En2s-En0s-delta_10_nmf1)[1:]*1000, label='-Z,f=1,m_f=?1?')
-    plt.plot(df[Ez][1:], (En3s-En0s-delta_10_nmft)[1:]*1000, label='-Z,f=1,m_f=?-1?')
-    plt.legend()
-    plt.ylabel('Energy (kHz)')
-    plt.xlabel("Electric Field (V/cm)")
-    #df.plot(Ez, states[:4], ylabel = 'Energy (MHz)', ax=plt.gca(), legend = use_legend)
-    plt.savefig(os.path.join(rundir, 'spectrum_rmp_3c.png'))
-    plt.close(fig)
-
 
 dn0 = Ep2s[1] - Ep0s[1]#np.average(En1s - En0s)
 dp0 = En2s[1] - En0s[1]#np.average(Ep1s - Ep0s)
-
-if do_extras:
-    fig = plt.figure(figsize=(13.66, 9.00))
-    plt.title(f"Equiv to EDM3 RMP Fig3d for run {run}")
-    plt.plot(df[Ez][1:], (Ep1s-Ep0s-dn0)[1:]*1000, label='+Z,f=1,m_f=0')
-    plt.plot(df[Ez][1:], (En1s-En0s-dp0)[1:]*1000, label='-Z,f=1,m_f=0')
-    plt.legend()
-    plt.ylabel('Energy (kHz)')
-    plt.xlabel("Electric Field (V/cm)")
-    #df.plot(Ez, states[:4], ylabel = 'Energy (MHz)', ax=plt.gca(), legend = use_legend)
-    plt.savefig(os.path.join(rundir, 'spectrum_bottom_fig3d.png'))
-    #plt.show()
-    plt.close(fig)
 
 ### Make equivalent to PRA fig 3
 props = dict(boxstyle='round,pad=0.2', facecolor='wheat', alpha=0.5)
@@ -271,7 +240,7 @@ plt.plot(Ezs_kV[1:], nz[1:]*1000, 'r-', label='-Z')
 plt.annotate('-Z', xy=(Ez_mid, nz[mid_idx - 1] * 1000), xycoords='data', xytext=(1.5, 5.5), color='r', textcoords='offset points')
 plt.legend()
 
-fig.suptitle(f"N=0, $F_1$=0,1 Stark shift for run {run}", y=0.999)
+fig.suptitle(f"N=0, $F_1$=0,1 Stark shift for run {run_str}", y=0.999)
 plt.subplots_adjust(bottom=0.05, right=0.990, top=0.97, left = 0.114, hspace = 0.0)
 plt.xlabel("Externally-Applied Electric field Strength (kV/cm)")
 

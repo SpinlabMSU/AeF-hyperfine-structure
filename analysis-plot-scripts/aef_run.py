@@ -267,10 +267,15 @@ class state_translation_table:
             E_z = self.E_z_list[Ezdx]
             self.Ez_map[E_z] = Ezdx
             csv_path = os.path.join(run.get_tracking_dir(), f'{E_z:g}.csv')
-            data = pd.read_csv(csv_path)
+            df = pd.read_csv(csv_path)
+            for index, row in df.iterrows():
+                sdx = row['State Idx From Energy E-state Index']
+                edx = row['Energy E-state Index from State Index']
+                self.edx_from_sdx_arr[E_z, sdx] = edx
+                self.sdx_from_edx_arr[E_z, edx] = sdx
 
-
-
+    def get_E_z(self, Ezdx):
+        return self.E_z_list[Ezdx]
     def get_Ezdx(self, E_z):
         # make sure we always use a single datatype to prevent future problems
         E_z = float(E_z)
@@ -278,9 +283,9 @@ class state_translation_table:
     def sdx_from_edx_Ez(self, E_z, edx):
         Ezdx = self.get_Ezdx(E_z)
         return self.sdx_from_edx_arr[Ezdx, edx]
-    def sdx_from_edx_Ez(self, E_z, edx):
+    def edx_from_sdx_Ez(self, E_z, sdx):
         Ezdx = self.get_Ezdx(E_z)
-        return self.sdx_from_edx_arr[Ezdx, edx]
+        return self.edx_from_sdx_arr[Ezdx, sdx]
 
 if __name__ == '__main__':
     # test code
