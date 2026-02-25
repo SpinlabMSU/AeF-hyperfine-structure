@@ -106,7 +106,7 @@ if abs(Ezs[0]) > abs(Ezs[1]):
 
 trans_table = aef_run.state_translation_table(run)
 
-## This now takes the state transmutation tablet into account
+## This now takes the state translation table into account
 def get_energies(sdx):
     n_Ezs = len(Ezs)
     Es = np.zeros(n_Ezs)
