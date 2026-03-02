@@ -129,11 +129,16 @@ int main(int argc, char **argv) {
 
     fs::path runpath = aef::get_aef_run_path(fs::absolute(loadname));
     dpath = runpath / "ptfw";
-    fs::create_directories(dpath, ec);
-    if (ec) {
-        std::clog << "[PerturbationAnalyzer] Unable to create output directory, error category:" <<
-            ec.category().name() << ", code: " << ec.value() << ", message: " << ec.message() << std::endl;
-        exit(2);
+    if (!fs::exists(dpath)) {
+        fs::create_directories(dpath, ec);
+        if (ec) {
+            std::clog << "[PerturbationAnalyzer] Unable to create output directory, error category:" <<
+                ec.category().name() << ", code: " << ec.value() << ", message: " << ec.message() << std::endl;
+            exit(2);
+        }
+    } else if (!fs::is_directory(dpath)) {
+        //
+        std::clog << fmt::format("Error: output path {} exists but is not a directory!", dpath.string()) << std::endl;
     }
 
     // create info log
@@ -215,6 +220,9 @@ int main(int argc, char **argv) {
     aef::matrix::set_max_size(sys.nBasisElts);
 
     rc = aef::ResultCode::Success;
+
+    // need to set E_z to maximum, 
+    //sys.
 
     // make bigmatrix
     prev_time = log_time_at_point("Creating perturbation theory framework", start_time, prev_time);
