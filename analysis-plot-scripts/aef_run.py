@@ -253,13 +253,13 @@ class state_translation_table:
         self.n_E_zs = run.n_E_zs
         self.Ez_map = {}
         # arr is E_z, edx --> sdx
-        self.sdx_from_edx_arr = np.zeros((self.n_E_zs, run.n_basis_elts))
+        self.sdx_from_edx_arr = np.zeros((self.n_E_zs, run.n_basis_elts), dtype=np.int32)
         # arr is E_z, sdx --> edx
-        self.edx_from_sdx_arr = np.zeros((self.n_E_zs, run.n_basis_elts))
+        self.edx_from_sdx_arr = np.zeros((self.n_E_zs, run.n_basis_elts), dtype=np.int32)
         csvs = run.list_tracking()
 
         self.E_z_list = np.array([
-            float(os.path.basename(csv_path).split('.')[0])
+            int(os.path.basename(csv_path).split('.')[0])
             for csv_path in csvs])
 
         self.E_z_list.sort()
@@ -272,14 +272,15 @@ class state_translation_table:
             for index, row in df.iterrows():
                 sdx = row['State Idx From Energy E-state Index']
                 edx = row['Energy E-state Index from State Index']
-                self.edx_from_sdx_arr[E_z, sdx] = edx
-                self.sdx_from_edx_arr[E_z, edx] = sdx
+                self.edx_from_sdx_arr[Ezdx, sdx] = edx
+                self.sdx_from_edx_arr[Ezdx, edx] = sdx
 
     def get_E_z(self, Ezdx):
         return self.E_z_list[Ezdx]
     def get_Ezdx(self, E_z):
         # make sure we always use a single datatype to prevent future problems
-        E_z = float(E_z)
+        # round to prevent precision problems from 
+        E_z = int(round(E_z))
         return self.Ez_map[E_z]
     def sdx_from_edx_Ez(self, E_z, edx):
         Ezdx = self.get_Ezdx(E_z)
