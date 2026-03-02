@@ -58,6 +58,7 @@ scale_map = {
 plt.rcParams['font.size'] = 14
 title = None
 outname = None
+make_debug_plots = False
 ## Actually parse arguments
 for idx in range(2, len(sys.argv)):
     arg = sys.argv[idx]
@@ -69,17 +70,26 @@ for idx in range(2, len(sys.argv)):
         do_cut = True
         max_idx = int(sys.argv[idx + 1])
         idx += 1 # skip next argument
-    if lrg.startswith('-s'):
-        # scale -- TODO really implement
+    if lrg == ('-s'):
         scale = sys.argv[idx + 1]
+        if not scale in scale_map:
+            print(f"Error: unrecognized scale {scale}")
+            sys.exit(111)
         idx += 1
-    if lrg.startswith('-b'): black_dots = True
-    if lrg.startswith('-t'):
+    if lrg == '-b': black_dots = True
+    if lrg == '-t':
         title = sys.argv[idx + 1]
         idx += 1
-    if lrg.startswith('-o'):
+    if lrg == '-o':
         outname = sys.argv[idx + 1]
         idx += 1
+    if lrg == '-d':
+        make_debug_plots = True
+
+kV_from_V = 1E-03 # kV/V
+scale_mult = scale_map[scale][0]
+scale_lab = scale_map[scale][1]
+
 
 run = aef_run.aef_run(rundir)
 run_str = run.run
@@ -92,9 +102,14 @@ states = df.keys()[2:]
 print(Ez)
 print(states)
 Ezs = df[Ez]
+print(Ezs)
 mid_idx = len(Ezs) // 2
-Ez_mid = Ezs[mid_idx] / 1000
+Ez_mid = Ezs[mid_idx] * kV_from_V
+Ezs_kV = np.array(df[Ez]) * kV_from_V
 going_backwards = False
+
+if make_debug_plots:
+    os.makedirs(os.path.join(rundir, "debug_plots"), exist_ok=True)
 
 ## Dot-product state tracking starts at the E-field
 ## Furthest away from zero and goes "backwards" towards zero
@@ -112,8 +127,8 @@ def get_energies(sdx):
     Es = np.zeros(n_Ezs)
     for i in range(n_Ezs):
         E_z = Ezs[i]
-        edx = trans_table.sdx_from_edx_Ez(E_z, sdx)
-        Es[i] = df[f'E{edx}']
+        edx = trans_table.edx_from_sdx_Ez(E_z, sdx)
+        Es[i] = df[f'E{edx}'][i]
     return Es
 ## 
 ## suspect MDA is actually backwards
@@ -144,9 +159,27 @@ Ep5s = get_energies(bidx_pz + 5)
 Ep6s = get_energies(bidx_pz + 6)
 Ep7s = get_energies(bidx_pz + 7)
 
+if make_debug_plots:
+    fig = plt.figure(figsize=(13.66, 9.00))
+    plt.title("Debug plot: Whole Bottom group energies")
+    Ess = [get_energies(bidx_pz + idx) for idx in range(6*grp_size)]
+    idx = 0
+    for Es in Ess:
+        plt.plot(Ezs_kV, Es * scale_mult, label=f'State Index {idx}')
+        idx += 1
+    plt.legend()
+    plt.ylabel(f"Energy ({scale_lab})")
+    plt.xlabel(f"Externally-Applied Electric Field (kV/cm)")
+    plt.savefig(os.path.join(rundir, "debug_plots", "debug_plot_0_bottom_group_spect.png"))
+    plt.savefig(os.path.join(rundir, "debug_plots", "debug_plot_0_bottom_group_spect.pdf"))
+    plt.savefig(os.path.join(rundir, "debug_plots", "debug_plot_0_bottom_group_spect.svg"))
+    plt.show()
+    sys.exit(0)
+
 Eps = [get_energies(bidx_pz + idx) for idx in range(grp_size)]
 
 Em0s = get_energies(bidx_pz + grp_size)
+Em1s = get_energies(bidx_pz + grp_size + 1)
 # -z oriented states
 bidx_nz = grp_size * 5 #20 # 4 (for -z) + 4*4 (ffor +-x, +-y)
 Ens = [get_energies(bidx_nz + idx) for idx in range(grp_size)]
@@ -182,16 +215,16 @@ for i in range(4): color.append('b')
 for i in range(16): color.append('g')
 for i in range(4): color.append('r')
 gca.text(0.015, 0.12, textstr, transform=gca.transAxes, fontsize=14, verticalalignment='top', bbox=props)
-Ezs_kV = np.array(df[Ez]) / 1000.0
+
 #df.plot(Ez[:24], states[:24], ylabel = 'Energy (MHz)', ax=plt.gca(), legend = False)
-plt.ylabel('Energy (GHz)')
-#plt.plot(df[Ez][1:], df[states[:24]][1:] / 1000)
-plt.plot(Ezs_kV, Ep0s/1000, color='b')
-plt.annotate('$+\hat{Z}$', xy=(Ez_mid, Ep0s[mid_idx - 1]/1000), xycoords='data', xytext=(1.5, 1.5), color='b', textcoords='offset points')
-plt.plot(Ezs_kV, Em0s/1000, color='g')
-plt.annotate('$+\hat{X},-\hat{X},+\hat{Y},-\hat{Y}$', xy=(Ez_mid, Em0s[mid_idx - 1]/1000), xycoords='data', xytext=(1.5, 2.5), color='g', textcoords='offset points')
-plt.plot(Ezs_kV, En0s/1000, color='r')
-plt.annotate('$-\hat{Z}$', xy=(Ez_mid, En0s[mid_idx - 1]/1000), xycoords='data', xytext=(1.5, 5.5), color='r', textcoords='offset points')
+plt.ylabel(f'Energy ({scale_lab})')
+#plt.plot(df[Ez][1:], df[states[:24]][1:] * scale_mult)
+plt.plot(Ezs_kV, Ep0s * scale_mult, color='b')
+plt.annotate('$+\hat{Z}$', xy=(Ez_mid, Ep0s[mid_idx - 1] * scale_mult), xycoords='data', xytext=(1.5, 1.5), color='b', textcoords='offset points')
+plt.plot(Ezs_kV, Em0s * scale_mult, color='g')
+plt.annotate('$+\hat{X},-\hat{X},+\hat{Y},-\hat{Y}$', xy=(Ez_mid, Em0s[mid_idx - 1] * scale_mult), xycoords='data', xytext=(1.5, 2.5), color='g', textcoords='offset points')
+plt.plot(Ezs_kV, En0s * scale_mult, color='r')
+plt.annotate('$-\hat{Z}$', xy=(Ez_mid, En0s[mid_idx - 1] * scale_mult), xycoords='data', xytext=(1.5, 5.5), color='r', textcoords='offset points')
 
 #for i,j in enumerate(gca.lines):
 #    j.set_color(color[i])
