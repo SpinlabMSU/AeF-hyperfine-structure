@@ -256,8 +256,8 @@ void output_state_info(std::ostream& output, aef::MolecularSystem& calc
 ) {
     output << "Index n, Energy (MHz), Re(<n|dx|n>), Re(<n|dy|n>), Re(<n|dz|n>), "
         "Im(<n|dx|n>), Im(<n|dy|n>), Im(<n|dz|n>), "
-        "Re(<n|n|n>), Re(<n|j|n>), Re(<n|f|n>), Re(<n|m_f|n>),"
-        "Im(<n|n|n>), Im(<n|j|n>), Im(<n|f|n>), Im(<n|m_f|n>),"
+        "Re(<n|n|n>), Re(<n|j|n>), Re(<n|f_1|n>), Re(<n|f|n>), Re(<n|m_f|n>),"
+        "Im(<n|n|n>), Im(<n|j|n>), Im(<n|f_1|n>), Im(<n|f|n>), Im(<n|m_f|n>),"
         "<n|(-1)^n|n>"
         << std::endl;
 
@@ -300,9 +300,9 @@ void output_state_info(std::ostream& output, aef::MolecularSystem& calc
             fmt::format("{}, {}, {}, {}, {}, {}, {}, {}", n, std::real(calc.Es[n]),
                 std::real(dx), std::real(dy), std::real(dz), std::real(dx),
                 std::imag(dy), std::imag(dz));
-        auto re_njfmf = fmt::format("{},{},{},{}", std::real(v.n), std::real(v.j), std::real(v.f), std::real(v.m_f));
-        auto im_njfmf = fmt::format("{},{},{},{}", std::imag(v.n), std::imag(v.j), std::imag(v.f), std::imag(v.m_f));
-        output << mda_ifo << ", " << re_njfmf << ", " << im_njfmf << "," << expect_parity(calc, n) << std::endl;
+        auto re_njf1fmf = fmt::format("{},{},{}, {},{}", std::real(v.n), std::real(v.j), std::real(v.f_1), std::real(v.f), std::real(v.m_f));
+        auto im_njf1fmf = fmt::format("{},{},{}, {},{}", std::imag(v.n), std::imag(v.j), std::imag(v.f_1), std::imag(v.f), std::imag(v.m_f));
+        output << mda_ifo << ", " << re_njf1fmf << ", " << im_njf1fmf << "," << expect_parity(calc, n) << std::endl;
     }
     output.flush();
 }
