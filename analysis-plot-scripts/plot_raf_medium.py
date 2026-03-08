@@ -165,7 +165,7 @@ if make_debug_plots:
     Ess = [get_energies(bidx_pz + idx) for idx in range(6*grp_size)]
     idx = 0
     for Es in Ess:
-        plt.plot(Ezs_kV, Es * scale_mult, label=f'State Index {idx}')
+        plt.scatter(Ezs_kV, Es * scale_mult, label=f'State Index {idx}')
         idx += 1
     plt.legend()
     plt.ylabel(f"Energy ({scale_lab})")
