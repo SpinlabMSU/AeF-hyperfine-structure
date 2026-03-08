@@ -21,6 +21,7 @@
 #include <aef/xiffstream.h>
 #include <aef/io/aefchunk.h>
 #include <aef/matrix_io.hpp>
+#include <aef/aef_run.h>
 
 namespace aef {
     MolecularSystem::MolecularSystem(IMolecularCalculator *calc_, spin nmax_, double E_z_, double K_) :
@@ -457,20 +458,33 @@ namespace aef {
         this->diagonalized = flags & FLAG_DIAG;
 
         {
-            // handle params chunk "payload".  Here the "version" is actually used to store the payload size
+            // handle params chunk "payload".  Here the "version" can be used to store the payload size
             uint16_t payload_size = chdr.version;
-            if (payload_size == 0 || true) {
+            if (payload_size <= sizeof(prms_payload_fixed)) {
                 payload_size = sizeof(prms_payload_fixed);
             }
             prms_payload_fixed *pay = (prms_payload_fixed*)calloc(payload_size, 1);
             assert(pay);
             in.read((char*)pay, payload_size);
-            this->nmax = pay->twice_nmax / 2.0;
-            this->E_z = pay->E_z;
-            this->K = pay->K;
+            if (version >= (int16_t)aef::molsys_save_version::fix_payload_chunk) {
+                this->nmax = pay->twice_nmax / 2.0;
+                this->E_z = pay->E_z;
+                this->K = pay->K;
+            } else {
+                // version 2: neglected to save in payload -- try to get from log file???
+                std::cerr << fmt::format("Warning: load version is {}, which is less than {}, the first version where"
+                    "parameter chunks were saved correctly.  A best-effort attempt will be made to read important"
+                    "parameters from the log file, but this may crash",
+                    version, (uint16_t)aef::molsys_save_version::fix_payload_chunk) << std::endl;
+                aef::aef_run run(path);
+                aef::run_params rp = run.parse_params();
+                this->nmax = rp.nmax;
+                this->E_z = rp.calc_E_z;
+                this->K = rp.K;
+            }
 
             //// read aef::IMolecularCalculator
-            size_t cbRemaining = pay->calcTypeLen + pay->cbCalcData;
+            size_t cbRemaining = (size_t)pay->calcTypeLen + (size_t)pay->cbCalcData;
             char* curr = (char*)calloc(cbRemaining, 1);
             in.read(curr, cbRemaining);
             //char* curr = ((char*)pay) + sizeof(prms_payload_fixed);
@@ -551,6 +565,9 @@ namespace aef {
             std::string calcType = calc->get_calc_type();
             struct prms_payload_fixed pay = {};
             pay.calcTypeLen = (int)calcType.length();
+            pay.twice_nmax = (int)(nmax * 2);
+            pay.K = this->K;
+            pay.E_z = this->E_z;
 
             std::ostringstream os;
             calc->save(os);

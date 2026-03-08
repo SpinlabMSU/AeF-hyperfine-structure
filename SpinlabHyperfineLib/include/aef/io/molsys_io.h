@@ -11,6 +11,7 @@ enum class molsys_save_version : uint16_t {
     initial = 1,
     //
     fix_hfs_stk_swap = 2,
+    fix_payload_chunk = 3,
     _maxn,
     //
     max = _maxn - 1
