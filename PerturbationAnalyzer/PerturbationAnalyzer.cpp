@@ -299,7 +299,7 @@ int main(int argc, char **argv) {
         dcomplex dE_f_NSM = dEs_f_nsm(idx);
         dcomplex dE_Ra_NSM = dEs_Ra_nsm(idx);
         dcomplex dE_zeez = dEs_zeez(idx);
-        out << fmt::format("{}\t{}\t{}\t{}\t{}", idx, std::real(dE_EDM), std::real(dE_f_NSM), std::real(dE_Ra_NSM), std::real(dE_zeez),
+        out << fmt::format("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}", idx, std::real(dE_EDM), std::real(dE_f_NSM), std::real(dE_Ra_NSM), std::real(dE_zeez),
             std::imag(dE_EDM), std::imag(dE_f_NSM), std::imag(dE_Ra_NSM), std::imag(dE_zeez)) << std::endl;
     }
     out.close();
