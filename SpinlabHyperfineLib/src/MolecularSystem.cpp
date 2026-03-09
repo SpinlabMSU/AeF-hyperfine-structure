@@ -481,6 +481,7 @@ namespace aef {
                 this->nmax = rp.nmax;
                 this->E_z = rp.calc_E_z;
                 this->K = rp.K;
+                this->enableDev = (K != 0);
             }
 
             //// read aef::IMolecularCalculator
