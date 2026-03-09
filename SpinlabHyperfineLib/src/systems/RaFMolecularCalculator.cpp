@@ -25,18 +25,21 @@ spin aef::RaFMolecularCalculator::get_nmax() {
 }
 
 void aef::RaFMolecularCalculator::set_nmax(spin nmax_) {
+    bool new_nmax = nmax_ != nmax;
     nmax = nmax_;
     nBasisElts = jf_basis_vec::index_of_n(nmax_ + 1);
     std::cout << fmt::format("Using coefficient set \"{}\"", jf_basis_vec::get_coeff_set()) << std::endl;
     // construct basis
     basis.clear();
     basis.reserve(nBasisElts);
-    std::cout << "Idx, basis ket" << std::endl;
-    for (size_t idx = 0; idx < nBasisElts; idx++) {
-        basis.emplace_back(jf_basis_vec::from_index(idx));
-        std::cout << idx << ", " << basis[idx].ket_csv_str() << std::endl;
+    if (new_nmax) {
+        std::cout << "Idx, basis ket" << std::endl;
+        for (size_t idx = 0; idx < nBasisElts; idx++) {
+            basis.emplace_back(jf_basis_vec::from_index(idx));
+            std::cout << idx << ", " << basis[idx].ket_csv_str() << std::endl;
+        }
+        std::cout << std::endl << std::endl;
     }
-    std::cout << std::endl << std::endl;
     using aef::half;
     lowest_states = {
         // f1 = 0, f = 1/2 doublet
