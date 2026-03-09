@@ -172,7 +172,7 @@ else:
     firstidx = 0 if not going_backwards else len(dE_f10s)-1
     plt.axhline(y=dE_f10s[firstidx], linestyle='dashed', color='blue')
     print("NEWNENWNENW")
-    gca.yaxis.set_label('Energy below $f_1$=0 states (MHz)')
+    gca.set_ylabel('Energy below $f_1$=0 states (MHz)')
 plt.xlabel("Externally-applied electric field strength (kV/cm)")
 plt.annotate('$f=\\frac{3}{2}$', xy=(Ez_mid, dE_f11s[mid_idx - 1]), xycoords='data', xytext=(1.5, -12.5), color='g', textcoords='offset points', fontsize = 14)
 plt.annotate('$f=\\frac{1}{2}$', xy=(Ez_mid, dE_f10s[mid_idx - 1]), xycoords='data', xytext=(1.5, 1.5), color='orange', textcoords='offset points', fontsize = 14)
