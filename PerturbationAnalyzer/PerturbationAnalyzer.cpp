@@ -267,7 +267,7 @@ int main(int argc, char **argv) {
     // delta E vector from Radium-225 nuclear schiff moment-like operator
     prev_time = log_time_at_point("1st ord PT NSM 225Ra start", start_time, prev_time);
     Eigen::VectorXcd dEs_Ra_nsm;
-    rc = pfw.delta_E_lo("NSM2", dEs_Ra_nsm);
+    rc = pfw.delta_E_lo("NSM1", dEs_Ra_nsm);
     if (!aef::succeeded(rc)) {
         // error
         std::clog << fmt::format("delta-E heavy NSM calc failed {}", (int)rc);

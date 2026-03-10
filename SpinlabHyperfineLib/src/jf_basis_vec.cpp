@@ -625,9 +625,29 @@ namespace aef {
         dcomplex prf = i1_we_mag * xi(n, np) * xi(j, jp) * xi(f1, f1p) * xi(f, fp) / sqrt(2*f1+1);
         dcomplex phase = parity(half - m_f);
         dcomplex f3j = w3j(f, 0, fp, -m_f, 0, m_fp) * w3j(n, 1, np, 0, 0, 0);
-        dcomplex f6j = w6j(f, 0, fp, f1p, i2, f1) * w6j(i1, jp, f, j, i1, 1) * w6j(j, 1, jp, np, s, n);
+        dcomplex f6j = w6j(f, 0, fp, f1p, i2, f1) * w6j(i1, jp, f1, j, i1, 1) * w6j(j, 1, jp, np, s, n);
         
-        return prf * phase * f3j * f6j;
+        dcomplex ret = prf * phase * f3j * f6j;
+
+#ifdef DEBUG_COMPONENTS
+        dcomplex a = w6j(f, 0, fp, f1p, i2, f1);
+        dcomplex b = w6j(i1, jp, f1, j, i1, 1);
+        dcomplex c = w6j(j, 1, jp, np, s, n);
+
+        if (/** /a != 0.0 || /**/b != 0.0 /** / || c != 0.0/**/) {
+            std::string s = fmt::format("<{}|I1dotINA|{}> = {} != 0, a = {}, b = {}, c = {},", *this, other, ret, a, b, c);
+            MessageBoxA(nullptr, s.c_str(), "aef::jf_basis_vector::I1_dot_ina w6j parts nonzero!", MB_OK | MB_ICONERROR);
+            abort();
+        }
+#endif
+#ifdef DEBUG_NUCLEUS1_TV_TOTAL
+        if (ret != 0.0 || f6j != 0.0) {
+            std::string s = fmt::format("<{}|I1dotINA|{}> = {} != 0, f6j = {}", *this, other, ret, f6j);
+            MessageBoxA(nullptr, s.c_str(), "aef::jf_basis_vector::I1_dot_ina nonzero!", MB_OK | MB_ICONERROR);
+            abort();
+        }
+#endif
+        return ret;
     }
 
     /// <summary>
