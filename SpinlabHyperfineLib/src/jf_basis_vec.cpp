@@ -629,24 +629,6 @@ namespace aef {
         
         dcomplex ret = prf * phase * f3j * f6j;
 
-#ifdef DEBUG_COMPONENTS
-        dcomplex a = w6j(f, 0, fp, f1p, i2, f1);
-        dcomplex b = w6j(i1, jp, f1, j, i1, 1);
-        dcomplex c = w6j(j, 1, jp, np, s, n);
-
-        if (/** /a != 0.0 || /**/b != 0.0 /** / || c != 0.0/**/) {
-            std::string s = fmt::format("<{}|I1dotINA|{}> = {} != 0, a = {}, b = {}, c = {},", *this, other, ret, a, b, c);
-            MessageBoxA(nullptr, s.c_str(), "aef::jf_basis_vector::I1_dot_ina w6j parts nonzero!", MB_OK | MB_ICONERROR);
-            abort();
-        }
-#endif
-#ifdef DEBUG_NUCLEUS1_TV_TOTAL
-        if (ret != 0.0 || f6j != 0.0) {
-            std::string s = fmt::format("<{}|I1dotINA|{}> = {} != 0, f6j = {}", *this, other, ret, f6j);
-            MessageBoxA(nullptr, s.c_str(), "aef::jf_basis_vector::I1_dot_ina nonzero!", MB_OK | MB_ICONERROR);
-            abort();
-        }
-#endif
         return ret;
     }
 
