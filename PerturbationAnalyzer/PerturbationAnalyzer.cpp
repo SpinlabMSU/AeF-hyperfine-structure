@@ -291,7 +291,7 @@ int main(int argc, char **argv) {
         std::cout << fmt::format("{}\t{}\t{}\t{}", idx, dEs_eEDM(idx), dEs_f_nsm(idx), dEs_Ra_nsm(idx), dEs_zeez(idx)) << std::endl;
     }
 
-    std::ofstream out(dpath / "cpv_energies.tsv");
+    std::ofstream out(dpath / "tv_energy_shifts.tsv");
     out << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tDelta E 225Ra NSM (MHz)\tDelta E Z-axis Zeeman (MHz)"
         "\tImaginary Part of dE_EDM(MHz)\tImaginary Part of dE_19F_NSM(MHz)\tImaginary Part of dE_225Ra_NSM(MHz)\tImagninary Part of dE_ZeeZ (MHz)" << std::endl;
     for (int idx = 0; idx < sys.nBasisElts; idx++) {
@@ -303,6 +303,7 @@ int main(int argc, char **argv) {
             std::imag(dE_EDM), std::imag(dE_f_NSM), std::imag(dE_Ra_NSM), std::imag(dE_zeez)) << std::endl;
     }
     out.close();
+    fs::copy_file(dpath / "tv_energy_shifts.tsv", dpath / "cpv_energies.tsv");
     prev_time = log_time_at_point("File writes complete4", start_time, prev_time);
 //    std::cout << fmt::format("Energy vector {}", es) << std::endl;
     aef::matrix::shutdown();
