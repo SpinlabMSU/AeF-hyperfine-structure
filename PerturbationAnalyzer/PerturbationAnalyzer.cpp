@@ -68,7 +68,9 @@ int main(int argc, char **argv) {
     bool output_Es = true;
     size_t nStarkIterations = 101;
     double min_E_z = 0;
-    double max_E_z = calc_E_z;
+    double E_z = calc_E_z;
+    double E_z_V_cm = calc_E_z / unit_conversion::MHz_D_per_V_cm;
+    bool E_z_specified = false;
     fs::path dpath("output");
 
     // todo parse args
@@ -77,7 +79,7 @@ int main(int argc, char **argv) {
         " the hyperfine structure of diatomic Alkaline - monofluoride molecules");
     options.add_options()
         ("h,help", "Print usage")
-        ("e,E_max", "Maximum electric field [V/cm]", cxxopts::value<double>())
+        ("e,Ez", "Electric field for PT calculations [V/cm]", cxxopts::value<double>())
         ("E_min", "Minimum electric field [V/cm]", cxxopts::value<double>())
         ("n,n_max", "Maximum n level to include", cxxopts::value<int>())
         ("d,enable_debug", "Enable debug mode", cxxopts::value<bool>()->default_value("false"))
@@ -112,8 +114,9 @@ int main(int argc, char **argv) {
         nStarkIterations = result["stark_iterations"].as<size_t>();
     }
 
-    if (result.count("E_max")) {
-        max_E_z = result["E_max"].as<double>();
+    if (result.count("Ez")) {
+        E_z_V_cm = result["Ez"].as<double>();
+        E_z_specified = true;
     }
 
     if (result.count("E_min")) {
@@ -128,7 +131,11 @@ int main(int argc, char **argv) {
     std::error_code ec;
 
     fs::path runpath = aef::get_aef_run_path(fs::absolute(loadname));
-    dpath = runpath / "ptfw";
+    dpath = runpath / "ptfw";// / fmt::format("{}", );
+    if (E_z_specified) {
+        E_z = E_z_V_cm * unit_conversion::MHz_D_per_V_cm;
+        dpath /= fmt::format("{}", E_z_V_cm);
+    }
     if (!fs::exists(dpath)) {
         fs::create_directories(dpath, ec);
         if (ec) {
@@ -154,6 +161,8 @@ int main(int argc, char **argv) {
         std::cout << "Git status is " << dirty << " string {" << status << "}" << std::endl;
         std::cout << fmt::format("Start time is {}", start_time) << std::endl;
         std::cout << fmt::format("Eigen will use {} threads", Eigen::nbThreads()) << std::endl;
+        std::string Ez_spec = E_z_specified ? "": " not";
+        std::cout << fmt::format("E_z has{} been specified, E_z = {} MHz/D = {} V/cm", Ez_spec, E_z, E_z / unit_conversion::MHz_D_per_V_cm) << std::endl;
     }
 
     // log arguments
@@ -222,6 +231,14 @@ int main(int argc, char **argv) {
     rc = aef::ResultCode::Success;
 
     // need to set E_z to maximum, 
+    if (E_z_specified) {
+        prev_time = log_time_at_point("Recalculating H_tot with specified E_z", start_time, prev_time);
+        const double scale = E_z / calc_E_z;
+        sys.H_tot = sys.H_rot.toDenseMatrix() + sys.H_hfs + scale * sys.H_stk + sys.H_dev;
+        prev_time = log_time_at_point("Finished recalculating H_tot, now diagonalizing", start_time, prev_time);
+        sys.diagonalize();
+        prev_time = log_time_at_point("Diagonalization complete", start_time, prev_time);
+    }
     //sys.
 
     // make bigmatrix
