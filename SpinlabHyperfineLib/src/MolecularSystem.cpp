@@ -608,7 +608,7 @@ namespace aef {
                     id, val.getMatrix(this)->rows(), val.getMatrix(this)->cols()) << std::endl;
                 rc = write_matrix(*out, val.getMatrix(this), id.ucode);
             }
-            assert(SUCCEEDED(rc));
+            assert(aef::succeeded(rc));
         }
         std::cout << fmt::format("[aef::MolecularSystem::save] done writing operator matricies") << std::endl;
 
@@ -653,7 +653,7 @@ namespace aef {
 
         if (out->bad() || out->eof() || out->fail()) {
             std::cout << fmt::format("[aef::MolecularSystem::save#{} out problem bad={}, eof={}, fail={} (flags={})",
-                __LINE__, out->bad(), out->eof(), out->fail(), out->flags()) << std::endl;
+                __LINE__, (int)out->bad(), (int)out->eof(), (int)out->fail(), (int)out->flags()) << std::endl;
         }
         
         std::cout << fmt::format("[aef::MolecularSystem::save] Save completed") << std::endl;
