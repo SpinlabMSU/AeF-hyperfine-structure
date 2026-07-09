@@ -438,6 +438,29 @@ namespace aef {
     /// <param name="other">the "other</param>
     /// <returns>&lt;this| \vec{\mu_{E,mol}} |other&gt;</returns>
     std::array<dcomplex, 3> jf_basis_vec::molec_edm(jf_basis_vec other) const {
+        using namespace std::complex_literals;
+
+        // delegate to spherical tensor to keep implementation in one place
+        auto [mue_t, mue_0, mue_1] = molec_edm_sph(other);
+
+        constexpr double inv_sqrt2 = 1 / std::numbers::sqrt2;
+
+        // cartesian form
+        dcomplex mue_x = (mue_t - mue_1) * inv_sqrt2;
+        dcomplex mue_y = (mue_t + mue_1) * 1i * inv_sqrt2;
+        dcomplex mue_z = mue_0;
+
+        return std::array<dcomplex, 3>({ mue_x, mue_y, mue_z });
+    }
+
+    /// <summary>
+    /// Evaluates the three spherical tensor matrix elements of the molecular electric dipole moment operator
+    /// between two j-basis states "this" and "other" as &lt;this| \vec{\mu_{E,mol}} |other&gt;
+    /// The result array is ordered as p=-1, 0, 1
+    /// </summary>
+    /// <param name="other">the "other</param>
+    /// <returns>&lt;this| T^1_p(\mu_{E,mol}) |other&gt; in order p=-1, 0, 1</returns>
+    std::array<dcomplex, 3> jf_basis_vec::molec_edm_sph(jf_basis_vec other) const {
         const spin np = other.n;
         const spin jp = other.j;
         const spin f1p = other.f1;
@@ -467,14 +490,7 @@ namespace aef {
         dcomplex mue_0 = we_factor_0 * reduced_mat_elt;
         dcomplex mue_1 = we_factor_1 * reduced_mat_elt;
 
-        constexpr double inv_sqrt2 = 1 / std::numbers::sqrt2;
-
-        // cartesian form
-        dcomplex mue_x = (mue_t - mue_1) * inv_sqrt2;
-        dcomplex mue_y = (mue_t + mue_1) * 1i * inv_sqrt2;
-        dcomplex mue_z = mue_0;
-
-        return std::array<dcomplex, 3>({ mue_x, mue_y, mue_z });
+        return std::array<dcomplex, 3>({ mue_t, mue_0, mue_1 });
     }
 
     /// <summary>
@@ -484,6 +500,27 @@ namespace aef {
     /// <param name="other"></param>
     /// <returns>&lt;this| \vec{\mu_{B,mol}} |other&gt;</returns>
     std::array<dcomplex, 3> jf_basis_vec::molec_mdm(jf_basis_vec other) const {
+        using namespace std::complex_literals;
+
+        constexpr double inv_sqrt2 = 1 / std::numbers::sqrt2;
+
+        auto [mub_t, mub_0, mub_1] = molec_mdm_sph(other);
+
+        // cartesian form
+        dcomplex mub_x = (mub_t - mub_1) * inv_sqrt2;
+        dcomplex mub_y = (mub_t + mub_1) * 1i * inv_sqrt2;
+        dcomplex mub_z = mub_0;
+
+        return std::array<dcomplex, 3>({ mub_x, mub_y, mub_z });
+    }
+
+    /// <summary>
+    /// Evaluates the three cartesian matrix elements of the molecular magnetic dipole moment operator
+    /// between two j-basis states "this" and "other" as &lt;this| \vec{\mu_{B,mol}} |other&gt;
+    /// </summary>
+    /// <param name="other"></param>
+    /// <returns>&lt;this| \vec{\mu_{B,mol}} |other&gt;</returns>
+    std::array<dcomplex, 3> jf_basis_vec::molec_mdm_sph(jf_basis_vec other) const {
         const spin np = other.n;
         const spin jp = other.j;
         const spin f1p = other.f1;
@@ -552,14 +589,7 @@ namespace aef {
         dcomplex mub_0 = we_factor_0 * reduced_mat_elt;
         dcomplex mub_1 = we_factor_1 * reduced_mat_elt;
 
-        constexpr double inv_sqrt2 = 1 / std::numbers::sqrt2;
-
-        // cartesian form
-        dcomplex mub_x = (mub_t - mub_1) * inv_sqrt2;
-        dcomplex mub_y = (mub_t + mub_1) * 1i * inv_sqrt2;
-        dcomplex mub_z = mub_0;
-
-        return std::array<dcomplex, 3>({ mub_x, mub_y, mub_z });
+        return std::array<dcomplex, 3>({ mub_t, mub_0, mub_1 });
     }
 
     /// <summary>

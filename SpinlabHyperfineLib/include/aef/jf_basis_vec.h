@@ -270,19 +270,37 @@ namespace aef {
     public:
         /// <summary>
         /// Evaluates the three cartesian matrix elements of the molecular electric dipole moment operator
-        /// between two j-basis states "this" and "other" as &lt;this| \vec{\mu_{E,mol}} |other&gt;
+        /// between two jf-basis states "this" and "other" as &lt;this| \vec{\mu_{E,mol}} |other&gt;
         /// </summary>
         /// <param name="other">the "other</param>
         /// <returns>&lt;this| \vec{\mu_{E,mol}} |other&gt;</returns>
         std::array<dcomplex, 3> molec_edm(jf_basis_vec other) const;
 
         /// <summary>
+        /// Evaluates the three spherical tensor matrix elements of the molecular electric dipole moment operator
+        /// between two jf-basis states "this" and "other" as &lt;this| \vec{\mu_{E,mol}} |other&gt;
+        /// Returned in order p=-1, 0, 1
+        /// </summary>
+        /// <param name="other">the "other</param>
+        /// <returns>&lt;this| T^k_p\left(\mu_{E,mol}\right) |other&gt;</returns>
+        std::array<dcomplex, 3> molec_edm_sph(jf_basis_vec other) const;
+
+        /// <summary>
         /// Evaluates the three cartesian matrix elements of the molecular magnetic dipole moment operator
-        /// between two j-basis states "this" and "other" as &lt;this| \vec{\mu_{B,mol}} |other&gt;
+        /// between two jf-basis states "this" and "other" as &lt;this| \vec{\mu_{B,mol}} |other&gt;
         /// </summary>
         /// <param name="other"></param>
         /// <returns>&lt;this| \vec{\mu_{B,mol}} |other&gt;</returns>
         std::array<dcomplex, 3> molec_mdm(jf_basis_vec other) const;
+
+        /// <summary>
+        /// Evaluates the three spherical tensor matrix elements of the molecular magnetic dipole moment operator
+        /// between two jf-basis states "this" and "other" as &lt;this| \vec{\mu_{B,mol}} |other&gt;
+        /// Returned in order p=-1, 0, 1
+        /// </summary>
+        /// <param name="other">the "other</param>
+        /// <returns>&lt;this| T^k_p\left(\mu_{B,mol}\right) |other&gt;</returns>
+        std::array<dcomplex, 3> molec_mdm_sph(jf_basis_vec other) const;
 
         /// <summary>
         /// Evaluates the dot product of the electron spin with the internuclear axis.

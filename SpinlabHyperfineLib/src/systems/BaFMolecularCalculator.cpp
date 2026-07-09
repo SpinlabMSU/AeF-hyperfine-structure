@@ -182,6 +182,42 @@ std::array<dcomplex, 3> aef::BaFMolecularCalculator::molec_mdm(int kdx1, int kdx
     return basis[kdx1].molec_mdm(basis[kdx2]);
 }
 
+void aef::BaFMolecularCalculator::calculate_mol_EDM(Eigen::MatrixXcd& d10, Eigen::MatrixXcd& d1t, Eigen::MatrixXcd& d11) {
+    d10.setZero(); d11.setZero(); d1t.setZero();
+    for (int jdx = 0; jdx < nBasisElts; jdx++) {
+        for (int idx = 0; idx <= jdx; idx++) {
+            auto edm = basis[idx].molec_edm_sph(basis[jdx]);
+
+            d1t(idx, jdx) = edm[0];
+            d1t(jdx, idx) = std::conj(edm[0]);
+
+            d10(idx, jdx) = edm[1];
+            d10(jdx, idx) = std::conj(edm[1]);
+
+            d11(idx, jdx) = edm[2];
+            d11(jdx, idx) = std::conj(edm[2]);
+        }
+    }
+}
+
+void aef::BaFMolecularCalculator::calculate_mol_MDM(Eigen::MatrixXcd& d10, Eigen::MatrixXcd& d1t, Eigen::MatrixXcd& d11) {
+    d10.setZero(); d11.setZero(); d1t.setZero();
+    for (int jdx = 0; jdx < nBasisElts; jdx++) {
+        for (int idx = 0; idx <= jdx; idx++) {
+            auto mdm = basis[idx].molec_mdm_sph(basis[jdx]);
+
+            d1t(idx, jdx) = mdm[0];
+            d1t(jdx, idx) = std::conj(mdm[0]);
+
+            d10(idx, jdx) = mdm[1];
+            d10(jdx, idx) = std::conj(mdm[1]);
+
+            d11(idx, jdx) = mdm[2];
+            d11(jdx, idx) = std::conj(mdm[2]);
+        }
+    }
+}
+
 void aef::BaFMolecularCalculator::calculate_S_dot_ina(Eigen::MatrixXcd& A) {
     A.setZero();
     for (int jdx = 0; jdx < nBasisElts; jdx++) {

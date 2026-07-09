@@ -137,7 +137,7 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
     return retval;
 }
 
-std::array<dcomplex, 3> aef::j_basis_vec::molec_edm(j_basis_vec other) {
+std::array<dcomplex, 3> aef::j_basis_vec::molec_edm_sph(j_basis_vec other) const {
     const spin np = other.n;
     const spin jp = other.j;
     const spin fp = other.f;
@@ -164,21 +164,28 @@ std::array<dcomplex, 3> aef::j_basis_vec::molec_edm(j_basis_vec other) {
     dcomplex mue_0 = we_factor_0 * reduced_mat_elt;
     dcomplex mue_1 = we_factor_1 * reduced_mat_elt;
 
+    return std::array<dcomplex, 3>({mue_t, mue_0, mue_1});
+}
+
+std::array<dcomplex, 3> aef::j_basis_vec::molec_edm(j_basis_vec other) const {
+    using namespace std::complex_literals;
     constexpr double inv_sqrt2 = 1 / std::numbers::sqrt2;
+
+    auto [mue_t, mue_0, mue_1] = molec_edm_sph(other);
 
     // cartesian form
     dcomplex mue_x = (mue_t - mue_1) * inv_sqrt2;
     dcomplex mue_y = (mue_t + mue_1) * 1i * inv_sqrt2;
     dcomplex mue_z = mue_0;
 
-    return std::array<dcomplex, 3>({mue_x, mue_y, mue_z});
+    return std::array<dcomplex, 3>({ mue_x, mue_y, mue_z });
 }
 
 static double kd(spin x1, spin x2) {
     return (x1 == x2) ? 1 : 0;
 }
 
-std::array<dcomplex, 3> aef::j_basis_vec::molec_mdm(j_basis_vec other) {
+std::array<dcomplex, 3> aef::j_basis_vec::molec_mdm_sph(j_basis_vec other) const {
     const spin np = other.n;
     const spin jp = other.j;
     const spin fp = other.f;
@@ -194,12 +201,12 @@ std::array<dcomplex, 3> aef::j_basis_vec::molec_mdm(j_basis_vec other) {
     // there are multiple possible contributions to the molecular mdm
     // including one from the electron magnetic moment, a magnetic moment induced by molecular rotation,
     // and the nuclear magnetic moment
-    
+
     // electron mag moment
     dcomplex rme_S = 0;
     if (n == np) {
         dcomplex parity_S = parity(1 + n - m_f);
-        dcomplex prf_S = constexpr_sqrt(3/2.)*xi(j, jp) * xi(f, fp);
+        dcomplex prf_S = constexpr_sqrt(3 / 2.) * xi(j, jp) * xi(f, fp);
         dcomplex w6j_S = w6j(f, 1, fp, jp, half, j) * w6j(j, 1, jp, half, n, half);
         rme_S = g_S * constants::mu_bohr * parity_S * prf_S * w6j_S;
     }
@@ -215,7 +222,7 @@ std::array<dcomplex, 3> aef::j_basis_vec::molec_mdm(j_basis_vec other) {
     dcomplex rme_N = 0;
     if (j == jp && f == fp && n == np) {
         dcomplex parity_N = parity(1 + n - m_f);
-        dcomplex prf_N = xi(j, jp) * xi(f, fp) * sqrt(n * (n+1) * (2*n+1));
+        dcomplex prf_N = xi(j, jp) * xi(f, fp) * sqrt(n * (n + 1) * (2 * n + 1));
         dcomplex w6j_N = w6j(j, 1, jp, np, half, n) * w6j(f, 1, fp, jp, half, j);
         rme_N = mu_rotational * parity_N * prf_N * w6j_N;
     }
@@ -225,6 +232,15 @@ std::array<dcomplex, 3> aef::j_basis_vec::molec_mdm(j_basis_vec other) {
     dcomplex mub_t = we_factor_t * reduced_mat_elt;
     dcomplex mub_0 = we_factor_0 * reduced_mat_elt;
     dcomplex mub_1 = we_factor_1 * reduced_mat_elt;
+
+    return std::array<dcomplex, 3>({ mub_t, mub_0, mub_1 });
+}
+
+std::array<dcomplex, 3> aef::j_basis_vec::molec_mdm(j_basis_vec other) const{
+
+    using namespace std::complex_literals;
+
+    auto [mub_t, mub_0, mub_1] = molec_mdm_sph(other);
 
     constexpr double inv_sqrt2 = 1 / std::numbers::sqrt2;
 

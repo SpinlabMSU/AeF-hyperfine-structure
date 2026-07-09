@@ -154,6 +154,8 @@ namespace aef {
         virtual void calculate_S_dot_ina(Eigen::MatrixXcd&A) = 0;
         virtual void calculate_I1_dot_ina(Eigen::MatrixXcd& A) = 0;
         virtual void calculate_I2_dot_ina(Eigen::MatrixXcd& A) = 0;
+        virtual void calculate_mol_EDM(Eigen::MatrixXcd& d10, Eigen::MatrixXcd& d1t, Eigen::MatrixXcd& d11) = 0;
+        virtual void calculate_mol_MDM(Eigen::MatrixXcd& d10, Eigen::MatrixXcd& d1t, Eigen::MatrixXcd& d11) = 0;
 
         // load/save any state
         virtual void load(std::istream& in) = 0;

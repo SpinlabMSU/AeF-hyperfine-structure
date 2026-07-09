@@ -234,7 +234,16 @@ namespace aef {
         /// </summary>
         /// <param name="other">the "other</param>
         /// <returns>&lt;this| \vec{\mu_{E,mol}} |other&gt;</returns>
-        std::array<dcomplex, 3> molec_edm(j_basis_vec other);
+        std::array<dcomplex, 3> molec_edm(j_basis_vec other) const;
+        
+        /// <summary>
+        /// Evaluates the three spherical tensor matrix elements of the molecular electric dipole moment operator
+        /// between two j-basis states "this" and "other" as &lt;this| \vec{\mu_{E,mol}} |other&gt;
+        /// Returned in order p=-1, 0, 1
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns>&lt;this| T^1_p\left(\mu_{E,mol}\right) |other&gt;</returns>
+        std::array<dcomplex, 3> molec_edm_sph(j_basis_vec other) const;
 
         /// <summary>
         /// Evaluates the three cartesian matrix elements of the molecular magnetic dipole moment operator
@@ -242,7 +251,16 @@ namespace aef {
         /// </summary>
         /// <param name="other"></param>
         /// <returns>&lt;this| \vec{\mu_{B,mol}} |other&gt;</returns>
-        std::array<dcomplex, 3> molec_mdm(j_basis_vec other);
+        std::array<dcomplex, 3> molec_mdm(j_basis_vec other) const;
+
+        /// <summary>
+        /// Evaluates the three spherical tensor matrix elements of the molecular magnetic dipole moment operator
+        /// between two j-basis states "this" and "other" as &lt;this| \vec{\mu_{B,mol}} |other&gt;
+        /// Returned in order p=-1, 0, 1
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns>&lt;this| T^1_p\left(\mu_{B,mol}\right) |other&gt;</returns>
+        std::array<dcomplex, 3> molec_mdm_sph(j_basis_vec other) const;
     };
 };
 using aef::j_basis_vec;

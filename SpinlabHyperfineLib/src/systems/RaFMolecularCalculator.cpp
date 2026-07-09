@@ -42,10 +42,6 @@ void aef::RaFMolecularCalculator::set_nmax(spin nmax_) {
     }
     using aef::half;
     lowest_states = {
-        // f1 = 0, f = 1/2 doublet
-        aef::universal_diatomic_basis_vec(0, half, 0, half, -half),
-        aef::universal_diatomic_basis_vec(0, half, 0, half, +half),
-
         // f1 = 1, f = 1/2 doublet
         aef::universal_diatomic_basis_vec(0, half, 1, 1/2., -1/2.),
         aef::universal_diatomic_basis_vec(0, half, 1, 1/2., +1/2.),
@@ -55,6 +51,10 @@ void aef::RaFMolecularCalculator::set_nmax(spin nmax_) {
         aef::universal_diatomic_basis_vec(0, half, 1, 3/2., -1 / 2.),
         aef::universal_diatomic_basis_vec(0, half, 1, 3/2., +1 / 2.),
         aef::universal_diatomic_basis_vec(0, half, 1, 3/2., +3 / 2.),
+
+        // f1 = 0, f = 1/2 doublet
+        aef::universal_diatomic_basis_vec(0, half, 0, half, -half),
+        aef::universal_diatomic_basis_vec(0, half, 0, half, +half),
     };
 }
 
@@ -179,6 +179,42 @@ void aef::RaFMolecularCalculator::calculate_d11(Eigen::MatrixXcd& H) {
 
 std::array<dcomplex, 3> aef::RaFMolecularCalculator::molec_edm(int kdx1, int kdx2) {
     return basis[kdx1].molec_edm(basis[kdx2]);
+}
+
+void aef::RaFMolecularCalculator::calculate_mol_EDM(Eigen::MatrixXcd& d10, Eigen::MatrixXcd& d1t, Eigen::MatrixXcd& d11) {
+    d10.setZero(); d11.setZero(); d1t.setZero();
+    for (int jdx = 0; jdx < nBasisElts; jdx++) {
+        for (int idx = 0; idx <= jdx; idx++) {
+            auto edm = basis[idx].molec_edm_sph(basis[jdx]);
+
+            d1t(idx, jdx) = edm[0];
+            d1t(jdx, idx) = std::conj(edm[0]);
+
+            d10(idx, jdx) = edm[1];
+            d10(jdx, idx) = std::conj(edm[1]);
+
+            d11(idx, jdx) = edm[2];
+            d11(jdx, idx) = std::conj(edm[2]);
+        }
+    }
+}
+
+void aef::RaFMolecularCalculator::calculate_mol_MDM(Eigen::MatrixXcd& d10, Eigen::MatrixXcd& d1t, Eigen::MatrixXcd& d11) {
+    d10.setZero(); d11.setZero(); d1t.setZero();
+    for (int jdx = 0; jdx < nBasisElts; jdx++) {
+        for (int idx = 0; idx <= jdx; idx++) {
+            auto mdm = basis[idx].molec_mdm_sph(basis[jdx]);
+
+            d1t(idx, jdx) = mdm[0];
+            d1t(jdx, idx) = std::conj(mdm[0]);
+
+            d10(idx, jdx) = mdm[1];
+            d10(jdx, idx) = std::conj(mdm[1]);
+
+            d11(idx, jdx) = mdm[2];
+            d11(jdx, idx) = std::conj(mdm[2]);
+        }
+    }
 }
 
 std::array<dcomplex, 3> aef::RaFMolecularCalculator::molec_mdm(int kdx1, int kdx2) {
