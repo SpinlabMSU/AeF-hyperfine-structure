@@ -373,6 +373,7 @@ int main(int argc, char **argv) {
     double max_E_z = calc_E_z / unit_conversion::MHz_D_per_V_cm; // units of max_E_z are V/cm
     std::string mol_calc_type = aef::RaFMolecularCalculator::calc_type_str;
     bool do_tracking = true;
+    bool round_files = true;
 
     // todo parse args
     // args should include: E_max, nmax, enable_debug_log
@@ -389,7 +390,8 @@ int main(int argc, char **argv) {
         ("t,stark_iterations", "Number of iterations to perform the stark loop for", cxxopts::value<size_t>())
         ("s,sys", "Molecular system type to use", cxxopts::value<std::string>())
         ("S,force-save", "Force the Molecular System to always be saved", cxxopts::value<bool>()->default_value("false"))
-        ("do_tracking", "Do state tracking", cxxopts::value<bool>()->default_value("true"));
+        ("do_tracking", "Do state tracking", cxxopts::value<bool>()->default_value("true"))
+        ("round_files", "Round the electric field to the nearest integer in the info_Ez_{}.csv files", cxxopts::value<bool>()->default_value("true"));
 
     options.allow_unrecognised_options();
 
@@ -438,6 +440,10 @@ int main(int argc, char **argv) {
 
     if (result.count("do_tracking")) {
         do_tracking = result["do_tracking"].as<bool>();
+    }
+
+    if (result.count("round_files")) {
+        round_files = result["round_files"].as<bool>();
     }
 
     // Create output directory and info log now that arguments have been parsed
@@ -666,8 +672,6 @@ int main(int argc, char **argv) {
     std::cout << "Is Hdev all zero " << sys.H_dev.isZero(1E-6) << std::endl;
 
     // Initialize state tracking
-    prev_time = log_time_at_point("Initializing State Tracking", start_time, prev_time);
-    init_state_tracking(sys, max_E_z * unit_conversion::MHz_D_per_V_cm / calc_E_z);
     auto track_dir_path = dpath / "tracking_info";
     if (do_tracking) {
         prev_time = log_time_at_point("Initializing State Tracking", start_time, prev_time);
@@ -705,7 +709,13 @@ int main(int argc, char **argv) {
         // Update tracking and then output new tracking info
         if (do_tracking) {
             update_tracking(sys, vals);
-            auto track_csv_path = track_dir_path / fmt::format("{}.csv", std::lround(Ez_V_cm));
+            std::string csvbas;
+            if (round_files) {
+                csvbas = fmt::format("{}.csv", std::lround(Ez_V_cm));
+            } else {
+                csvbas = fmt::format("{:.1f}.csv", Ez_V_cm);
+            }
+            auto track_csv_path = track_dir_path / csvbas;
             std::ofstream os(track_csv_path);
             output_tracking_info(os);
         }
@@ -768,7 +778,12 @@ int main(int argc, char **argv) {
             lowest_energies(fdx, sdx) = EVAL(sys.Es[idxs[sdx]]);
         }
 
-        auto dev_out_fname = fmt::format("info_Ez_{}.csv", std::lround(Ez_V_cm));
+        std::string dev_out_fname;
+        if (round_files) {
+            dev_out_fname = fmt::format("info_Ez_{}.csv", std::lround(Ez_V_cm));
+        } else {
+            dev_out_fname = fmt::format("info_Ez_{:.1f}.csv", Ez_V_cm);
+        }
         std::ofstream dout(devpath / dev_out_fname);
         output_state_info(dout, sys
 #ifndef DONT_USE_CUDA
