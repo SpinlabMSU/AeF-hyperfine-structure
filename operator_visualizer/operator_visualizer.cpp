@@ -188,6 +188,28 @@ int main(int argc, char **argv) {
     param_stark_only->Write();
     dir->WriteObject(&(run_name), "run");
     dir->Write();
+
+
+    // Dump operators
+    Eigen::MatrixXcd opMat;
+    opMat.resizeLike(calc.H_tot);
+    Eigen::MatrixXcd mat_elts;
+    mat_elts.resizeLike(calc.H_tot);
+
+    //calc.calc->calculate_mol_EDM
+    opMat = -calc.d10;
+    aef::matrix::group_action(mat_elts, calc.Vs, opMat);
+    (void)write_matrix_tree(calc, "Od10", "Molecular dipole p =  0 component", opMat);
+
+    opMat = -calc.d11;
+    aef::matrix::group_action(mat_elts, calc.Vs, opMat);
+    (void)write_matrix_tree(calc, "Od11", "Molecular dipole p = +1 component", opMat);
+
+    opMat = -calc.d1t;
+    aef::matrix::group_action(mat_elts, calc.Vs, opMat);
+    (void)write_matrix_tree(calc, "Od1t", "Molecular dipole p = -1 component", opMat);
+
+
     rfile.Flush();
 }
 
