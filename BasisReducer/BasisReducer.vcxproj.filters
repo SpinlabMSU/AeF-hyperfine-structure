@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="NoStark_HyperfineTester.cpp">
+    <ClCompile Include="BasisReducer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

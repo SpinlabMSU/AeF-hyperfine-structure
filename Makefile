@@ -78,9 +78,12 @@ operatorVisualizer: operator_visualizer/operator_visualizer.cpp libSpinlabHyperf
 perturbation_analyzer: PerturbationAnalyzer/PerturbationAnalyzer.o libSpinlabHyperfine.so
 	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $< $(LDLIBS)
 
+basis_reducer: BasisReducer/BasisReducer.o libSpinlabHyperfine.so
+	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $< $(LDLIBS)
+
 clean:
 	$(RM) aef_hyperfine_structure AeF-hyperfine-structure.inl $(LSPHF_OBJ) \
 	SpinlabHyperfineLib/include/pch.h.gch AeF-hyperfine-structure.o libSpinlabHyperfine.* \
-	StarkDiagonalizer/StarkDiagonalizer.o NoStark_HyperfineTester/NoStark_HyperfineTester.o \
+	StarkDiagonalizer/StarkDiagonalizer.o BasisReducer/BasisReducer.o \
 	LowStateDumper/LowStateDumper.o GenerateHamiltonianFiles/GenerateHamiltonianFiles.o \
 	nodev_aef_hf deven_aef_hf low_state_dumper stark_diagonalizer

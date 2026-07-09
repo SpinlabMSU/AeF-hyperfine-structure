@@ -12,7 +12,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpinlabHyperfineLib", "Spin
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GenerateHamiltonianFiles", "GenerateHamiltonianFiles\GenerateHamiltonianFiles.vcxproj", "{63553923-16FD-46F4-B013-287E378FFE65}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NoStark_HyperfineTester", "NoStark_HyperfineTester\NoStark_HyperfineTester.vcxproj", "{A8F122EB-B1CD-4653-9856-4E1B95B0B0FF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BasisReducer", "BasisReducer\BasisReducer.vcxproj", "{A8F122EB-B1CD-4653-9856-4E1B95B0B0FF}"
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "analysis-plot-scripts", "analysis-plot-scripts\analysis-plot-scripts.pyproj", "{E4D7E497-5364-49B6-B0A1-2791714BF0DC}"
 EndProject

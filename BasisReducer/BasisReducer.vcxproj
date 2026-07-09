@@ -22,8 +22,9 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{a8f122eb-b1cd-4653-9856-4e1b95b0b0ff}</ProjectGuid>
-    <RootNamespace>NoStarkHyperfineTester</RootNamespace>
+    <RootNamespace>BasisReducer</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>BasisReducer</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -144,7 +145,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="NoStark_HyperfineTester.cpp" />
+    <ClCompile Include="BasisReducer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SpinlabHyperfineLib\SpinlabHyperfineLib.vcxproj">
