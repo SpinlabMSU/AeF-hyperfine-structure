@@ -27,12 +27,15 @@
 
 
 ////// Stateful dot-product state tracking: spinlab memebers see elog:EDM3/680
+// note: these will be empty when tracking is disabled
+bool _do_tracking;
 Eigen::MatrixXcd prev_Vs_H; // store previous eigenvectors in hermition conjugate form
 Eigen::VectorXcd prev_Es;
 std::vector<size_t> sdx_from_edx_map; // sdx_from_edx_map[energy eigenstate idx] == state idx
 std::vector<size_t> edx_from_sdx_map; // edx_from_sdx_map[state idx] = energy eigenstate idx
 
 void init_state_tracking(aef::MolecularSystem& sys, double stk_scale=1.0) {
+    _do_tracking = true;
     // construct as
     sys.H_tot = sys.H_rot.toDenseMatrix() + sys.H_hfs + stk_scale * sys.H_stk + sys.H_dev;
     sys.diagonalize();
@@ -46,6 +49,14 @@ void init_state_tracking(aef::MolecularSystem& sys, double stk_scale=1.0) {
         sdx_from_edx_map[idx] = idx;
         edx_from_sdx_map[idx] = idx;
     }
+}
+
+void disable_tracking() {
+    _do_tracking = false;
+    prev_Es.resize(0);
+    prev_Vs_H.resize(0, 0);
+    sdx_from_edx_map.clear();
+    edx_from_sdx_map.clear();
 }
 
 void update_tracking(aef::MolecularSystem& sys, Eigen::MatrixXcd &scratch) {
@@ -209,7 +220,11 @@ int32_t closest_state(aef::MolecularSystem& calc, int32_t ket_idx,
 #define USE_TRIVIAL
 #define USE_STATE_TRACKING
 #if defined(USE_STATE_TRACKING)
-    closest_idx = sdx_from_edx_map[ket_idx];
+    if (_do_tracking) {
+        closest_idx = sdx_from_edx_map[ket_idx];
+    } else {
+        closest_idx = ket_idx; // tracking disable -- just do trivial
+    }
 #elif defined(USE_EXPECTATION_VALUES
     // strategy 1: look for the energy eigenstate whose expectation values most closely match the target state
     double chisq = (double)std::numeric_limits<double>::infinity();
@@ -357,6 +372,7 @@ int main(int argc, char **argv) {
     double min_E_z = 0;
     double max_E_z = calc_E_z / unit_conversion::MHz_D_per_V_cm; // units of max_E_z are V/cm
     std::string mol_calc_type = aef::RaFMolecularCalculator::calc_type_str;
+    bool do_tracking = true;
 
     // todo parse args
     // args should include: E_max, nmax, enable_debug_log
@@ -365,14 +381,17 @@ int main(int argc, char **argv) {
     options.add_options()
         ("h,help", "Print usage")
         ("e,E_max", "Maximum electric field [V/cm]", cxxopts::value<double>())
-        ("E_min", "Minimum electric field [V/cm]", cxxopts::value<double>())
+        ("Z,E_min", "Minimum electric field [V/cm]", cxxopts::value<double>())
         ("n,n_max", "Maximum n level to include", cxxopts::value<int>())
         ("d,enable_debug", "Enable debug mode", cxxopts::value<bool>()->default_value("false"))
         ("print_extras", "Print extra information", cxxopts::value<bool>()->default_value("true"))
         ("l,load", "Load molecular system operators from file", cxxopts::value<std::string>())
         ("t,stark_iterations", "Number of iterations to perform the stark loop for", cxxopts::value<size_t>())
         ("s,sys", "Molecular system type to use", cxxopts::value<std::string>())
-        ("S,force-save", "Force the Molecular System to always be saved", cxxopts::value<bool>()->default_value("false"));
+        ("S,force-save", "Force the Molecular System to always be saved", cxxopts::value<bool>()->default_value("false"))
+        ("do_tracking", "Do state tracking", cxxopts::value<bool>()->default_value("true"));
+
+    options.allow_unrecognised_options();
 
     auto result = options.parse(argc, argv);
     
@@ -415,6 +434,10 @@ int main(int argc, char **argv) {
 
     if (result.count("force-save")) {
         force_save = result["force-save"].as<bool>();
+    }
+
+    if (result.count("do_tracking")) {
+        do_tracking = result["do_tracking"].as<bool>();
     }
 
     // Create output directory and info log now that arguments have been parsed
@@ -480,10 +503,11 @@ int main(int argc, char **argv) {
     }
 
     aef::MolecularSystem sys(pCalc, nmax, calc_E_z, K);
-
-    std::cout << fmt::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({}), calculator is {}",
-        nmax, calc_E_z, K, devstatus, pCalc->get_calc_type()) << std::endl;
-
+    {
+        std::string track_status = do_tracking ? "enabled" : "disabled";
+        std::cout << fmt::format("nmax is {}, E_z is {} MHz/D, K is {} MHz ({}), calculator is {}, tracking is {}",
+            nmax, calc_E_z, K, devstatus, pCalc->get_calc_type(), track_status) << std::endl;
+    }
     if (load_from_file) {
         std::string logstr = fmt::format("Loading matrix elements from {}", loadname);
         prev_time = log_time_at_point(logstr.c_str(), start_time, prev_time);
@@ -645,7 +669,14 @@ int main(int argc, char **argv) {
     prev_time = log_time_at_point("Initializing State Tracking", start_time, prev_time);
     init_state_tracking(sys, max_E_z * unit_conversion::MHz_D_per_V_cm / calc_E_z);
     auto track_dir_path = dpath / "tracking_info";
-    fs::create_directories(track_dir_path);
+    if (do_tracking) {
+        prev_time = log_time_at_point("Initializing State Tracking", start_time, prev_time);
+        init_state_tracking(sys, max_E_z * unit_conversion::MHz_D_per_V_cm / calc_E_z);
+        fs::create_directories(track_dir_path);
+    } else {
+        prev_time = log_time_at_point("Not Initializing State Tracking (force-disabled)", start_time, prev_time);
+        disable_tracking();
+    }
 
     // Stark loop
     prev_time = log_time_at_point("About to start stark loop", start_time, prev_time);
@@ -672,7 +703,7 @@ int main(int argc, char **argv) {
 #endif
         sys.diagonalize();
         // Update tracking and then output new tracking info
-        {
+        if (do_tracking) {
             update_tracking(sys, vals);
             auto track_csv_path = track_dir_path / fmt::format("{}.csv", std::lround(Ez_V_cm));
             std::ofstream os(track_csv_path);
