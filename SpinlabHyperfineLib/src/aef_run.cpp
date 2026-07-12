@@ -4,9 +4,13 @@
 namespace fs = std::filesystem;
 
 
-aef::aef_run::aef_run(char* path_) {
-    runpath = fs::absolute(path_);
+aef::aef_run::aef_run(char* path_) : aef_run(fs::absolute(path_)) {
+}
 
+aef::aef_run::aef_run(std::filesystem::path runpath_)
+    :runpath(runpath_), params(), valid(false), valid_checked(false), valid_params(false) {
+
+    auto path_ = runpath.generic_string();
     //
     fs::path rp = runpath;
     bool fail = false;
@@ -24,11 +28,7 @@ aef::aef_run::aef_run(char* path_) {
     }
     stk_shifts.clear();
     durations.clear();
-    run_name = (char*)(rp.filename().u8string().c_str()); 
-}
-
-aef::aef_run::aef_run(std::filesystem::path runpath_)
-    :runpath(runpath_){
+    run_name = (char*)(rp.filename().u8string().c_str());
 }
 
 aef::aef_run::~aef_run() {}

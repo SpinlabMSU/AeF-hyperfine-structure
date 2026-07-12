@@ -1,4 +1,4 @@
-// NoStark_HyperfineTester.cpp : This file contains the 'main' function. Program execution begins and ends there.
+// BasisReducer.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 /*
     This file is part of the AeF-hyperfine-structure program. 
@@ -16,13 +16,34 @@
     You should have received a copy of the GNU General Public License along with
     AeF-hyperfine-structure. If not, see <https://www.gnu.org/licenses/>.
 */
-
+#include <pch.h>
+#include <system_error>
 #include <aef/aef.h>
-#include <fmt.hpp>
-#include <iostream>
+#include <aef/debug_stream.h>
+#include <aef/matrix_utils.h>
+#include <aef/teestream.hpp>
+#include <aef/aef_run.h>
 #include <chrono>
-#include <fstream>
+#include <cstring>
 #include <filesystem>
+#include <fmt.hpp>
+#include <fstream>
+#include <iostream>
+#include <numbers>
+#include <numeric>
+#include <cxxopts.hpp>
+#include <aef/quantum.h>
+#include <aef/aef_run.h>
+#include <aef/operators/operators.h>
+#include <aef/MolecularSystem.h>
+
+
+using namespace std::chrono;
+namespace fs = std::filesystem;
+using aef::log_time_at_point;
+using namespace aef::quantum;
+
+#include "../AeF-hyperfine-structure.inl"
 
 
 using namespace std::chrono;
@@ -53,96 +74,287 @@ double energy_of_closest(HyperfineCalculator& calc, int32_t ket_idx) {
     return std::real(calc.Es[bidx]);
 }
 
-int main() {
-    std::cout << "Hello World!\n";
+void reduceMatrix(Eigen::MatrixXcd& opReducedOut, Eigen::MatrixXcd& opJfBasis, aef::MolecularSystem &sys, int size, Eigen::MatrixXcd *work) {
+    //Eigen::MatrixXcd reducedVs = sys.Vs(Eigen::seq())
+    // eigen is column major
+    // for now just reduce at the end -- todo 
+    opReducedOut.resize(size, size); opReducedOut.setZero();
+    aef::matrix::group_action(*work, sys.Vs, opJfBasis);
+    opReducedOut = (*work)(Eigen::seq(0, size-1), Eigen::seq(0, size-1));
+}
 
+void reduceAndOutputOperator(aef::MolecularSystem& sys, Eigen::MatrixXcd& op, char* fnam, Eigen::MatrixXcd& work, int size, fs::path p) {
+    Eigen::MatrixXcd opReduced;
+    reduceMatrix(opReduced, op, sys, size, &work);
+
+
+    std::string spath = fmt::format("{}.csv", fnam);
+    std::ofstream out(p / spath);
+    const char* sep = "";
+    for (int jdx = 0; jdx < size; jdx++) {
+        // write out column index
+        out << fmt::format("{}{}", sep, jdx) << std::endl;
+        sep = ", ";
+    }
+    // 
+    for (int idx = 0; idx < size; idx++) {
+        // write out row index
+        out << fmt::format("{}", idx);
+        for (int jdx = 0; jdx < size; jdx++) {
+            // write out element -- remember that Eigen is column major
+            auto elt = opReduced(jdx, idx);
+            out << fmt::format(", ({}+i*{})", std::real(elt), std::imag(elt));
+        }
+        out << std::endl;
+    }
+}
+
+void reduceAndOutputOperator_w_sq(aef::MolecularSystem& sys, Eigen::MatrixXcd& op, char* fnam, Eigen::MatrixXcd& work, int size, fs::path dir) {
+    Eigen::MatrixXcd opReduced;
+    reduceMatrix(opReduced, op, sys, size, &work);
+
+
+    std::string spath = fmt::format("{}.csv", fnam);
+    std::ofstream out(dir / spath);
+
+    std::string spath2 = fmt::format("{}_magsq.csv", fnam); // op mag sq
+    std::ofstream out2(dir / spath2);
+    const char* sep = "";
+    for (int jdx = 0; jdx < size; jdx++) {
+        // write out column index
+        out << fmt::format("{}{}", sep, jdx) << std::endl;
+        out2 << fmt::format("{}{}", sep, jdx) << std::endl;
+        sep = ", ";
+    }
+    // 
+    for (int idx = 0; idx < size; idx++) {
+        // write out row index
+        out << fmt::format("{}", idx);
+        out2 << fmt::format("{}", idx);
+        for (int jdx = 0; jdx < size; jdx++) {
+            // write out element -- remember that Eigen is column major
+            auto elt = opReduced(jdx, idx);
+            out << fmt::format(", ({}+i*{})", std::real(elt), std::imag(elt));
+            out2 << fmt::format(", {}", std::norm(elt));
+        }
+        out << std::endl;
+        out2 << std::endl;
+    }
+    out.close();
+    out2.close();
+}
+
+
+int main(int argc, char **argv) {
+    constexpr std::string_view progname("BasisReducer");
+    constexpr double calc_E_z = unit_conversion::MHz_D_per_V_cm * 50 * 1000;
+
+    std::chrono::time_point<std::chrono::system_clock> start_time =
+        std::chrono::system_clock::now();
+    std::string stime = fmt::format("{0:%F}-{0:%H%M}{0:%S}", start_time);
+    std::chrono::time_point<std::chrono::system_clock> prev_time = start_time;
+    //fs::create_directories(dpath);
+
+    int param_nmax = 20;
+    bool enable_debug_log = false;
+    bool load_from_file = false;
+    std::string loadname = "";
+    bool print_extras = true;
+    bool output_Es = true;
+    size_t nStarkIterations = 101;
+    double min_E_z = 0;
+    double E_z = calc_E_z;
+    double E_z_V_cm = calc_E_z / unit_conversion::MHz_D_per_V_cm;
+    bool E_z_specified = false;
+    fs::path dpath("output");
+
+    // todo parse args
+    // args should include: E_max, nmax, enable_debug_log
+    cxxopts::Options options("basis-reducer", "Program to calculate perturbative corrections to"
+        " the hyperfine structure of diatomic Alkaline - monofluoride molecules");
+    options.add_options()
+        ("h,help", "Print usage")
+        ("e,Ez", "Electric field for PT calculations [V/cm]", cxxopts::value<double>())
+        ("E_min", "Minimum electric field [V/cm]", cxxopts::value<double>())
+        ("n,n_max", "Maximum n level to include", cxxopts::value<int>())
+        ("d,enable_debug", "Enable debug mode", cxxopts::value<bool>()->default_value("false"))
+        ("print_extras", "Print extra information", cxxopts::value<bool>()->default_value("true"))
+        ("l,load", "Load molecular system operators from file", cxxopts::value<std::string>())
+        ("t,stark_iterations", "Number of iterations to perform the stark loop for", cxxopts::value<size_t>());
+
+    auto result = options.parse(argc, argv);
+
+    if (result.count("help")) {
+        std::cout << options.help() << std::endl;
+        exit(0);
+    }
+
+    if (result.count("enable_debug")) {
+        enable_debug_log = result["enable_debug"].as<bool>();
+    }
+
+    if (result.count("n_max")) {
+        param_nmax = result["n_max"].as<int>();
+    }
+    if (result.count("load")) {
+        load_from_file = true;
+        loadname = result["load"].as<std::string>();
+    }
+
+    if (result.count("print_extras")) {
+        print_extras = result["print_extras"].as<bool>();
+    }
+
+    if (result.count("stark_iterations")) {
+        nStarkIterations = result["stark_iterations"].as<size_t>();
+    }
+
+    if (result.count("Ez")) {
+        E_z_V_cm = result["Ez"].as<double>();
+        E_z_specified = true;
+    }
+
+    if (result.count("E_min")) {
+        min_E_z = result["E_min"].as<double>();
+    }
+
+    if (!load_from_file) {
+        std::clog << "[" << progname <<"] Error: must load from file" << std::endl;
+        exit(1);
+    }
+
+    int rbasis_size = 48;
+
+    std::error_code ec;
+
+    fs::path runpath = aef::get_aef_run_path(fs::absolute(loadname));
+    dpath = (runpath / "reduced") / fmt::format("{}", rbasis_size);// / fmt::format("{}", );
+    if (E_z_specified) {
+        E_z = E_z_V_cm * unit_conversion::MHz_D_per_V_cm;
+        dpath /= fmt::format("{}", E_z_V_cm);
+    }
+    if (!fs::exists(dpath)) {
+        fs::create_directories(dpath, ec);
+        if (ec) {
+            std::clog << fmt::format("[{}] Unable to create output directory, error category: {}, code: {}, message: {}",
+                progname, ec.category().name(), ec.value(), ec.message()) << std::endl;
+            exit(2);
+        }
+    } else if (!fs::is_directory(dpath)) {
+        //
+        std::clog << fmt::format("Error: output path {} exists but is not a directory!", dpath.string()) << std::endl;
+    }
+
+    // create info log
+    std::ofstream oLog(dpath / "basis_reducer.log", std::ios::trunc | std::ios::out);
+    aef::LogRedirector lredir(oLog, enable_debug_log, true);
+    // info lines
     {
-        constexpr int nmax = 40;
-        for (int idx = 0; idx < aef::jf_basis_vec::index_of_n(40); idx++) {
-            jf_basis_vec v = jf_basis_vec::from_index(idx);
-            assert(v.index() == idx);
-            if (v.index() != idx) {
-                std::cerr << "BAD INDEX " << idx << std::endl;
-                throw idx;
-            }
+        std::string status(aef_git_status);
+        bool bdirty = status.contains('M') || status.contains('d');
+        std::string dirty = bdirty ? "dirty" : "clean";
+        std::cout << "AeF Hyperfine Structure basis reducer, version compiled on " << __DATE__ << " "
+            << __TIME__ << ", git commit " << aef_git_commit << std::endl;
+        std::cout << "Git status is " << dirty << " string {" << status << "}" << std::endl;
+        std::cout << fmt::format("Start time is {}", start_time) << std::endl;
+        std::cout << fmt::format("Eigen will use {} threads", Eigen::nbThreads()) << std::endl;
+        std::string Ez_spec = E_z_specified ? "" : " not";
+        std::cout << fmt::format("E_z has{} been specified, E_z = {} MHz/D = {} V/cm", Ez_spec, E_z, E_z / unit_conversion::MHz_D_per_V_cm) << std::endl;
+    }
+
+    // log arguments
+    {
+        std::cout << "Arguments: [";
+        for (int i = 0; i < argc; i++) {
+            std::cout << fmt::format(" {{{}}}", argv[i]);
+        }
+        std::cout << "]" << std::endl;
+    }
+
+#ifdef _OPENMP
+    std::cout << "Reconfiguring openmp to use the correct number of threads (the number of physical cores)." << std::endl;
+    int num_physical_cores = get_num_cores();
+    omp_set_num_threads(num_physical_cores);
+    Eigen::setNbThreads(num_physical_cores);
+    std::cout << fmt::format("OpenMP/Eigen will use {} threads", num_physical_cores) << std::endl;
+#endif
+
+#ifndef DONT_USE_CUDA
+    constexpr bool diag_use_cuda = true;
+    std::cout << fmt::format("{} Initializing matrix backend", progname) << std::endl;
+    aef::ResultCode rc = aef::matrix::init(aef::matrix::BackendType::NvidiaCuda, argc, argv);
+    if (!aef::succeeded(rc)) {
+        std::cout << fmt::format("Initializing matrix backend failed with error {} = 0x{:x}", static_cast<int32_t>(rc), static_cast<uint32_t>(rc));
+    }
+    std::cout << "Successfully initialized CUDA" << std::endl;
+#else
+    constexpr bool diag_use_cuda = false;
+    aef::matrix::init(aef::matrix::BackendType::EigenCPU, argc, argv);
+#endif
+
+
+
+    init_rng();
+    std::cout << "Successfully initialized RNG" << std::endl;
+
+    aef::aef_run run(runpath);
+
+    aef::MolecularSystem sys;
+    {
+        auto mpath = run.get_run_path() / "molsys.dat";
+        std::string str_pth = mpath.generic_string();
+        std::cout << fmt::format("[{}] Loading matrix file from {}", progname, str_pth) << std::endl;
+        rc = sys.load(mpath); //run.get_matrix_path());
+
+        if (aef::failed(rc)) {
+            // TODO error
+            std::string str_pth = run.get_matrix_path().generic_string();
+            std::cerr << fmt::format("[{}] Loading matrix file {} from run {} failed!",
+                progname, str_pth, run.get_run_name()) << std::endl;
+            std::abort();
+            aef::unreachable();
         }
     }
 
+    Eigen::MatrixXcd vals, work;
+    vals.resize(sys.nBasisElts, sys.nBasisElts);
+    vals.setZero();
+    work.resize(sys.nBasisElts, sys.nBasisElts);
+    work.setZero();
 
+    std::cout << fmt::format(
+        "Setting up matrix backend device-side buffers with nRows={} after creating molecular system",
+        sys.nBasisElts) << std::endl;
+    aef::matrix::set_max_size(sys.nBasisElts);
 
-    j_basis_vec v(1, .5, 0, 0);
-    double E_rot = std::real(v.H_rot());
-    dcomplex H_hfs = v.H_hfs(v);
-    /// <summary>
-    /// WARNING: the wrong value was originally used in the conversion factor
-    /// This was supposed to be 50 kV/cm but is actually 500 kV/cm.
-    /// </summary>
-    const double E_z = unit_conversion::MHz_D_per_V_cm * 500 * 1000;
+    rc = aef::ResultCode::Success;
 
-    dcomplex H_st = v.H_st(v, E_z);
-    std::string str = fmt::format("{}: E_rot={} MHz, E_hfs={} MHz, E_st(50kV/cm) = {} MHz",
-        v, E_rot, H_hfs, H_st);
-
-    std::ofstream out("log.txt", std::ios::out);
-    std::cout << str << std::endl;
-    out << str << std::endl;
-
-    // todo add code using hyperfine calculator
-    int nmax = 1;
-    HyperfineCalculator calc(nmax, 0, false);
     
-#if 0
-    std::string spath = fmt::format("out/matrix_{}.dat", nmax);
+    reduceAndOutputOperator(sys, sys.H_tot, (char*)"h_tot", work, rbasis_size, dpath);
+    reduceAndOutputOperator(sys, sys.H_stk, (char*)"h_stk", work, rbasis_size, dpath);
+    reduceAndOutputOperator(sys, sys.H_dev, (char*)"h_dev", work, rbasis_size, dpath);
+    reduceAndOutputOperator(sys, sys.H_hfs, (char*)"h_hfs", work, rbasis_size, dpath);
+    vals = sys.H_rot.toDenseMatrix();
+    reduceAndOutputOperator(sys,      vals, (char*)"h_rot", work, rbasis_size, dpath);
+    reduceAndOutputOperator(sys,   sys.d10, (char*)"O_d10", work, rbasis_size, dpath);
+    reduceAndOutputOperator(sys,   sys.d11, (char*)"O_d11", work, rbasis_size, dpath);
+    reduceAndOutputOperator(sys,   sys.d1t, (char*)"O_d1t", work, rbasis_size, dpath);
+    
+    Eigen::MatrixXcd vals2, vals3;
+    vals2.resize(sys.nBasisElts, sys.nBasisElts); vals2.setZero();
+    vals3.resize(sys.nBasisElts, sys.nBasisElts); vals3.setZero();
+    // for E1 transitions
+    sys.get_calc()->calculate_mol_EDM(vals, vals2, vals3);
+    reduceAndOutputOperator_w_sq(sys, vals , (char*)"E1_d10", work, rbasis_size, dpath);
+    reduceAndOutputOperator_w_sq(sys, vals2, (char*)"E1_d11", work, rbasis_size, dpath);
+    reduceAndOutputOperator_w_sq(sys, vals3, (char*)"E1_d1t", work, rbasis_size, dpath);
 
-    bool result = calc.load_matrix_elts(spath);
-
-    if (!result) {
-        std::cout << "couldn't load " << spath << std::endl;
-    }
-#endif
-    calc.calculate_matrix_elts();
-    //calc.H_tot -= calc.H_stk;
-    calc.diagonalize_H();
-    Eigen::VectorXcd Es = calc.Es;
-    // find
-    j_basis_vec gnd = j_basis_vec::from_index(0);
-    std::cout << gnd.ket_string() << std::endl;
-
-    double E = energy_of_closest(calc, 0);
-
-    // n = 0, j = 0.5, f = 1 hyperfine triplet
-    j_basis_vec f1t(0, 0.5, 1, -1); int32_t if1t = f1t.index();
-    j_basis_vec f10(0, 0.5, 1, 0); int32_t if10 = f10.index();
-    j_basis_vec f11(0, 0.5, 1, 1); int32_t if11 = f11.index();
-
-    double dE_f1t = energy_of_closest(calc, if1t) - E;
-    double dE_f10 = energy_of_closest(calc, if10) - E;
-    double dE_f11 = energy_of_closest(calc, if11) - E;
-
-
-    std::string ostr = fmt::format("Gnd state energy: {}, Shift of f=1 m_f=-1: {}, Shift of f=1 m_f=0: {},"
-        "Shift of f = 1 m_f = 1: {}", E, dE_f1t, dE_f10, dE_f11);
-    std::cout << ostr << std::endl;
-
-    dcomplex E_hfs_scalar = f10.H_hfs_scalar(f10);
-    dcomplex E_hfs_tensor = f10.H_hfs_tensor(f10);
-
-    //                             njfm_f
-    std::cout << "E_hfs_scalar for |0,+,+,0>: " << E_hfs_scalar << ", E_hfs_tensor for |0, +, +, 0>" << E_hfs_tensor << std::endl;
-
-    E_hfs_scalar = f11.H_hfs_scalar(f11);
-    E_hfs_tensor = f11.H_hfs_tensor(f11);
-
-    //                             njfm_f
-    std::cout << "E_hfs_scalar for |0,+,+,1>: " << E_hfs_scalar << ", E_hfs_tensor for |0, +, +, 1>" << E_hfs_tensor << std::endl;
-
-    E_hfs_scalar = f1t.H_hfs_scalar(f1t);
-    E_hfs_tensor = f1t.H_hfs_tensor(f1t);
-
-    //                             njfm_f
-    std::cout << "E_hfs_scalar for |0,+,+,t>: " << E_hfs_scalar << ", E_hfs_tensor for |0, +, +,-1>" << E_hfs_tensor << std::endl;
-
-    //std::cout <<  E << "," << dE_f1t << "," << dE_f10 << "," << dE_f11 << std::endl;
+    // for M1 transitions
+    sys.get_calc()->calculate_mol_MDM(vals, vals2, vals3);
+    reduceAndOutputOperator_w_sq(sys, vals , (char*)"M1_d10", work, rbasis_size, dpath);
+    reduceAndOutputOperator_w_sq(sys, vals2, (char*)"M1_d11", work, rbasis_size, dpath);
+    reduceAndOutputOperator_w_sq(sys, vals3, (char*)"M1_d1t", work, rbasis_size, dpath);
+    
     return 0;
 }
 
