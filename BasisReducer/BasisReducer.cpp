@@ -48,6 +48,7 @@ using namespace aef::quantum;
 
 using namespace std::chrono;
 namespace fs = std::filesystem;
+using system_time = std::chrono::time_point<std::chrono::system_clock>;
 
 //int32_t closest_approx(Eigen)
 
@@ -83,17 +84,20 @@ void reduceMatrix(Eigen::MatrixXcd& opReducedOut, Eigen::MatrixXcd& opJfBasis, a
     opReducedOut = (*work)(Eigen::seq(0, size-1), Eigen::seq(0, size-1));
 }
 
-void reduceAndOutputOperator(aef::MolecularSystem& sys, Eigen::MatrixXcd& op, char* fnam, Eigen::MatrixXcd& work, int size, fs::path p) {
+void reduceAndOutputOperator(aef::MolecularSystem& sys, Eigen::MatrixXcd& op, char* fnam, Eigen::MatrixXcd& work, int size, fs::path p, 
+    system_time start_time, system_time *prev_time) {
     Eigen::MatrixXcd opReduced;
+
+    *prev_time = log_time_at_point(fmt::format("Reducing operator {} to size {}", fnam, size).c_str(), start_time, *prev_time);
     reduceMatrix(opReduced, op, sys, size, &work);
 
-
+    *prev_time = log_time_at_point("Reducing finished, now writing reduced operator", start_time, *prev_time);
     std::string spath = fmt::format("{}.csv", fnam);
     std::ofstream out(p / spath);
     const char* sep = "";
     for (int jdx = 0; jdx < size; jdx++) {
         // write out column index
-        out << fmt::format("{}{}", sep, jdx) << std::endl;
+        out << fmt::format("{}{}", sep, jdx);
         sep = ", ";
     }
     // 
@@ -107,13 +111,16 @@ void reduceAndOutputOperator(aef::MolecularSystem& sys, Eigen::MatrixXcd& op, ch
         }
         out << std::endl;
     }
+    *prev_time = log_time_at_point(fmt::format("Done with operator {}", fnam).c_str(), start_time, *prev_time);
 }
 
-void reduceAndOutputOperator_w_sq(aef::MolecularSystem& sys, Eigen::MatrixXcd& op, char* fnam, Eigen::MatrixXcd& work, int size, fs::path dir) {
+void reduceAndOutputOperator_w_sq(aef::MolecularSystem& sys, Eigen::MatrixXcd& op, char* fnam, Eigen::MatrixXcd& work, int size, fs::path dir,
+    system_time start_time, system_time* prev_time) {
     Eigen::MatrixXcd opReduced;
+    *prev_time = log_time_at_point(fmt::format("Reducing operator {} to size {} with magsq", fnam, size).c_str(), start_time, *prev_time);
     reduceMatrix(opReduced, op, sys, size, &work);
 
-
+    *prev_time = log_time_at_point("Reducing finished, now writing reduced operator and magsq", start_time, *prev_time);
     std::string spath = fmt::format("{}.csv", fnam);
     std::ofstream out(dir / spath);
 
@@ -122,8 +129,8 @@ void reduceAndOutputOperator_w_sq(aef::MolecularSystem& sys, Eigen::MatrixXcd& o
     const char* sep = "";
     for (int jdx = 0; jdx < size; jdx++) {
         // write out column index
-        out << fmt::format("{}{}", sep, jdx) << std::endl;
-        out2 << fmt::format("{}{}", sep, jdx) << std::endl;
+        out << fmt::format("{}{}", sep, jdx);
+        out2 << fmt::format("{}{}", sep, jdx);
         sep = ", ";
     }
     // 
@@ -142,6 +149,7 @@ void reduceAndOutputOperator_w_sq(aef::MolecularSystem& sys, Eigen::MatrixXcd& o
     }
     out.close();
     out2.close();
+    *prev_time = log_time_at_point(fmt::format("Done with operator {}", fnam).c_str(), start_time, *prev_time);
 }
 
 
@@ -182,6 +190,7 @@ int main(int argc, char **argv) {
         ("l,load", "Load molecular system operators from file", cxxopts::value<std::string>())
         ("t,stark_iterations", "Number of iterations to perform the stark loop for", cxxopts::value<size_t>());
 
+    options.allow_unrecognised_options();
     auto result = options.parse(argc, argv);
 
     if (result.count("help")) {
@@ -226,13 +235,14 @@ int main(int argc, char **argv) {
     int rbasis_size = 48;
 
     std::error_code ec;
-
-    fs::path runpath = aef::get_aef_run_path(fs::absolute(loadname));
+    aef::aef_run run(fs::absolute(loadname));
+    fs::path runpath = run.get_run_path();
     dpath = (runpath / "reduced") / fmt::format("{}", rbasis_size);// / fmt::format("{}", );
     if (E_z_specified) {
         E_z = E_z_V_cm * unit_conversion::MHz_D_per_V_cm;
         dpath /= fmt::format("{}", E_z_V_cm);
     }
+    std::cout << fmt::format("[{}] Using output directory {}", progname, dpath.generic_string()) << std::endl;
     if (!fs::exists(dpath)) {
         fs::create_directories(dpath, ec);
         if (ec) {
@@ -278,7 +288,7 @@ int main(int argc, char **argv) {
     Eigen::setNbThreads(num_physical_cores);
     std::cout << fmt::format("OpenMP/Eigen will use {} threads", num_physical_cores) << std::endl;
 #endif
-
+    prev_time = log_time_at_point("Initializing matrix Backend", start_time, prev_time);
 #ifndef DONT_USE_CUDA
     constexpr bool diag_use_cuda = true;
     std::cout << fmt::format("{} Initializing matrix backend", progname) << std::endl;
@@ -297,8 +307,8 @@ int main(int argc, char **argv) {
     init_rng();
     std::cout << "Successfully initialized RNG" << std::endl;
 
-    aef::aef_run run(runpath);
-
+    //aef::aef_run run(runpath);
+    prev_time = log_time_at_point("Loading molecular system", start_time, prev_time);
     aef::MolecularSystem sys;
     {
         auto mpath = run.get_run_path() / "molsys.dat";
@@ -316,44 +326,57 @@ int main(int argc, char **argv) {
         }
     }
 
+
     Eigen::MatrixXcd vals, work;
     vals.resize(sys.nBasisElts, sys.nBasisElts);
     vals.setZero();
     work.resize(sys.nBasisElts, sys.nBasisElts);
     work.setZero();
 
+    prev_time = log_time_at_point("Matrix backend setup", start_time, prev_time);
     std::cout << fmt::format(
         "Setting up matrix backend device-side buffers with nRows={} after creating molecular system",
         sys.nBasisElts) << std::endl;
     aef::matrix::set_max_size(sys.nBasisElts);
+    prev_time = log_time_at_point("Recalculating H_tot with specified E_z", start_time, prev_time);
+
+    // need to set E_z to maximum, 
+    if (E_z_specified) {
+        prev_time = log_time_at_point("Recalculating H_tot with specified E_z", start_time, prev_time);
+        const double scale = E_z / calc_E_z;
+        sys.H_tot = sys.H_rot.toDenseMatrix() + sys.H_hfs + scale * sys.H_stk + sys.H_dev;
+        prev_time = log_time_at_point("Finished recalculating H_tot, now diagonalizing", start_time, prev_time);
+        sys.diagonalize();
+        prev_time = log_time_at_point("Diagonalization complete", start_time, prev_time);
+    }
 
     rc = aef::ResultCode::Success;
 
     
-    reduceAndOutputOperator(sys, sys.H_tot, (char*)"h_tot", work, rbasis_size, dpath);
-    reduceAndOutputOperator(sys, sys.H_stk, (char*)"h_stk", work, rbasis_size, dpath);
-    reduceAndOutputOperator(sys, sys.H_dev, (char*)"h_dev", work, rbasis_size, dpath);
-    reduceAndOutputOperator(sys, sys.H_hfs, (char*)"h_hfs", work, rbasis_size, dpath);
+    reduceAndOutputOperator(sys, sys.H_tot, (char*)"h_tot", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator(sys, sys.H_stk, (char*)"h_stk", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator(sys, sys.H_dev, (char*)"h_dev", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator(sys, sys.H_hfs, (char*)"h_hfs", work, rbasis_size, dpath, start_time, &prev_time);
     vals = sys.H_rot.toDenseMatrix();
-    reduceAndOutputOperator(sys,      vals, (char*)"h_rot", work, rbasis_size, dpath);
-    reduceAndOutputOperator(sys,   sys.d10, (char*)"O_d10", work, rbasis_size, dpath);
-    reduceAndOutputOperator(sys,   sys.d11, (char*)"O_d11", work, rbasis_size, dpath);
-    reduceAndOutputOperator(sys,   sys.d1t, (char*)"O_d1t", work, rbasis_size, dpath);
+    reduceAndOutputOperator(sys,      vals, (char*)"h_rot", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator(sys,   sys.d10, (char*)"O_d10", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator(sys,   sys.d11, (char*)"O_d11", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator(sys,   sys.d1t, (char*)"O_d1t", work, rbasis_size, dpath, start_time, &prev_time);
     
     Eigen::MatrixXcd vals2, vals3;
     vals2.resize(sys.nBasisElts, sys.nBasisElts); vals2.setZero();
     vals3.resize(sys.nBasisElts, sys.nBasisElts); vals3.setZero();
     // for E1 transitions
     sys.get_calc()->calculate_mol_EDM(vals, vals2, vals3);
-    reduceAndOutputOperator_w_sq(sys, vals , (char*)"E1_d10", work, rbasis_size, dpath);
-    reduceAndOutputOperator_w_sq(sys, vals2, (char*)"E1_d11", work, rbasis_size, dpath);
-    reduceAndOutputOperator_w_sq(sys, vals3, (char*)"E1_d1t", work, rbasis_size, dpath);
+    reduceAndOutputOperator_w_sq(sys, vals , (char*)"E1_d10", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator_w_sq(sys, vals2, (char*)"E1_d11", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator_w_sq(sys, vals3, (char*)"E1_d1t", work, rbasis_size, dpath, start_time, &prev_time);
 
     // for M1 transitions
     sys.get_calc()->calculate_mol_MDM(vals, vals2, vals3);
-    reduceAndOutputOperator_w_sq(sys, vals , (char*)"M1_d10", work, rbasis_size, dpath);
-    reduceAndOutputOperator_w_sq(sys, vals2, (char*)"M1_d11", work, rbasis_size, dpath);
-    reduceAndOutputOperator_w_sq(sys, vals3, (char*)"M1_d1t", work, rbasis_size, dpath);
+    reduceAndOutputOperator_w_sq(sys, vals , (char*)"M1_d10", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator_w_sq(sys, vals2, (char*)"M1_d11", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator_w_sq(sys, vals3, (char*)"M1_d1t", work, rbasis_size, dpath, start_time, &prev_time);
     
     return 0;
 }
