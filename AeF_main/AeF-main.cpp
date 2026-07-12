@@ -818,7 +818,7 @@ int main(int argc, char **argv) {
     std::cout << "--------- stark loop completed ---------" << std::endl;
     prev_time = log_time_at_point("Completed stark loop", start_time, prev_time);
     std::cout << fmt::format("Explicit m_f degeneracy breaking coeff is {:.4} Hz",
-        raf_constants::e_mf_break * 1E6) << std::endl;
+        aef::raf_constants::e_mf_break * 1E6) << std::endl;
     for (int sdx = 0; sdx < nLowestStates; sdx++) {
         std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
             lowest_states[sdx], max_devs_vec[sdx], max_devdx_vec[sdx]) << std::endl;
