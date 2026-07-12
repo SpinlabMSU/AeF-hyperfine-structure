@@ -1,6 +1,6 @@
 #pragma once
 #include "aef/MolecularSystem.h"
-#include <aef/j_basis_vec.h>
+#include <aef/jf_basis_vec.h>
 namespace aef {
     class RaFMolecularCalculator : public IMolecularCalculator {
     private:

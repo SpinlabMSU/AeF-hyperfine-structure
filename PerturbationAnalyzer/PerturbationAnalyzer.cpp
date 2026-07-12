@@ -42,7 +42,6 @@
 
 using namespace std::chrono;
 namespace fs = std::filesystem;
-namespace hfs_constants = baf_constants;
 using aef::log_time_at_point;
 using namespace aef::quantum;
 

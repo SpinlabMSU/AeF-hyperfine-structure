@@ -749,7 +749,12 @@ int main(int argc, char **argv) {
             dEs[sdx] = std::real(sys.Es[idxs[sdx]]) - E;
         }
 
-        double stark_scale = Ez_V_cm * hfs_constants::mu_e * unit_conversion::MHz_D_per_V_cm;
+        double stark_scale = std::nan("");
+        {
+            double mu_e = baf_constants::mu_e;
+            (void)pCalc->get_parameter("mu_E", mu_e);
+            double stark_scale = Ez_V_cm * mu_e * unit_conversion::MHz_D_per_V_cm;
+        }
 
         std::cout << fmt::format("Electric field strength is {} V/cm, stark scale is {} MHz", Ez_V_cm, stark_scale) << std::endl;
         std::cout << fmt::format("Gnd state expectation values: {}", expectation_values(sys, gnd_idx)) << std::endl;
@@ -813,7 +818,7 @@ int main(int argc, char **argv) {
     std::cout << "--------- stark loop completed ---------" << std::endl;
     prev_time = log_time_at_point("Completed stark loop", start_time, prev_time);
     std::cout << fmt::format("Explicit m_f degeneracy breaking coeff is {:.4} Hz",
-        hfs_constants::e_mf_break * 1E6) << std::endl;
+        raf_constants::e_mf_break * 1E6) << std::endl;
     for (int sdx = 0; sdx < nLowestStates; sdx++) {
         std::cout << fmt::format("Maximum m_f deviation for {} is {} at index {}",
             lowest_states[sdx], max_devs_vec[sdx], max_devdx_vec[sdx]) << std::endl;

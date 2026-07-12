@@ -131,6 +131,12 @@ namespace aef {
     constexpr size_t max_op_id_len = 256;
     class IMolecularCalculator {
     public:
+        /// <summary>
+        /// Get parameter with given ID, must not touch out unless a succesful
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="out">The location to store the parameter value to, untouched if not successful</param>
+        /// <returns>a result code describing whether the operation was successful</returns>
         virtual ResultCode get_parameter(std::string id, double& out) = 0;
         virtual ResultCode set_parameter(std::string id, double value) = 0;
         virtual void set_nmax(spin nmax) = 0;

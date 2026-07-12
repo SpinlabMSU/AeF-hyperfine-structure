@@ -20,11 +20,11 @@
 #include <aef/MolecularSystem.h>
 #include <aef/systems/BaFMolecularCalculator.h>
 #include <aef/systems/RaFMolecularCalculator.h>
+#include <aef/raf_constants.h>
 #include <assert.h>
 
 using namespace std::chrono;
 namespace fs = std::filesystem;
-namespace hfs_constants = baf_constants;
 using aef::log_time_at_point;
 using namespace aef::quantum;
 

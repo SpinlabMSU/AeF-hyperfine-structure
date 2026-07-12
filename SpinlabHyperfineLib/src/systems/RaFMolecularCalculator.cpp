@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "aef/systems/RaFMolecularCalculator.h"
+#include "aef/raf_constants.h"
 using aef::ResultCode;
 
 
@@ -13,6 +14,12 @@ aef::RaFMolecularCalculator::RaFMolecularCalculator(spin nmax_) : nmax(nmax_) {
 aef::RaFMolecularCalculator::~RaFMolecularCalculator() {}
 
 ResultCode aef::RaFMolecularCalculator::get_parameter(std::string id, double& out) {
+
+    if (id == "mu_E") {
+        out = raf_constants::mu_e;
+        return ResultCode::Success;
+    }
+
     return ResultCode::Unimplemented;
 }
 

@@ -13,6 +13,12 @@ aef::BaFMolecularCalculator::BaFMolecularCalculator(spin nmax_) : nmax(nmax_) {
 aef::BaFMolecularCalculator::~BaFMolecularCalculator() {}
 
 ResultCode aef::BaFMolecularCalculator::get_parameter(std::string id, double& out) {
+
+    if (id == "mu_E") {
+        out = baf_constants::mu_e;
+        return ResultCode::Success;
+    }
+
     return ResultCode::Unimplemented;
 }
 
