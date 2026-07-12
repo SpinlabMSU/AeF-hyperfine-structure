@@ -86,6 +86,7 @@ int main(int argc, char **argv) {
         ("l,load", "Load molecular system operators from file", cxxopts::value<std::string>())
         ("t,stark_iterations", "Number of iterations to perform the stark loop for", cxxopts::value<size_t>());
 
+    options.allow_unrecognised_options();
     auto result = options.parse(argc, argv);
 
     if (result.count("help")) {
