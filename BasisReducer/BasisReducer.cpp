@@ -94,12 +94,12 @@ void reduceAndOutputOperator(aef::MolecularSystem& sys, Eigen::MatrixXcd& op, ch
     *prev_time = log_time_at_point("Reducing finished, now writing reduced operator", start_time, *prev_time);
     std::string spath = fmt::format("{}.csv", fnam);
     std::ofstream out(p / spath);
-    const char* sep = "";
+    out << fnam;
     for (int jdx = 0; jdx < size; jdx++) {
         // write out column index
-        out << fmt::format("{}{}", sep, jdx);
-        sep = ", ";
+        out << fmt::format(", {}", jdx);
     }
+    out << std::endl;
     // 
     for (int idx = 0; idx < size; idx++) {
         // write out row index
@@ -133,6 +133,7 @@ void reduceAndOutputOperator_w_sq(aef::MolecularSystem& sys, Eigen::MatrixXcd& o
         out2 << fmt::format("{}{}", sep, jdx);
         sep = ", ";
     }
+    out << std::endl; out2 << std::endl;
     // 
     for (int idx = 0; idx < size; idx++) {
         // write out row index
