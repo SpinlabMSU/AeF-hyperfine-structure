@@ -71,6 +71,10 @@ int main(int argc, char **argv) {
     double E_z_V_cm = calc_E_z / unit_conversion::MHz_D_per_V_cm;
     bool E_z_specified = false;
     fs::path dpath("output");
+    double B_z_Gauss = 0;
+    double B_x_Gauss = 0;
+    double B_y_Gauss = 0;
+    bool B_specified = false;
 
     // todo parse args
     // args should include: E_max, nmax, enable_debug_log
@@ -79,6 +83,9 @@ int main(int argc, char **argv) {
     options.add_options()
         ("h,help", "Print usage")
         ("e,Ez", "Electric field for PT calculations [V/cm]", cxxopts::value<double>())
+        ("b,Bz", "Magnetic field along the Z-axis for PT calculations [V/cm]", cxxopts::value<double>())
+        ("Bx", "Magnetic field along the X-axis for PT calculations [V/cm]", cxxopts::value<double>())
+        ("By", "Magnetic field along the Y-axis for PT calculations [V/cm]", cxxopts::value<double>())
         ("E_min", "Minimum electric field [V/cm]", cxxopts::value<double>())
         ("n,n_max", "Maximum n level to include", cxxopts::value<int>())
         ("d,enable_debug", "Enable debug mode", cxxopts::value<bool>()->default_value("false"))
@@ -123,6 +130,21 @@ int main(int argc, char **argv) {
         min_E_z = result["E_min"].as<double>();
     }
 
+    if (result.count("Bz")) {
+        B_z_Gauss = result["Bz"].as<double>();
+        B_specified = true;
+    }
+
+    if (result.count("Bx")) {
+        B_x_Gauss = result["Bx"].as<double>();
+        B_specified = true;
+    }
+
+    if (result.count("By")) {
+        B_y_Gauss = result["By"].as<double>();
+        B_specified = true;
+    }
+
     if (!load_from_file) {
         std::clog << "[PerturbationAnalyzer] Error: must load from file" << std::endl;
         exit(1);
@@ -132,10 +154,15 @@ int main(int argc, char **argv) {
 
     fs::path runpath = aef::get_aef_run_path(fs::absolute(loadname));
     dpath = runpath / "ptfw";// / fmt::format("{}", );
-    if (E_z_specified) {
+    
+    if (B_specified) {
+        E_z = E_z_V_cm * unit_conversion::MHz_D_per_V_cm;
+        dpath /= fmt::format("E_{}_B_{}_{}_{}", E_z_V_cm, B_x_Gauss, B_y_Gauss, B_z_Gauss);
+    } else if (E_z_specified) {
         E_z = E_z_V_cm * unit_conversion::MHz_D_per_V_cm;
         dpath /= fmt::format("{}", E_z_V_cm);
     }
+
     if (!fs::exists(dpath)) {
         fs::create_directories(dpath, ec);
         if (ec) {
@@ -230,11 +257,28 @@ int main(int argc, char **argv) {
 
     rc = aef::ResultCode::Success;
 
-    // need to set E_z to maximum, 
-    if (E_z_specified) {
-        prev_time = log_time_at_point("Recalculating H_tot with specified E_z", start_time, prev_time);
+    // need to set Hamiltonian to correct electric and magnetic field
+    if (E_z_specified || B_specified) {
+        Eigen::MatrixXcd H_zeeman;
+        if (B_specified) {
+            std::string s = fmt::format("Calculating Zeeman Hamiltonian with B=({}, {}, {}) Gauss",
+                B_x_Gauss, B_y_Gauss, B_z_Gauss);
+            prev_time = log_time_at_point(s.c_str(), start_time, prev_time);
+            double B_z_T = B_z_Gauss * unit_conversion::Tesla_per_Gauss;
+            double B_x_T = B_x_Gauss * unit_conversion::Tesla_per_Gauss;
+            double B_y_T = B_y_Gauss * unit_conversion::Tesla_per_Gauss;
+            aef::operators::ZeemanOperator zop(sys, { B_x_T, B_y_T, B_z_T });
+            H_zeeman.resizeLike(sys.H_tot);
+            zop.fillMatrix(H_zeeman);
+        }
+        prev_time = log_time_at_point("Recalculating H_tot with specified E_z & B_z", start_time, prev_time);
         const double scale = E_z / calc_E_z;
         sys.H_tot = sys.H_rot.toDenseMatrix() + sys.H_hfs + scale * sys.H_stk + sys.H_dev;
+
+        if (B_specified) {
+            sys.H_tot += H_zeeman;
+        }
+
         prev_time = log_time_at_point("Finished recalculating H_tot, now diagonalizing", start_time, prev_time);
         sys.diagonalize();
         prev_time = log_time_at_point("Diagonalization complete", start_time, prev_time);
@@ -264,7 +308,7 @@ int main(int argc, char **argv) {
     // delta E vector from eEDM-like operator
     Eigen::VectorXcd dEs_eEDM;
     prev_time = log_time_at_point("1st ord PT eEDM start", start_time, prev_time);
-    rc = pfw.delta_E_lo("eEDM", dEs_eEDM);
+    rc = pfw.delta_E_lo("eEDM", dEs_eEDM, &vals);
     if (!aef::succeeded(rc)) {
         // error
         std::clog << fmt::format("delta-E eEDM calc failed {}", (int)rc);
@@ -274,7 +318,7 @@ int main(int argc, char **argv) {
     // delta E vector from Fluorine-19 nuclear schiff moment-like operator
     prev_time = log_time_at_point("1st ord PT NSM 19F start", start_time, prev_time);
     Eigen::VectorXcd dEs_f_nsm;
-    rc = pfw.delta_E_lo("NSM2", dEs_f_nsm);
+    rc = pfw.delta_E_lo("NSM2", dEs_f_nsm, &vals);
     if (!aef::succeeded(rc)) {
         // error
         std::clog << fmt::format("delta-E light NSM calc failed {}", (int)rc);
@@ -284,7 +328,7 @@ int main(int argc, char **argv) {
     // delta E vector from Radium-225 nuclear schiff moment-like operator
     prev_time = log_time_at_point("1st ord PT NSM 225Ra start", start_time, prev_time);
     Eigen::VectorXcd dEs_Ra_nsm;
-    rc = pfw.delta_E_lo("NSM1", dEs_Ra_nsm);
+    rc = pfw.delta_E_lo("NSM1", dEs_Ra_nsm, &vals);
     if (!aef::succeeded(rc)) {
         // error
         std::clog << fmt::format("delta-E heavy NSM calc failed {}", (int)rc);
@@ -294,34 +338,88 @@ int main(int argc, char **argv) {
     // delta-E vector from Z-axis Zeeman shift
     prev_time = log_time_at_point("1st ord PT ZeemanZ start", start_time, prev_time);
     Eigen::VectorXcd dEs_zeez;
-    rc = pfw.delta_E_lo("ZeemanZ", dEs_zeez);
+    rc = pfw.delta_E_lo("ZeemanZ", dEs_zeez, &vals);
     if (!aef::succeeded(rc)) {
         // error
         std::clog << fmt::format("delta-E Z-axis Zeeman calc failed {}", (int)rc);
     }
     prev_time = log_time_at_point("1st ord PT ZeemanZ done", start_time, prev_time);
+
+    prev_time = log_time_at_point("1st ord PT Orientation start", start_time, prev_time);
+    Eigen::VectorXcd d10s;
+    Eigen::VectorXcd d11s;
+    Eigen::VectorXcd d1ts;
+    
+    std::cout << "Now calculating d10s" << std::endl;
+    rc = aef::matrix::group_action(vals, pfw.Vs, pfw.d10);
+    if (!aef::succeeded(rc)) {
+        // error
+        std::clog << fmt::format("Orientation calc d10 failed {}", (int)rc);
+    }
+    d10s = vals.diagonal();
+    
+    std::cout << "Now calculating d11s" << std::endl;
+    rc = aef::matrix::group_action(vals, pfw.Vs, pfw.d11);
+    if (!aef::succeeded(rc)) {
+        // error
+        std::clog << fmt::format("Orientation calc d11 failed {}", (int)rc);
+    }
+    d11s = vals.diagonal();
+    
+    std::cout << "Now calculating d11s" << std::endl;
+    rc = aef::matrix::group_action(vals, pfw.Vs, pfw.d1t);
+    if (!aef::succeeded(rc)) {
+        std::clog << fmt::format("Orientation calc d1t failed {}", (int)rc);
+    }
+    d1ts = vals.diagonal();
+    prev_time = log_time_at_point("Orienation calcs done", start_time, prev_time);
+
+
     prev_time = log_time_at_point("Perturbative energy shift calculations complete", start_time, prev_time);
 
     // file output
-    std::cout << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tDelta E Zeeman Z (MHz)" << std::endl;
+    std::cout << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tDelta E Zeeman Z (MHz)";
+    std::cout << "MDA 10\tMDA 11\tMDA 1t" << std::endl;
     for (int idx = 0; idx < sys.nBasisElts; idx++) {
-        std::cout << fmt::format("{}\t{}\t{}\t{}", idx, dEs_eEDM(idx), dEs_f_nsm(idx), dEs_Ra_nsm(idx), dEs_zeez(idx)) << std::endl;
+        std::cout << fmt::format("{}\t{}\t{}\t{}", idx, dEs_eEDM(idx), dEs_f_nsm(idx), dEs_Ra_nsm(idx), dEs_zeez(idx));
+        std::cout << fmt::format("\t{}\t{}\t{}", d10s(idx), d11s(idx), d1ts(idx)) << std::endl;
     }
 
     std::ofstream out(dpath / "tv_energy_shifts.tsv");
     out << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tDelta E 225Ra NSM (MHz)\tDelta E Z-axis Zeeman (MHz)"
-        "\tImaginary Part of dE_EDM(MHz)\tImaginary Part of dE_19F_NSM(MHz)\tImaginary Part of dE_225Ra_NSM(MHz)\tImagninary Part of dE_ZeeZ (MHz)" << std::endl;
+        "\tImaginary Part of dE_EDM(MHz)\tImaginary Part of dE_19F_NSM(MHz)\tImaginary Part of dE_225Ra_NSM(MHz)\tImagninary Part of dE_ZeeZ (MHz)\t";
+    out << "Re(<psi|dz|psi>)\ttIm(<psi|dz|psi>)\t";
+    out << "Re(<psi|dx|psi>)\ttIm(<psi|dx|psi>)\t";
+    out << "Re(<psi|dy|psi>)\ttIm(<psi|dy|psi>)\t";
+    out << std::endl;
     for (int idx = 0; idx < sys.nBasisElts; idx++) {
         dcomplex dE_EDM = dEs_eEDM(idx);
         dcomplex dE_f_NSM = dEs_f_nsm(idx);
         dcomplex dE_Ra_NSM = dEs_Ra_nsm(idx);
         dcomplex dE_zeez = dEs_zeez(idx);
+
+        dcomplex d10 = d10s(idx);
+        dcomplex d11 = d11s(idx);
+        dcomplex d1t = d1ts(idx);
+
+        constexpr double inv_sqrt2 = std::numbers::sqrt2 / 2.0;
+
+        // convert to cartesian
+        using namespace std::complex_literals;
+        dcomplex dx = (d1t - d11) * inv_sqrt2;
+        dcomplex dy = (d1t + d11) * 1i * inv_sqrt2;
+        dcomplex dz = d10;
+
         out << fmt::format("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}", idx, std::real(dE_EDM), std::real(dE_f_NSM), std::real(dE_Ra_NSM), std::real(dE_zeez),
-            std::imag(dE_EDM), std::imag(dE_f_NSM), std::imag(dE_Ra_NSM), std::imag(dE_zeez)) << std::endl;
+            std::imag(dE_EDM), std::imag(dE_f_NSM), std::imag(dE_Ra_NSM), std::imag(dE_zeez));
+        out << fmt::format("\t{}\t{}", std::real(dx), std::imag(dx));
+        out << fmt::format("\t{}\t{}", std::real(dy), std::imag(dy));
+        out << fmt::format("\t{}\t{}", std::real(dz), std::imag(dz));
+        out << std::endl;
     }
     out.close();
     fs::copy_file(dpath / "tv_energy_shifts.tsv", dpath / "cpv_energies.tsv");
-    prev_time = log_time_at_point("File writes complete4", start_time, prev_time);
+    prev_time = log_time_at_point("File writes complete!", start_time, prev_time);
 //    std::cout << fmt::format("Energy vector {}", es) << std::endl;
     aef::matrix::shutdown();
 }

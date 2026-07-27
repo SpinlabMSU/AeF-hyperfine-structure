@@ -49,6 +49,10 @@ namespace unit_conversion {
 
     constexpr double MHz_per_inv_cm = constants::c * 1E-6 * 100;
 
+    // magnetic field
+    constexpr double Gauss_per_Tesla = 10000;
+    constexpr double Tesla_per_Gauss = 1 / Gauss_per_Tesla;
+
 
 #pragma region "Debye conversion"
     /// <summary>

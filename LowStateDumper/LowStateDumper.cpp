@@ -102,6 +102,8 @@ int main(int argc, char **argv) {
     std::vector<double> E_zs;
     double K = 0;
     bool k_enabled = false;
+    double B_z_Gauss = 0; // unit: Gauss
+    double b_en = false;
 
     /// <summary>
     /// The value of E_z used to calculate H_stk is 50 kV/cm = 25170 MHz/D.
@@ -115,6 +117,7 @@ int main(int argc, char **argv) {
     options.add_options()
         ("h,help", "Print usage")
         ("e,Ez", "Electric field values to consider in V/cm (can use multiple times)", cxxopts::value<std::vector<double>>()) // allow multiple Ez
+        ("b,Bz", "Electric field values to consider in Gauss", cxxopts::value<double>())
         ("d,enable_debug", "Enable debug mode", cxxopts::value<bool>()->default_value("false"))
         ("print_extras", "Print extra information", cxxopts::value<bool>()->default_value("true"))
         ("l,load", "Load molecular system operators from file", cxxopts::value<std::string>())
@@ -141,6 +144,11 @@ int main(int argc, char **argv) {
         E_zs.insert(E_zs.end(), begin(vals), end(vals));
     } else {
         E_zs.push_back(500);
+    }
+
+    if (result.count("Bz")) {
+        B_z_Gauss = result["Bz"].as<double>();
+        b_en = B_z_Gauss != 0;
     }
     
     fs::path p = fs::absolute(loadname);
@@ -222,6 +230,8 @@ int main(int argc, char **argv) {
     // we only need to know whether K is zero (in-vacuum) or not (in-matrix).
     std::cout << fmt::format("K_enabled = {}", calc.enableDev ? "true" : "false") << std::endl;
 
+    std::cout << fmt::format("B_enabled = {}, B_z = {} G", b_en, B_z_Gauss);
+
     std::cout << "does H_tot commute with F_z? " << aef::matrix::commutes(calc.H_tot, calc.F_z) << std::endl;
     std::cout << "does H_stk commute with F_z? " << aef::matrix::commutes(calc.H_stk, calc.F_z) << std::endl;
     std::cout << "does H_hfs commute with F_z? " << aef::matrix::commutes(calc.H_hfs, calc.F_z) << std::endl;
@@ -229,9 +239,21 @@ int main(int argc, char **argv) {
     // load succeded
     prev_time = log_time_at_point("[Low state dumper] Finished loading matrix elements.", start_time, prev_time);
 
+    Eigen::MatrixXcd H_zeeman;
+    if (b_en) {
+        H_zeeman.resizeLike(calc.H_tot);
+        Eigen::MatrixXcd z10, z11, z1t;
+        z10.resizeLike(H_zeeman); z11.resizeLike(H_zeeman); z1t.resizeLike(H_zeeman);
+        prev_time = log_time_at_point("[Low state dumper] ", start_time, prev_time);
+        calc.get_calc()->calculate_mol_MDM(z10, z11, z1t);
+        const double B_z = B_z_Gauss * unit_conversion::Tesla_per_Gauss;
+        H_zeeman = z10 * B_z;
+    }
+
     // give info --> note: enableDev and K weren't saved in older formats 
     std::cout << fmt::format("Molecular System information: nmax = {}", calc.nmax) << std::endl;//, calc.enableDev);
     std::cout << fmt::format("[] Starting to dump states, {} field values", E_zs.size()) << std::endl;
+
 
     for (auto Ez : E_zs) {
         const double Ez_mhz = Ez * unit_conversion::MHz_D_per_V_cm;
@@ -245,9 +267,18 @@ int main(int argc, char **argv) {
         std::cout << fmt::format("H_stk rows={}, cols={}", calc.H_stk.rows(), calc.H_stk.cols()) << std::endl;
         calc.H_tot = calc.H_rot.toDenseMatrix() + calc.H_hfs + scale * calc.H_stk + calc.H_dev;
 
+        if (b_en) {
+            calc.H_tot += H_zeeman;
+        }
+
         calc.diagonalize();
 
         fs::path csvpath = odir / fmt::format("{}.csv", Ez);
+
+        if (b_en) {
+            csvpath = odir / fmt::format("Bz={},Ez={}.csv", B_z_Gauss, Ez);
+        }
+
         std::ofstream out(csvpath);
         // write out header line
         out << "Eidx";
