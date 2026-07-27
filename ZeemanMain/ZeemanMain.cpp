@@ -614,7 +614,7 @@ int main(int argc, char** argv) {
         Eigen::MatrixXcd dx = (sys.d1t - sys.d11) * inv_sqrt2;
         Eigen::MatrixXcd dy = (sys.d1t + sys.d11) * 1i * inv_sqrt2;
 
-        Dev_orient_Diagonalizer = 1 * sys.d10 + 0.1 * dx + 0.01 * dy;
+        Dev_orient_Diagonalizer = 10 * sys.d10 + 5 * dx + 1 * dy;
     }
 #endif
 
