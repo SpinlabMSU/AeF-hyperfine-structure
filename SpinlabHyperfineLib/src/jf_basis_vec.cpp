@@ -580,7 +580,7 @@ namespace aef {
             dcomplex parity_N = parity(thlf + n - m_f);
             dcomplex prf_N = n_we_mag * xi(n, np) * xi(j, jp) * xi(f, fp);
             dcomplex w6j_N = 0 * w6j(f1, 1, f1p, jp, i1, j) * w6j(f, 1, fp, f1p, i2, f1);;
-            rme_N = mu_rotational * parity_N * prf_N * w6j_N;
+            rme_N = g_N * constants::mu_nuclear * parity_N * prf_N * w6j_N;
         }
         // full reduced matrix element is the sum of the three contributions
         dcomplex reduced_mat_elt = rme_S + rme_I1 + rme_I2 + rme_N;
