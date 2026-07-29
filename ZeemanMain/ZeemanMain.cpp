@@ -740,7 +740,7 @@ int main(int argc, char** argv) {
         }
         std::cout << std::endl;
     }
-    for (int fdx = 0; fdx < 101; fdx++) {
+    for (int fdx = 0; fdx < nZeemanIterations; fdx++) {
         const char* sep = "";
         for (int sdx = 0; sdx < nLowestStates; sdx++) {
             std::cout << fmt::format("{}{}", sep, lowest_energies(fdx, sdx));
