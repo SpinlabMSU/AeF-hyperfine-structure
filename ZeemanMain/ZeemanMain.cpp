@@ -295,12 +295,12 @@ int main(int argc, char** argv) {
     bool output_Es = true;
     bool force_save = false;
     size_t nZeemanIterations = 101;
-    double min_B_z_G = 0;
-    double max_B_z_G = 1; // units of max_E_z are V/cm
+    double min_B_z_G = 0; // Gauss
+    double max_B_z_G = 1; // Gauss
     std::string mol_calc_type = aef::RaFMolecularCalculator::calc_type_str;
     bool do_tracking = true;
     bool round_files = true;
-    double E_z = 0;// calc_E_z / unit_conversion::MHz_D_per_V_cm;
+    double E_z = 0;// V/cm calc_E_z / unit_conversion::MHz_D_per_V_cm;
 
     // todo parse args
     // args should include: E_max, nmax, enable_debug_log
@@ -611,10 +611,18 @@ int main(int argc, char** argv) {
 
         // convert to cartesian
         using namespace std::complex_literals;
+        Eigen::MatrixXcd& dz = sys.d10;
         Eigen::MatrixXcd dx = (sys.d1t - sys.d11) * inv_sqrt2;
         Eigen::MatrixXcd dy = (sys.d1t + sys.d11) * 1i * inv_sqrt2;
 
-        Dev_orient_Diagonalizer = 20 * sys.d10 + 10 * dx + 5 * dy;
+        constexpr double E_dz = 20;
+        constexpr double E_dx = 10;
+        constexpr double E_dy = 5;
+
+        Dev_orient_Diagonalizer = E_dz * dz + E_dx * dx + E_dy * dy;
+        std::cout << fmt::format(
+            "Orientation diagonalizer coeffs are E_dz = {} MHz, E_dx = {} MHz, E_dy = {} MHz",
+            E_dz, E_dx, E_dy) << std::endl;
     }
 #endif
 
