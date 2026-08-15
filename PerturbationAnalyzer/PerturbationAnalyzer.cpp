@@ -421,7 +421,7 @@ int main(int argc, char **argv) {
     prev_time = log_time_at_point("Perturbative energy shift calculations complete", start_time, prev_time);
 
     // file output
-    std::cout << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tDelta E Zeeman Z (MHz)";
+    std::cout << "Energy Eigenstate Index\teEDM polarization\t19F NSM polarization\tDelta E Zeeman Z (MHz/T)";
     std::cout << "MDA 10\tMDA 11\tMDA 1t" << std::endl;
     for (int idx = 0; idx < sys.nBasisElts; idx++) {
         std::cout << fmt::format("{}\t{}\t{}\t{}", idx, dEs_eEDM(idx), dEs_f_nsm(idx), dEs_Ra_nsm(idx), dEs_zeez(idx));
@@ -429,7 +429,7 @@ int main(int argc, char **argv) {
     }
 
     std::ofstream out(dpath / "tv_energy_shifts.tsv");
-    out << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tDelta E 225Ra NSM (MHz)\tDelta E Z-axis Zeeman (MHz)"
+    out << "Energy Eigenstate Index\teEDM polarization\t19F NSM Polarization\t225Ra NSM Polarization\tDelta E Z-axis Zeeman (MHz/T)"
         "\tImaginary Part of dE_EDM(MHz)\tImaginary Part of dE_19F_NSM(MHz)\tImaginary Part of dE_225Ra_NSM(MHz)\tImaginary Part of dE_ZeeZ (MHz)\t";
     out << "Re(<psi|dz|psi>)\tIm(<psi|dz|psi>)\t";
     out << "Re(<psi|dx|psi>)\tIm(<psi|dx|psi>)\t";

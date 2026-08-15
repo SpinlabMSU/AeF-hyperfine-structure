@@ -387,7 +387,7 @@ int main(int argc, char** argv) {
         std::string status(aef_git_status);
         bool bdirty = status.contains('M') || status.contains('d');
         std::string dirty = bdirty ? "dirty" : "clean";
-        std::cout << "AeF-Hyperfine-Structure main spectrum calculation program (MolecularSystem enhanced), version compiled on " << __DATE__ << " "
+        std::cout << "AeF-Hyperfine-Structure Zeeman spectrum calculation program (MolecularSystem enhanced), version compiled on " << __DATE__ << " "
             << __TIME__ << ", git commit " << aef_git_commit << ", main program file " __FILE__ << std::endl;
         std::cout << "Git status is " << dirty << " string {" << status << "}" << std::endl;
         std::cout << fmt::format("Start time is {}", start_time) << std::endl;
@@ -556,7 +556,7 @@ int main(int argc, char** argv) {
     assert(sys.H_tot.rows() == sys.H_stk.rows());
 
     // output stark.csv header line + lowest states
-    oStk << "B-field (G), dE_gnd";// << ", dE_f1t, dE_f10, dE_f11" << std::endl;
+    oStk << "B-field (T), dE_gnd";// << ", dE_f1t, dE_f10, dE_f11" << std::endl;
     for (int sdx = 1; sdx < nLowestStates; sdx++) {
         std::cout << fmt::format("Lowest state #{}: ket #{}, {}", sdx, lowest_idxs[sdx], lowest_states[sdx]) << std::endl;
         oStk << ", dE_" << sdx;
@@ -677,7 +677,7 @@ int main(int argc, char** argv) {
             std::cout << fmt::format("#{} state expectation values: {}", sdx, expectation_values(sys, idxs[sdx])) << std::endl;
         }
 
-        std::cout << fmt::format("Closest Energy-estate to 0-E-field gnd state is "
+        std::cout << fmt::format("Closest Energy-estate to 0-B-field gnd state is "
             "{}, with energy {}", gnd_idx, E) << std::endl;
         // write energy differences to stark log and to standard out
         {
