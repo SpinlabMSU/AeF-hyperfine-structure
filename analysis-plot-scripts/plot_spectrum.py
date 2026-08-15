@@ -28,6 +28,7 @@ import matplotlib.pyplot as plt
 import numpy.linalg as npla
 import pandas as pd
 import numba
+import aef_run
 
 
 #rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-18-185338.4873197' #nodev
@@ -36,23 +37,31 @@ rundir = r'C:\Users\nusgart\source\AeF-hyperfine-structure\output\2023-07-19-181
 if len(sys.argv) > 1:
     rundir = sys.argv[1]
 rundir = os.path.abspath(rundir)
-run = os.path.split(rundir)[1]
+run = aef_run.aef_run(rundir)
+run_name = run.run
 
-starkpath = os.path.join(rundir, 'stark_spectrum.csv')
-df = pd.read_csv(starkpath)
+#starkpath = os.path.join(rundir, 'stark_spectrum.csv')
+#df = pd.read_csv(starkpath)
+df = run.parse_stark_spect()
+field_type = 'electric' if not run.is_zeeman else 'magnetic'
 
 Ez = df.keys()[1]
+print(Ez)
 states = df.keys()[2:]
 
 zero_ground = False
+zero_idx = 0
 measure_deviation = False
 use_volts = False
 do_cut = False
+do_hard_cut = False
 black_dots = False
+elabel = 'Energy'
 
 ymax = None
 ymin = None
-max_idx = None
+max_idx_soft = None
+max_idx_hard = None
 scale = 'm'
 # map to scale from Megahertz to 
 scale_map = {
@@ -65,16 +74,27 @@ scale_map = {
 plt.rcParams['font.size'] = 14
 title = None
 outname = None
+plot_vline = False
+vline_x = 0.0
+
 ## Actually parse arguments
 for idx in range(2, len(sys.argv)):
     arg = sys.argv[idx]
     lrg = arg.lower()
-    if lrg.startswith('-z'): zero_ground = True
+    if arg.startswith('-z'): zero_ground = True
+    if arg.startswith('-Z'): # zero out an arbitrary state
+        zero_ground = True
+        zero_idx = int(sys.argv[idx + 1])
+        idx += 1 # skip next argument
     if lrg.startswith('-m'): measure_deviation = True
     if lrg.startswith('-v'): use_volts = True
-    if lrg.startswith('-c'):
+    if arg.startswith('-c'): # "soft cut": sets window, lowercase c specifically
         do_cut = True
-        max_idx = int(sys.argv[idx + 1])
+        max_idx_soft = int(sys.argv[idx + 1])
+        idx += 1 # skip next argument
+    if arg.startswith('-C'): #  "Hard cut": doesn't plot higher states, uppercase C specifically
+        do_hard_cut = True
+        max_idx_hard = int(sys.argv[idx + 1])
         idx += 1 # skip next argument
     if lrg.startswith('-s'):
         # scale -- TODO really implement
@@ -87,6 +107,10 @@ for idx in range(2, len(sys.argv)):
     if lrg.startswith('-o'):
         outname = sys.argv[idx + 1]
         idx += 1
+    if lrg.startswith('-vline'):
+        plot_vline = True
+        vline_x = float(sys.argv[idx + 1])
+        idx += 1
 # set default output filename:
 if outname == None:
     outname = "spectrum_plot.png" if not black_dots else "spectrum_plot_no_state.png"
@@ -95,6 +119,14 @@ if outname == None:
 use_legend = True
 if len(df[Ez]) > 15:
     use_legend = False
+
+# set scale factor and label
+scale_factor, scale_label = scale_map[scale]
+elabel = f'"Absolute" Energy ({scale_label})'
+
+if do_hard_cut:
+    states = states[:max_idx_hard]
+    #states = []
 
 if measure_deviation:
     print(df[states])
@@ -106,21 +138,21 @@ if measure_deviation:
 
 if zero_ground:
     print(df[states])
-    zero_field_Es = df['E0']
+    zero_field_Es = df[f'E{zero_idx}']
+    elabel = f'Excitation Energy ({scale_label}) above state #{zero_idx}'
     print(zero_field_Es)
     for state in states:
         df[state] = df[state] - zero_field_Es
         print(df[state])
 
 # process y-axis scaling
-scale_factor, scale_label = scale_map[scale]
 df[states] *= scale_factor
 
 # perform cut
 if do_cut:
     #states = states[:maxn]
-    state = states[max_idx]
-    print(f"Cutting plot at state #{max_idx} = {state}")
+    state = states[max_idx_soft]
+    print(f"Cutting plot at state #{max_idx_soft} = {state}")
     Es = np.array(df[state])
     Egs = np.array(df['E0'])
     ymax = np.max(Es)
@@ -133,7 +165,11 @@ if do_cut:
     print(f"ymin is {ymin}, ymax is {ymax}")
 
 xlab = "Externally-applied electric field strength (V/cm)"
-if not use_volts:
+if run.is_zeeman:
+    df[Ez] *= 10000 # Tesla to Gauss
+    df[Ez] *= 1000  # Gauss to milliGauss
+    xlab = "Externally-applied magnetic field strength (mG)"
+elif not use_volts: # only for electric field runs
     df[Ez] /= 1000 
     xlab = "Externally-applied electric field strength (kV/cm)"
 
@@ -142,14 +178,18 @@ color = None if not black_dots else "black"
 # do plot
 fig = plt.figure(figsize=(13.66, 9.00))
 if title == None:
-    title = f"Energy Spectrum for run {run}"
+    title = f"Energy Spectrum for run {run_name}"
 plt.title(title)
 if not black_dots:
-    df.plot(Ez, states, xlabel=xlab, ylabel = f'Energy ({scale_label})', ax=plt.gca(), legend = use_legend)
+    df.plot(Ez, states, xlabel=xlab, ylabel = f'{elabel}', ax=plt.gca(), legend = use_legend)
 else:
-    df.plot(Ez, states, xlabel=xlab, ylabel = f'Energy ({scale_label})', ax=plt.gca(), legend = use_legend, color=color, linestyle='', marker='o')
+    df.plot(Ez, states, xlabel=xlab, ylabel = f'{elabel}', ax=plt.gca(), legend = use_legend, color=color, linestyle='', marker='o')
 if ymax != None:
     plt.ylim(bottom=ymin, top=ymax)
+
+if plot_vline:
+    plt.axvline(vline_x, color='r')
+
 plt.savefig(os.path.join(rundir, outname))
 #if not black_dots:
 #    plt.savefig(os.path.join(rundir, 'spectrum_plot.png'))

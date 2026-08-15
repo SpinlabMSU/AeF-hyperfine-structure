@@ -55,7 +55,9 @@ class aef_run(object):
         self.timestamp = datetime.datetime.strptime(rs, "%Y-%m-%d-%H%M%S.%f")
 
         self.log_path = os.path.join(self.path, 'out.log')
+        self.type = 'stark'
 
+        self.is_zeeman = None
         self.valid = self.check_valid()
         self.uses_molsys = None # unknown
         self.calc_type = ""
@@ -99,12 +101,17 @@ class aef_run(object):
             self.uses_molsys = molsys_search in line
             use_str = "does" if self.uses_molsys else "does not"
             print(f"Run {self.run} {use_str} use aef::MolecularSystem")
+            zeeman_search = "Zeeman"
+            self.is_zeeman = zeeman_search in line
+            self.type = 'zeeman' if self.is_zeeman else 'stark'
+            is_zeeman_2 = os.path.exists(os.path.join(self.path, 'ZEEMAN.log'))
+            assert self.is_zeeman == is_zeeman_2
 
         for line in f:
             n_search = "nmax is"
             e_search = "E_z is" # externally applied
             k_search = "K is" # devonshire coupling constant named K, look for enabled
-            Emax_search = "Electric field strength is"
+            Emax_search = "Electric field strength is" if not self.is_zeeman else "Magnetic field strength is"
             calc_search = "calculator is"
             coeff_search = "Using coefficient set"
             nbasis_line_search = "Resizing aef::MolecularSystem to"
@@ -161,19 +168,20 @@ class aef_run(object):
         stk = self.parse_gnd_stark_shift()
         self.n_E_zs = stk.shape[0]
         del stk
-        print(f"Run evaluated {self.n_E_zs} electric field values")
+        ftype = 'magnetic' if self.is_zeeman else 'electric'
+        print(f"Run evaluated {self.n_E_zs} {ftype} field values")
         if not found_param_line:
             raise RuntimeError(f"Parameter line not found in {self.log_path}")
         if not math.isfinite(self.max_E_z):
-            raise RuntimeError(f"Unable to find maximum Electric field strength in {self.log_path}")
+            raise RuntimeError(f"Unable to find maximum {ftype} field strength in {self.log_path}")
         return self
 
     def parse_gnd_stark_shift(self, *args, **kwargs):
-        fpath = os.path.join(self.path, 'stark_shift_gnd.csv')
+        fpath = os.path.join(self.path, f'{self.type}_shift_gnd.csv')
         return pd.read_csv(fpath, *args, **kwargs)
 
     def parse_stark_spect(self, *args, **kwargs):
-        fpath = os.path.join(self.path, 'stark_spectrum.csv')
+        fpath = os.path.join(self.path, f'{self.type}_spectrum.csv')
         return pd.read_csv(fpath, *args, **kwargs)
 
     def get_coeff_dir(self):
@@ -197,7 +205,8 @@ class aef_run(object):
         return self.state_info_dir
 
     def get_state_ifo_Ez(self, Ez, *args, **kwargs):
-        csvpath = os.path.join(self.get_state_ifo_dir(), f'info_Ez_{Ez}.csv')
+        field = 'Bz' if self.is_zeeman else 'Ez'
+        csvpath = os.path.join(self.get_state_ifo_dir(), f'info_{field}_{Ez}.csv')
         return pd.read_csv(csvpath, *args, **kwargs)
 
     def list_ifo_csvs(self):

@@ -104,7 +104,7 @@ dev_en = run.dev_en
 dev_K = run.dev_K
 dirname = run.get_state_ifo_dir()
 ## todo replace
-re_name = re.compile('info_Ez_.*\\.csv')
+re_name = re.compile('info_[BE]z_.*\\.csv')
 trtbl = str.maketrans('i','j','() *')
 for entry in os.listdir(dirname):
     print(f"Testing entry {entry}")
@@ -149,10 +149,12 @@ Dz = np.array(arr_Dz)
 
 fig = plt.figure(figsize=(19.2, 10.8))#13.66, 7.68))
 #status_txt = f"enabled, K={dev_K}" if dev_en else "disabled"
+fld_nam = "electric" if not run.is_zeeman else "magnetic"
+fld_unt = "kV/cm"if not run.is_zeeman else "mG"
 status_txt = f"In-Matrix, K={dev_K/MHz_per_K}" if dev_en else "In-Vacuum"
-title_text = f"Degree of Molecular Orientation along the externally-applied electric field vs Externally applied electric field strength, {status_txt}"#(with Devonshire {status_txt})\nrun {run.run}"
+title_text = f"Degree of Molecular Orientation along the externally-applied {fld_nam} field vs Externally applied {fld_nam} field strength, {status_txt}"#(with Devonshire {status_txt})\nrun {run.run}"
 plt.title(title_text)
-plt.xlabel('Externally applied electric field (kV/cm)')
+plt.xlabel(f'Externally applied {fld_nam} field ({fld_unt})')
 plt.ylabel('Degree of Molecular Orientation (unitless, 0 to 1)')
 plt.plot(Ez, Dz, pltfmt)
 if incl_run_in_name:
