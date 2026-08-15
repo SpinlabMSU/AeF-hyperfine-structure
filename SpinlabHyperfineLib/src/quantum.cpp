@@ -141,3 +141,43 @@ double aef::quantum::expect_parity(aef::MolecularSystem& calc, int32_t E_idx) {
     }
     return ex_parity / prob_tot;
 }
+
+Eigen::MatrixXcd aef::orient_diag::makeOrientationDiagonalizer(aef::MolecularSystem& sys) {
+    constexpr double inv_sqrt2 = std::numbers::sqrt2 / 2.0;
+    Eigen::MatrixXcd orientEnergyMatrix;
+
+    // convert to cartesian
+    using namespace std::complex_literals;
+    Eigen::MatrixXcd& dz = sys.d10;
+    Eigen::MatrixXcd dx = (sys.d1t - sys.d11) * inv_sqrt2;
+    Eigen::MatrixXcd dy = (sys.d1t + sys.d11) * 1i * inv_sqrt2;
+
+    constexpr double E_dz = 40;
+    constexpr double E_dx = 20;
+    constexpr double E_dy = 10;
+
+    orientEnergyMatrix = E_dz * dz + E_dx * dx + E_dy * dy;
+    std::cout << fmt::format(
+        "Orientation diagonalizer coeffs are E_dz = {} MHz, E_dx = {} MHz, E_dy = {} MHz",
+        E_dz, E_dx, E_dy) << std::endl;
+    return orientEnergyMatrix;
+}
+aef::ResultCode aef::orient_diag::diagonalize(aef::MolecularSystem& sys, Eigen::MatrixXcd& orientEnergyMatrix, Eigen::MatrixXcd* vals) {
+    if (!vals) {
+        vals = new Eigen::MatrixXcd();
+        vals->resizeLike(sys.H_tot);
+        vals->setZero();
+    }
+
+
+    sys.H_tot += sys.H_dev;
+    *vals = sys.H_tot + orientEnergyMatrix;
+
+    auto rc = aef::matrix::diagonalize(*vals, sys.Es, sys.Vs);
+    assert("Diagonalization failed", aef::succeeded(rc));
+    rc = aef::matrix::group_action(*vals, sys.Vs, sys.H_tot);
+    assert("Eigenstate correction failed", aef::succeeded(rc));
+
+    sys.Es = vals->diagonal();
+    return rc;
+}

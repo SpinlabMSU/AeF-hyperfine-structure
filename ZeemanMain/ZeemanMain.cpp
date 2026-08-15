@@ -604,26 +604,7 @@ int main(int argc, char** argv) {
     }
 
 #ifdef USE_DEVONSHIRE
-    Eigen::MatrixXcd Dev_orient_Diagonalizer;
-    Dev_orient_Diagonalizer.setZero();
-    {
-        constexpr double inv_sqrt2 = std::numbers::sqrt2 / 2.0;
-
-        // convert to cartesian
-        using namespace std::complex_literals;
-        Eigen::MatrixXcd& dz = sys.d10;
-        Eigen::MatrixXcd dx = (sys.d1t - sys.d11) * inv_sqrt2;
-        Eigen::MatrixXcd dy = (sys.d1t + sys.d11) * 1i * inv_sqrt2;
-
-        constexpr double E_dz = 20;
-        constexpr double E_dx = 10;
-        constexpr double E_dy = 5;
-
-        Dev_orient_Diagonalizer = E_dz * dz + E_dx * dx + E_dy * dy;
-        std::cout << fmt::format(
-            "Orientation diagonalizer coeffs are E_dz = {} MHz, E_dx = {} MHz, E_dy = {} MHz",
-            E_dz, E_dx, E_dy) << std::endl;
-    }
+    Eigen::MatrixXcd Dev_orient_Diagonalizer = aef::orient_diag::makeOrientationDiagonalizer(sys);
 #endif
 
 
@@ -654,16 +635,7 @@ int main(int argc, char** argv) {
         sys.H_tot = sys.H_rot.toDenseMatrix() + /**/ sys.H_hfs + /**/ dcomplex(Ez_mhz / calc_E_z) * sys.H_stk;
         sys.H_tot += H_zeeman * B_z_T;
 #ifdef USE_DEVONSHIRE
-        sys.H_tot += sys.H_dev;
-        vals = sys.H_tot + Dev_orient_Diagonalizer;
-
-        auto rc = aef::matrix::diagonalize(vals, sys.Es, sys.Vs);
-        assert("Diagonalization failed", aef::succeeded(rc));
-        rc = aef::matrix::group_action(vals, sys.Vs, sys.H_tot);
-        assert("Eigenstate correction failed", aef::succeeded(rc));
-
-        sys.Es = vals.diagonal();
-
+        aef::orient_diag::diagonalize(sys, Dev_orient_Diagonalizer, &vals);
 #else
         sys.diagonalize();
 #endif

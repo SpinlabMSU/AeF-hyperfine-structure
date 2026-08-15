@@ -52,28 +52,20 @@ using system_time = std::chrono::time_point<std::chrono::system_clock>;
 
 //int32_t closest_approx(Eigen)
 
-
-int32_t most_like(Eigen::MatrixXcd& d, int32_t ket_idx) {
-    int32_t cdx = -1;
-    double max_comp = -99999;
-
-    for (int idx = 0; idx < d.cols(); idx++) {
-        dcomplex ampl = d.col(idx)(ket_idx);
-        double comp = abs(ampl);
-
-        if (comp >= max_comp) {
-            cdx = idx;
-            max_comp = comp;
-        }
+namespace {
+    enum class orient_choice {
+        INVALID = 0,
+        FORCE_DISABLE = 1,
+        AUTO = 2,
+        FORCE_ENABLE = 3
+    };
+    std::istream& operator>>(std::istream& in, orient_choice& c) {
+        int a;
+        in >> a;
+        c = (orient_choice)(a + 1);
+        return in;
     }
-
-    return cdx;
-}
-
-double energy_of_closest(HyperfineCalculator& calc, int32_t ket_idx) {
-    int32_t bidx = most_like(calc.Vs, ket_idx);
-    return std::real(calc.Es[bidx]);
-}
+};
 
 void reduceMatrix(Eigen::MatrixXcd& opReducedOut, Eigen::MatrixXcd& opJfBasis, aef::MolecularSystem &sys, int size, Eigen::MatrixXcd *work) {
     //Eigen::MatrixXcd reducedVs = sys.Vs(Eigen::seq())
@@ -176,6 +168,12 @@ int main(int argc, char **argv) {
     double E_z_V_cm = calc_E_z / unit_conversion::MHz_D_per_V_cm;
     bool E_z_specified = false;
     fs::path dpath("output");
+    double B_z_Gauss = 0;
+    double B_x_Gauss = 0;
+    double B_y_Gauss = 0;
+    bool B_specified = false;
+
+    orient_choice o_choice = orient_choice::AUTO;
 
     // todo parse args
     // args should include: E_max, nmax, enable_debug_log
@@ -185,11 +183,15 @@ int main(int argc, char **argv) {
         ("h,help", "Print usage")
         ("e,Ez", "Electric field for PT calculations [V/cm]", cxxopts::value<double>())
         ("E_min", "Minimum electric field [V/cm]", cxxopts::value<double>())
+        ("b,Bz", "Magnetic field along the Z-axis for PT calculations [G]", cxxopts::value<double>())
+        ("Bx", "Magnetic field along the X-axis for PT calculations [G]", cxxopts::value<double>())
+        ("By", "Magnetic field along the Y-axis for PT calculations [G]", cxxopts::value<double>())
         ("n,n_max", "Maximum n level to include", cxxopts::value<int>())
         ("d,enable_debug", "Enable debug mode", cxxopts::value<bool>()->default_value("false"))
         ("print_extras", "Print extra information", cxxopts::value<bool>()->default_value("true"))
         ("l,load", "Load molecular system operators from file", cxxopts::value<std::string>())
-        ("t,stark_iterations", "Number of iterations to perform the stark loop for", cxxopts::value<size_t>());
+        ("t,stark_iterations", "Number of iterations to perform the stark loop for", cxxopts::value<size_t>())
+        ("O,orientation_diagonalizer", "Force Enable (2)/Force Disable(0)/Auto(1) Orientation Diagonalizer", cxxopts::value<orient_choice>());
 
     options.allow_unrecognised_options();
     auto result = options.parse(argc, argv);
@@ -211,14 +213,6 @@ int main(int argc, char **argv) {
         loadname = result["load"].as<std::string>();
     }
 
-    if (result.count("print_extras")) {
-        print_extras = result["print_extras"].as<bool>();
-    }
-
-    if (result.count("stark_iterations")) {
-        nStarkIterations = result["stark_iterations"].as<size_t>();
-    }
-
     if (result.count("Ez")) {
         E_z_V_cm = result["Ez"].as<double>();
         E_z_specified = true;
@@ -226,6 +220,25 @@ int main(int argc, char **argv) {
 
     if (result.count("E_min")) {
         min_E_z = result["E_min"].as<double>();
+    }
+
+    if (result.count("Bz")) {
+        B_z_Gauss = result["Bz"].as<double>();
+        B_specified = true;
+    }
+
+    if (result.count("Bx")) {
+        B_x_Gauss = result["Bx"].as<double>();
+        B_specified = true;
+    }
+
+    if (result.count("By")) {
+        B_y_Gauss = result["By"].as<double>();
+        B_specified = true;
+    }
+
+    if (result.count("orientation_diagonalizer")) {
+        o_choice = result["orientation_diagonalizer"].as<orient_choice>();
     }
 
     if (!load_from_file) {
@@ -341,13 +354,31 @@ int main(int argc, char **argv) {
     aef::matrix::set_max_size(sys.nBasisElts);
     prev_time = log_time_at_point("Recalculating H_tot with specified E_z", start_time, prev_time);
 
-    // need to set E_z to maximum, 
-    if (E_z_specified) {
-        prev_time = log_time_at_point("Recalculating H_tot with specified E_z", start_time, prev_time);
+    // 
+    Eigen::MatrixXcd H_zeeman;
+    H_zeeman.resize(sys.nBasisElts, sys.nBasisElts);
+    H_zeeman.setZero();
+    {
+        aef::operators::ZeemanOperator zop(sys, { 0, 0, 1 });
+        zop.fillMatrix(H_zeeman);
+    }
+
+    Eigen::MatrixXcd Dev_orient_Diagonalizer;
+    Dev_orient_Diagonalizer.setZero();
+    if (sys.enableDev) {
+        Dev_orient_Diagonalizer = aef::orient_diag::makeOrientationDiagonalizer(sys);
+    }
+
+    if (B_specified || E_z_specified) {
+        prev_time = log_time_at_point("Recalculating H_tot with specified E_z and B_z", start_time, prev_time);
         const double scale = E_z / calc_E_z;
-        sys.H_tot = sys.H_rot.toDenseMatrix() + sys.H_hfs + scale * sys.H_stk + sys.H_dev;
+        sys.H_tot = sys.H_rot.toDenseMatrix() + sys.H_hfs + scale * sys.H_stk + sys.H_dev + H_zeeman;
         prev_time = log_time_at_point("Finished recalculating H_tot, now diagonalizing", start_time, prev_time);
-        sys.diagonalize();
+        if (sys.enableDev) {
+            (void)aef::orient_diag::diagonalize(sys, Dev_orient_Diagonalizer, &vals);
+        } else {
+            sys.diagonalize();
+        }
         prev_time = log_time_at_point("Diagonalization complete", start_time, prev_time);
     }
 

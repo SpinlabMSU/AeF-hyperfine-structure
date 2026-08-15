@@ -47,6 +47,20 @@ using namespace aef::quantum;
 
 #include "../AeF-hyperfine-structure.inl"
 
+namespace {
+    enum class orient_choice {
+        INVALID=0,
+        FORCE_DISABLE=1,
+        AUTO=2,
+        FORCE_ENABLE=3
+    };
+    std::istream& operator>>(std::istream& in, orient_choice& c) {
+        int a;
+        in >> a;
+        c = (orient_choice)(a + 1);
+        return in;
+    }
+};
 
 
 int main(int argc, char **argv) {
@@ -75,6 +89,8 @@ int main(int argc, char **argv) {
     double B_x_Gauss = 0;
     double B_y_Gauss = 0;
     bool B_specified = false;
+    
+    orient_choice o_choice = orient_choice::AUTO;
 
     // todo parse args
     // args should include: E_max, nmax, enable_debug_log
@@ -83,15 +99,16 @@ int main(int argc, char **argv) {
     options.add_options()
         ("h,help", "Print usage")
         ("e,Ez", "Electric field for PT calculations [V/cm]", cxxopts::value<double>())
-        ("b,Bz", "Magnetic field along the Z-axis for PT calculations [V/cm]", cxxopts::value<double>())
-        ("Bx", "Magnetic field along the X-axis for PT calculations [V/cm]", cxxopts::value<double>())
-        ("By", "Magnetic field along the Y-axis for PT calculations [V/cm]", cxxopts::value<double>())
+        ("b,Bz", "Magnetic field along the Z-axis for PT calculations [G]", cxxopts::value<double>())
+        ("Bx", "Magnetic field along the X-axis for PT calculations [G]", cxxopts::value<double>())
+        ("By", "Magnetic field along the Y-axis for PT calculations [G]", cxxopts::value<double>())
         ("E_min", "Minimum electric field [V/cm]", cxxopts::value<double>())
         ("n,n_max", "Maximum n level to include", cxxopts::value<int>())
         ("d,enable_debug", "Enable debug mode", cxxopts::value<bool>()->default_value("false"))
         ("print_extras", "Print extra information", cxxopts::value<bool>()->default_value("true"))
         ("l,load", "Load molecular system operators from file", cxxopts::value<std::string>())
-        ("t,stark_iterations", "Number of iterations to perform the stark loop for", cxxopts::value<size_t>());
+        ("t,stark_iterations", "Number of iterations to perform the stark loop for", cxxopts::value<size_t>())
+        ("O,orientation_diagonalizer", "Force Enable (2)/Force Disable(0)/Auto(1) Orientation Diagonalizer", cxxopts::value<orient_choice>());
 
     options.allow_unrecognised_options();
     auto result = options.parse(argc, argv);
@@ -143,6 +160,10 @@ int main(int argc, char **argv) {
     if (result.count("By")) {
         B_y_Gauss = result["By"].as<double>();
         B_specified = true;
+    }
+
+    if (result.count("orientation_diagonalizer")) {
+        o_choice = result["orientation_diagonalizer"].as<orient_choice>();
     }
 
     if (!load_from_file) {
@@ -244,6 +265,8 @@ int main(int argc, char **argv) {
             std::abort();
             aef::unreachable();
         }
+
+        assert("Temp test enableDev", sys.enableDev);
     }
 
     Eigen::MatrixXcd vals;
@@ -256,6 +279,9 @@ int main(int argc, char **argv) {
     aef::matrix::set_max_size(sys.nBasisElts);
 
     rc = aef::ResultCode::Success;
+
+    Eigen::MatrixXcd Dev_orient_Diagonalizer;
+    Dev_orient_Diagonalizer.setZero();
 
     // need to set Hamiltonian to correct electric and magnetic field
     if (E_z_specified || B_specified) {
@@ -279,8 +305,25 @@ int main(int argc, char **argv) {
             sys.H_tot += H_zeeman;
         }
 
+        bool use_orientation_diagonalizer;
+        if (o_choice == orient_choice::AUTO) {
+            use_orientation_diagonalizer = sys.enableDev;
+        } else {
+            use_orientation_diagonalizer = (o_choice == orient_choice::FORCE_ENABLE);
+        }
+
+        if (use_orientation_diagonalizer) {
+            Dev_orient_Diagonalizer = aef::orient_diag::makeOrientationDiagonalizer(sys);
+        }
+
         prev_time = log_time_at_point("Finished recalculating H_tot, now diagonalizing", start_time, prev_time);
-        sys.diagonalize();
+        if (!sys.enableDev) {
+            std::cout << "Using default system diagonalization" << std::endl;
+            sys.diagonalize();
+        } else {
+            std::cout << "Using orientation-" << std::endl;
+            auto rc = aef::orient_diag::diagonalize(sys, Dev_orient_Diagonalizer, &vals);
+        }
         prev_time = log_time_at_point("Diagonalization complete", start_time, prev_time);
     }
     //sys.
@@ -387,10 +430,10 @@ int main(int argc, char **argv) {
 
     std::ofstream out(dpath / "tv_energy_shifts.tsv");
     out << "Energy Eigenstate Index\tDelta E eEDM (MHz)\tDelta E 19F NSM (MHz)\tDelta E 225Ra NSM (MHz)\tDelta E Z-axis Zeeman (MHz)"
-        "\tImaginary Part of dE_EDM(MHz)\tImaginary Part of dE_19F_NSM(MHz)\tImaginary Part of dE_225Ra_NSM(MHz)\tImagninary Part of dE_ZeeZ (MHz)\t";
-    out << "Re(<psi|dz|psi>)\ttIm(<psi|dz|psi>)\t";
-    out << "Re(<psi|dx|psi>)\ttIm(<psi|dx|psi>)\t";
-    out << "Re(<psi|dy|psi>)\ttIm(<psi|dy|psi>)\t";
+        "\tImaginary Part of dE_EDM(MHz)\tImaginary Part of dE_19F_NSM(MHz)\tImaginary Part of dE_225Ra_NSM(MHz)\tImaginary Part of dE_ZeeZ (MHz)\t";
+    out << "Re(<psi|dz|psi>)\tIm(<psi|dz|psi>)\t";
+    out << "Re(<psi|dx|psi>)\tIm(<psi|dx|psi>)\t";
+    out << "Re(<psi|dy|psi>)\tIm(<psi|dy|psi>)\t";
     out << std::endl;
     for (int idx = 0; idx < sys.nBasisElts; idx++) {
         dcomplex dE_EDM = dEs_eEDM(idx);

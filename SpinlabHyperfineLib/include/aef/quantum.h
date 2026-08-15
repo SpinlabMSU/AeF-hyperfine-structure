@@ -38,7 +38,18 @@ namespace aef::quantum {
 
     aef::universal_diatomic_basis_vec expectation_values_jsq(aef::MolecularSystem &sys, int32_t E_idx);
     double expect_parity(aef::MolecularSystem& calc, int32_t E_idx);
+
 };
 
+
+namespace aef::orient_diag {
+    constexpr double E_dz = 40;
+    constexpr double E_dx = 20;
+    constexpr double E_dy = 10;
+
+
+    Eigen::MatrixXcd makeOrientationDiagonalizer(aef::MolecularSystem& sys);
+    aef::ResultCode diagonalize(aef::MolecularSystem& sys, Eigen::MatrixXcd &orientEnergyMatrix, Eigen::MatrixXcd *work=nullptr);
+};
 
 #endif //_AEF_QUANTUM_H

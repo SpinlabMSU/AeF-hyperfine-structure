@@ -470,6 +470,7 @@ namespace aef {
                 this->nmax = pay->twice_nmax / 2.0;
                 this->E_z = pay->E_z;
                 this->K = pay->K;
+                this->enableDev = (K != 0);
             } else {
                 // version 2: neglected to save in payload -- try to get from log file???
                 std::cerr << fmt::format("Warning: load version is {}, which is less than {}, the first version where"
