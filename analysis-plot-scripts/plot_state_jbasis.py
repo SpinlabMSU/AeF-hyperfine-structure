@@ -46,7 +46,13 @@ run = aef_run.aef_run(rundir)
 coeffdir = run.get_coeff_dir()
 
 Ez = 500 
+plot_nmax = 4
+no_text = False
 #Ez = 50000
+
+
+
+
 
 if len(sys.argv) > 2:
     try:
@@ -62,11 +68,9 @@ nBasisElts = (len(df.keys()) - 1) // 2
 
 hsts = baf_state.make_hyperfine_states(run.nmax)
 
-plot_nmax = 4
 if len(sys.argv) > 3:
     plot_nmax = int(sys.argv[3])
 
-no_text = False
 if len(sys.argv) > 4:
    no_text = sys.argv[4].lower().startswith('no_text') 
 

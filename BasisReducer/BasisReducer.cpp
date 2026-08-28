@@ -66,6 +66,25 @@ namespace {
         return in;
     }
 };
+/*
+enum qoperator:: {
+
+    reduceAndOutputOperator(sys, sys.H_tot, (char*)"h_tot", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperatorRe(sys, sys.H_tot, (char*)"h_tot", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator(sys, sys.H_stk, (char*)"h_stk", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator(sys, sys.H_dev, (char*)"h_dev", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator(sys, sys.H_hfs, (char*)"h_hfs", work, rbasis_size, dpath, start_time, &prev_time);
+    vals = sys.H_rot.toDenseMatrix();
+    reduceAndOutputOperator(sys, vals, (char*)"h_rot", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator(sys, sys.d10, (char*)"O_d10", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator(sys, sys.d11, (char*)"O_d11", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperator(sys, sys.d1t, (char*)"O_d1t", work, rbasis_size, dpath, start_time, &prev_time);
+};
+*/
+struct reduced_system {
+    int num;
+    Eigen::MatrixXcd* h_tot;
+};
 
 void reduceMatrix(Eigen::MatrixXcd& opReducedOut, Eigen::MatrixXcd& opJfBasis, aef::MolecularSystem &sys, int size, Eigen::MatrixXcd *work) {
     //Eigen::MatrixXcd reducedVs = sys.Vs(Eigen::seq())
@@ -106,7 +125,41 @@ void reduceAndOutputOperator(aef::MolecularSystem& sys, Eigen::MatrixXcd& op, ch
     *prev_time = log_time_at_point(fmt::format("Done with operator {}", fnam).c_str(), start_time, *prev_time);
 }
 
-void reduceAndOutputOperator_w_sq(aef::MolecularSystem& sys, Eigen::MatrixXcd& op, char* fnam, Eigen::MatrixXcd& work, int size, fs::path dir,
+void reduceAndOutputOperatorRe(aef::MolecularSystem& sys, Eigen::MatrixXcd& op, char* fnam, Eigen::MatrixXcd& work, int size, fs::path p,
+    system_time start_time, system_time* prev_time) {
+    Eigen::MatrixXcd opReduced;
+
+    *prev_time = log_time_at_point(fmt::format("Reducing operator {} to size {}", fnam, size).c_str(), start_time, *prev_time);
+    reduceMatrix(opReduced, op, sys, size, &work);
+
+    *prev_time = log_time_at_point("Reducing finished, now writing reduced operator real part", start_time, *prev_time);
+    std::string spath = fmt::format("{}_re.csv", fnam);
+    std::ofstream out(p / spath);
+    out << fnam;
+    for (int jdx = 0; jdx < size; jdx++) {
+        // write out column index
+        out << fmt::format(", {}", jdx);
+    }
+    out << std::endl;
+    // 
+    for (int idx = 0; idx < size; idx++) {
+        // write out row index
+        out << fmt::format("{}", idx);
+        for (int jdx = 0; jdx < size; jdx++) {
+            // write out element -- remember that Eigen is column major
+            auto elt = opReduced(jdx, idx);
+            out << fmt::format(", {}", std::real(elt));
+        }
+        out << std::endl;
+    }
+    *prev_time = log_time_at_point(fmt::format("Done with operator {}", fnam).c_str(), start_time, *prev_time);
+}
+
+using aef::quantum::transition_type;
+
+void reduceAndOutputTransitionOperator(aef::MolecularSystem& sys,
+    Eigen::MatrixXcd& op, transition_type typ, int order, 
+    char* fnam, Eigen::MatrixXcd& work, int size, fs::path dir,
     system_time start_time, system_time* prev_time) {
     Eigen::MatrixXcd opReduced;
     *prev_time = log_time_at_point(fmt::format("Reducing operator {} to size {} with magsq", fnam, size).c_str(), start_time, *prev_time);
@@ -118,27 +171,53 @@ void reduceAndOutputOperator_w_sq(aef::MolecularSystem& sys, Eigen::MatrixXcd& o
 
     std::string spath2 = fmt::format("{}_magsq.csv", fnam); // op mag sq
     std::ofstream out2(dir / spath2);
+    
+    std::string spathA = fmt::format("{}_A.csv", fnam); // einstein A coeff
+    std::ofstream outA(dir / spathA);
+
+    out << fmt::format("{}, ", fnam);
+    out2 << fmt::format("{}, ", fnam);
+    outA << fmt::format("{}, ", fnam);
     const char* sep = "";
     for (int jdx = 0; jdx < size; jdx++) {
         // write out column index
         out << fmt::format("{}{}", sep, jdx);
         out2 << fmt::format("{}{}", sep, jdx);
+        outA << fmt::format("{}{}", sep, jdx);
         sep = ", ";
     }
-    out << std::endl; out2 << std::endl;
+    out << std::endl; out2 << std::endl; outA << std::endl;
     // 
     for (int idx = 0; idx < size; idx++) {
         // write out row index
         out << fmt::format("{}", idx);
         out2 << fmt::format("{}", idx);
+        outA << fmt::format("{}", idx);
         for (int jdx = 0; jdx < size; jdx++) {
             // write out element -- remember that Eigen is column major
             auto elt = opReduced(jdx, idx);
             out << fmt::format(", ({}+i*{})", std::real(elt), std::imag(elt));
             out2 << fmt::format(", {}", std::norm(elt));
+
+            const double S = std::norm(elt);
+            const double E_i = std::real(sys.Es(idx));
+            const double E_j = std::real(sys.Es(jdx));
+            const double dE = std::real(E_i - E_j);
+            assert(!isnan(dE));
+            aef::quantum::transition_information tsn(typ, order, dE,elt);
+            double A = tsn.calc_A(); //aef::quantum::calculate_transition_rate(typ, order, dE, elt);
+            const char* tsn_type = (typ == transition_type::E) ? "E" : "M";
+            constexpr double thresh = 1E-4;
+            if (std::abs(elt) > thresh){
+                std::cout << fmt::format("{8} - {0}{1} transition {2} {3}\n"
+                    "\t{2}: E{2} = {4}\n"
+                    "\t{3}: E{3} = {5}\n"
+                    "\tdE = {6},\tS={9}\n"
+                    "\tA = {7}\n", tsn_type, order, idx, jdx, E_i, E_j, dE, A, fnam, S);
+            }
+            outA << fmt::format(", {}", A);
         }
-        out << std::endl;
-        out2 << std::endl;
+        out << std::endl; out2 << std::endl; outA << std::endl;
     }
     out.close();
     out2.close();
@@ -386,6 +465,7 @@ int main(int argc, char **argv) {
 
     
     reduceAndOutputOperator(sys, sys.H_tot, (char*)"h_tot", work, rbasis_size, dpath, start_time, &prev_time);
+    reduceAndOutputOperatorRe(sys, sys.H_tot, (char*)"h_tot", work, rbasis_size, dpath, start_time, &prev_time);
     reduceAndOutputOperator(sys, sys.H_stk, (char*)"h_stk", work, rbasis_size, dpath, start_time, &prev_time);
     reduceAndOutputOperator(sys, sys.H_dev, (char*)"h_dev", work, rbasis_size, dpath, start_time, &prev_time);
     reduceAndOutputOperator(sys, sys.H_hfs, (char*)"h_hfs", work, rbasis_size, dpath, start_time, &prev_time);
@@ -398,18 +478,24 @@ int main(int argc, char **argv) {
     Eigen::MatrixXcd vals2, vals3;
     vals2.resize(sys.nBasisElts, sys.nBasisElts); vals2.setZero();
     vals3.resize(sys.nBasisElts, sys.nBasisElts); vals3.setZero();
-    // for E1 transitions
-    sys.get_calc()->calculate_mol_EDM(vals, vals2, vals3);
-    reduceAndOutputOperator_w_sq(sys, vals , (char*)"E1_d10", work, rbasis_size, dpath, start_time, &prev_time);
-    reduceAndOutputOperator_w_sq(sys, vals2, (char*)"E1_d11", work, rbasis_size, dpath, start_time, &prev_time);
-    reduceAndOutputOperator_w_sq(sys, vals3, (char*)"E1_d1t", work, rbasis_size, dpath, start_time, &prev_time);
+    {
+        // for E1 transitions
+        sys.get_calc()->calculate_mol_EDM(vals, vals2, vals3);
+        using transition_type::E;
+        reduceAndOutputTransitionOperator(sys, vals , E, 1, (char*)"E1_d10", work, rbasis_size, dpath, start_time, &prev_time);
+        reduceAndOutputTransitionOperator(sys, vals2, E, 1, (char*)"E1_d11", work, rbasis_size, dpath, start_time, &prev_time);
+        reduceAndOutputTransitionOperator(sys, vals3, E, 1, (char*)"E1_d1t", work, rbasis_size, dpath, start_time, &prev_time);
+    }
 
-    // for M1 transitions
-    sys.get_calc()->calculate_mol_MDM(vals, vals2, vals3);
-    reduceAndOutputOperator_w_sq(sys, vals , (char*)"M1_d10", work, rbasis_size, dpath, start_time, &prev_time);
-    reduceAndOutputOperator_w_sq(sys, vals2, (char*)"M1_d11", work, rbasis_size, dpath, start_time, &prev_time);
-    reduceAndOutputOperator_w_sq(sys, vals3, (char*)"M1_d1t", work, rbasis_size, dpath, start_time, &prev_time);
-    
+    {
+        // for M1 transitions
+        sys.get_calc()->calculate_mol_MDM(vals, vals2, vals3);
+        using transition_type::M;
+        static_assert(transition_type::E != transition_type::M);
+        reduceAndOutputTransitionOperator(sys, vals , M, 1, (char*)"M1_d10", work, rbasis_size, dpath, start_time, &prev_time);
+        reduceAndOutputTransitionOperator(sys, vals2, M, 1, (char*)"M1_d11", work, rbasis_size, dpath, start_time, &prev_time);
+        reduceAndOutputTransitionOperator(sys, vals3, M, 1, (char*)"M1_d1t", work, rbasis_size, dpath, start_time, &prev_time);
+    }
     return 0;
 }
 

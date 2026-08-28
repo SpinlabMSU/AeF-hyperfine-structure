@@ -142,6 +142,12 @@ double aef::quantum::expect_parity(aef::MolecularSystem& calc, int32_t E_idx) {
     return ex_parity / prob_tot;
 }
 
+double aef::quantum::calculate_transition_rate(transition_type type, unsigned order, double energy, dcomplex mat_elt) {
+    aef::quantum::transition_information tsn(type, order, energy, mat_elt);
+    
+    return tsn.A;
+}
+
 Eigen::MatrixXcd aef::orient_diag::makeOrientationDiagonalizer(aef::MolecularSystem& sys) {
     constexpr double inv_sqrt2 = std::numbers::sqrt2 / 2.0;
     Eigen::MatrixXcd orientEnergyMatrix;
@@ -180,4 +186,83 @@ aef::ResultCode aef::orient_diag::diagonalize(aef::MolecularSystem& sys, Eigen::
 
     sys.Es = vals->diagonal();
     return rc;
+}
+
+aef::quantum::transition_information::transition_information(transition_type type_, unsigned order_, double freq_, dcomplex mat_elt_):
+    type(type_), order(order_), mat_elt(mat_elt_), freq_MHz(freq_), calcs_done(false)
+{
+    A = B = t = f = std::nan("");
+}
+
+aef::ResultCode aef::quantum::transition_information::calculate() {
+    A = base_rate() * std::norm(this->mat_elt);
+    return aef::ResultCode::Unimplemented;
+}
+
+double aef::quantum::transition_information::Energy_eV() const {
+    double E_J = Energy_J();
+    return E_J / constants::e;
+}
+
+double aef::quantum::transition_information::Energy_J() const {
+    double f_Hz = freq_MHz * 1E6;
+    return f_Hz * constants::h;
+}
+
+double aef::quantum::transition_information::wavelength_nm() const {
+    double f_Hz = freq_MHz * 1E6;
+    double l_m = constants::c / f_Hz;
+    return l_m * 1E9;
+}
+
+double aef::quantum::transition_information::wavenumber_inv_cm() const {
+    return freq_MHz /  unit_conversion::MHz_per_inv_cm;
+}
+
+double aef::quantum::transition_information::base_rate() const {
+    assert("Higher order transitions not implemented yet", order == 1);
+
+    using namespace std::numbers;
+    using aef::quantum::transition_type::E;
+    using aef::quantum::transition_type::M;
+    using namespace constants;
+
+    double omega = 2 * pi * freq_MHz * 1E6; // rad/s
+
+    if (order == 1 && type == E) {
+        constexpr auto m_e_J = m_e * c * c;
+        constexpr auto coeff = 2 * alpha * hbar / m_e_J;
+        {
+            constexpr double omega_700THz = 7E14 * 2 * pi;
+            constexpr double est_A_700THz = coeff * omega_700THz * omega_700THz;
+        }
+        return coeff *  omega * omega;
+    }
+
+    if (order == 1 && type == M) {
+        double k_rad = omega / c; // units: rad / m
+        constexpr double coeff = mu_naught / (3 * pi * hbar);
+        return coeff * k_rad * k_rad * k_rad;
+    }
+
+
+    return 0.0;
+}
+
+double aef::quantum::transition_information::calc_A() const {
+    const double base = base_rate();
+
+    if (isnan(base)) {
+        MessageBoxA(NULL, "FUK", "FUK base null", 0);
+    }
+
+    return base * std::norm(mat_elt);
+}
+
+auto fmt::formatter<aef::quantum::transition_information>::format(tsn_ifo tsn, format_context& ctx) const {
+    double A = tsn.calc_A();
+    const char* tsn_type = (tsn.type == aef::quantum::transition_type::E) ? "E" : "M";
+    return fmt::formatter<std::string>::format(
+        fmt::format("{}{} transition dE={}, {}", tsn_type, tsn.order, tsn.Energy_eV(), A), 
+        ctx);
 }

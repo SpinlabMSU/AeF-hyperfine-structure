@@ -8,17 +8,29 @@
 #ifndef _UNITS_HPP
 #define _UNITS_HPP 1
 #pragma once
-
+#include <numbers>
 /// <summary>
 /// The values of these constants are taken from NIST CODATA 2022
 /// </summary>
 namespace constants {
     constexpr double c = 299792458; // m/s, exact
-    constexpr double h = 6.626'070'15E-34; // J*s, exact
+    constexpr double h = 6.626'070'15E-34; // J*s, exact 
     constexpr double k_B = 1.380'649E-23; // J/K, exact
+    constexpr double e = 1.602176634E-19;// C, exact
+    constexpr double mu_naught = 1.256'637'061'2E-6; // N/A^2, +- 20 ulp (0.16 ppb)
+
+    constexpr double hbar = h / (2 * std::numbers::pi); // J * s
+
+    constexpr double m_e = 9.109'383'7139E-31; // kg, +- 28 ulp (0.31 ppb)
+
     constexpr double mu_bohr = 13'996.244'9171; // MHz/T, +- 44 ulp (0.31 ppb) 
     constexpr double mu_nuclear = 7.622'593'2188; // MHz / T, +- 24 ulp (0.31 ppb)
-    constexpr double e = 1.602176634E-19;// C, exact
+
+    constexpr double alpha = 7.297'352'5643e-3; // 1, +- 11 ulp (0.16 ppb)
+    constexpr double inv_alpha = 137.035'999'177; // 1, +- 21 ulp (0.16 ppb, is 1/alpha)
+    
+    // non-si units
+    constexpr double m_e_eV = 510'998.950'69; // eV, +- 16 ulp (0.31 ppb)
 };
 
 namespace unit_conversion {

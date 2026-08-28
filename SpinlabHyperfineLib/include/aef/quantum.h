@@ -39,8 +39,65 @@ namespace aef::quantum {
     aef::universal_diatomic_basis_vec expectation_values_jsq(aef::MolecularSystem &sys, int32_t E_idx);
     double expect_parity(aef::MolecularSystem& calc, int32_t E_idx);
 
+    enum class transition_type {
+        ELECTRIC,
+        MAGNETIC,
+        E = ELECTRIC,
+        M = MAGNETIC
+    };
+
+    struct transition_information {
+        transition_type type;
+        unsigned order;
+
+        double freq_MHz; // MHz, technically frequency f, not omega
+        dcomplex mat_elt;
+        bool calcs_done;
+        
+        // transition rates
+        double A; // Einstein A coeff / decay rate, Hz
+        double B; // Einstein B coeff, ??
+        double f; // oscillator strength, dimensionless
+        double t; // lifetime, = 1 / A
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="type_"></param>
+        /// <param name="order_"></param>
+        /// <param name="f_"></param>
+        /// <param name="mat_elt_"></param>
+        transition_information(transition_type type_, unsigned order_, double f_, dcomplex mat_elt_);
+
+        /// <summary>
+        /// Calculate the transition rates, filling out A, B, f, and t
+        /// </summary>
+        /// <returns></returns>
+        aef::ResultCode calculate();
+
+        double Energy_eV() const;
+        double Energy_J() const;
+        double wavelength_nm() const;
+        double wavenumber_inv_cm() const;
+        double base_rate() const;
+        double calc_A() const;
+    };
+
+    /// <summary>
+    /// Calculates the transition rates
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="order"></param>
+    /// <param name="energy"></param>
+    /// <param name="mat_elt"></param>
+    /// <returns></returns>
+    double calculate_transition_rate(transition_type type, unsigned order, double energy, dcomplex mat_elt);
 };
 
+template <> struct fmt::formatter<aef::quantum::transition_information> : fmt::formatter<std::string> {
+    using tsn_ifo = aef::quantum::transition_information;
+    auto format(tsn_ifo tsn, format_context& ctx) const;
+};
 
 namespace aef::orient_diag {
     constexpr double E_dz = 40;
