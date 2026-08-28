@@ -19,7 +19,6 @@
 namespace hfs_constants = baf_constants;
 
 #define MATRIX_ELEMENT_DEBUG
-#undef USE_ANALYTICAL_FORMULAS
 
 int j_basis_vec::index() {
     int offset = (int)(4 * n * n);
@@ -94,14 +93,7 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
 
     const spin i = half, s = half;
 
-#ifndef USE_ANALYTICAL_FORMULAS
     // Formulas here taken from J. Chem Phys 71, 389 (1982) [https://doi.org/10.1016/0301-0104(82)85045-3]
-    // This is the only working branch of code here.  Previous comments suggesting otherwise have been inaccurate
-    // since commit 6e59999.  The other branch will be removed completely at some point.
-
-    // ** technically, neither n nor j is a good quantum number, but they're approximately good
-    // in the zero applied E-field limit.
-    // 2023-08-04 --> I have no idea why the above statement was made here, need to check relevance.
     dcomplex retval = 0;
 
     constexpr dcomplex coeff = 3.0 / 2.0 * hfs_constants::c * constexpr_sqrt(10.0 / 3.0);
@@ -110,22 +102,6 @@ dcomplex j_basis_vec::H_hfs_tensor(j_basis_vec s2) {
     dcomplex fact9j = w9j(n, np, 2, half, half, 1, j, jp, 1);
 
     retval = prf * fact3j6j * fact9j;
-#else
-    // Formulas taken from J. Chem Phys 105, 7412 (1996)
-    // this branch seems to approximately match the plots from PRA 98, 032513 (2018)
-    // however, this doesn't actually work for unknown reasons
-    // DO NOT USE
-    dcomplex retval = 0.0;
-    using hfs_constants::c;
-    if (f == n + 1 && fp == np - 1 && np == n + 2) {
-        retval = c / 2 * sqrt((n + 1.0) * (n + 2.0)) / (2.0 * n + 3.0);
-    }
-
-    if (f == n - 1 && fp == np + 1 && np == n - 2) {
-        retval = c / 2 * sqrt((n - 1.0) * (n)) / (2.0 * n - 1.0);
-    }
-#error This code
-#endif
 #if defined(MATRIX_ELEMENT_DEBUG)
     if (std::abs(retval) > 1e-3) {
         std::cout << "Nonzero H_hfs_tensor for " << this->ket_string() << " and " <<
@@ -282,11 +258,6 @@ dcomplex j_basis_vec::H_st(j_basis_vec other, double E_z) {
 }
 
 dcomplex j_basis_vec::d10(j_basis_vec other) {
-    #if 0
-    if (m_f != other.m_f) {
-        return 0;
-    }
-    #endif
 
     // This operator is essentially the same as the stark shift divided by mu_E and E_Z
     // 
@@ -296,7 +267,7 @@ dcomplex j_basis_vec::d10(j_basis_vec other) {
     const spin m_fp = other.m_f;
 
     dcomplex xi_factors = xi(f, fp) * xi(j, jp) * xi(n, np);
-    dcomplex threej_factors = w3j(f, 1, fp, -m_f, 0, m_f) * w3j(n, 1, np, 0, 0, 0);
+    dcomplex threej_factors = w3j(f, 1, fp, -m_fp, 0, m_f) * w3j(n, 1, np, 0, 0, 0);
     dcomplex sixj_factors = w6j(f, 1, fp, jp, half, j) * w6j(j, 1, jp, np, half, n);
     dcomplex phase = parity(1 - m_f);
     dcomplex retval = xi_factors * threej_factors * sixj_factors * phase;
@@ -311,13 +282,6 @@ dcomplex j_basis_vec::d10(j_basis_vec other) {
 dcomplex j_basis_vec::d11(j_basis_vec other) {
     // The implementation of this operator is based on Rotational Spectroscopy of Diatomic molecules
     // section 5.5.5 and eqn 5.146
-    #if 0
-    // this isn't neccesary since the 3j symbols constrain m_f properly anyways, and the minor performance gain
-    // isn't worth the amount of time spent worrying whether this check is bugged every time I look at it fresh.
-    if (m_f - 1 != other.m_f) {
-        return 0;
-    }
-    #endif
     const spin np = other.n;
     const spin jp = other.j;
     const spin fp = other.f;
@@ -339,13 +303,6 @@ dcomplex j_basis_vec::d11(j_basis_vec other) {
 dcomplex j_basis_vec::d1t(j_basis_vec other) {
     // The implementation of this operator is based on Rotational Spectroscopy of Diatomic molecules
     // section 5.5.5 and eqn 5.146
-    #if 0
-    // this isn't neccesary since the 3j symbols constrain m_f properly anyways, and the minor performance gain
-    // isn't worth the amount of time spent worrying whether this check is bugged every time I look at it fresh.
-    if (m_f - 1 != other.m_f) {
-        return 0;
-    }
-    #endif
     const spin np = other.n;
     const spin jp = other.j;
     const spin fp = other.f;
@@ -386,7 +343,7 @@ dcomplex j_basis_vec::I_dot_ina(j_basis_vec other){
     const spin jp = other.j;
     const spin fp = other.f;
     const spin m_fp = other.m_f;
-    // \vec{I}\cdot\vec{d} is a scalar, 
+    // \vec{I}\cdot\vec{d} is a scalar operator 
     if (f != fp || m_f != m_fp) {
         return 0;
     }
