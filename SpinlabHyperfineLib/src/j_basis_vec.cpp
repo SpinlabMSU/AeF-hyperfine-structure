@@ -155,9 +155,9 @@ std::array<dcomplex, 3> aef::j_basis_vec::molec_edm_sph(j_basis_vec other) const
     // since it is 
     dcomplex reduced_mat_elt = mu_e * xi_factors * threej_n * sixj_factors * phase;
 
-    double we_factor_t = w3j(f, 1, fp, -m_f, -1, m_f);
-    double we_factor_0 = w3j(f, 1, fp, -m_f, 0, m_f);
-    double we_factor_1 = w3j(f, 1, fp, -m_f, 1, m_f);
+    double we_factor_t = w3j(f, 1, fp, -m_fp, -1, m_f);
+    double we_factor_0 = w3j(f, 1, fp, -m_fp, 0, m_f);
+    double we_factor_1 = w3j(f, 1, fp, -m_fp, 1, m_f);
 
     // spherical tensor operator form
     dcomplex mue_t = we_factor_t * reduced_mat_elt;
@@ -195,9 +195,9 @@ std::array<dcomplex, 3> aef::j_basis_vec::molec_mdm_sph(j_basis_vec other) const
     using namespace std::complex_literals;
     constexpr double half = 0.5;
 
-    double we_factor_t = w3j(f, 1, fp, -m_f, -1, m_f);
-    double we_factor_0 = w3j(f, 1, fp, -m_f, 0, m_f);
-    double we_factor_1 = w3j(f, 1, fp, -m_f, 1, m_f);
+    double we_factor_t = w3j(f, 1, fp, -m_fp, -1, m_f);
+    double we_factor_0 = w3j(f, 1, fp, -m_fp, 0, m_f);
+    double we_factor_1 = w3j(f, 1, fp, -m_fp, 1, m_f);
     // there are multiple possible contributions to the molecular mdm
     // including one from the electron magnetic moment, a magnetic moment induced by molecular rotation,
     // and the nuclear magnetic moment
