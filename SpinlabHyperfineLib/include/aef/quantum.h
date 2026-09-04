@@ -85,6 +85,7 @@ namespace aef::quantum {
         double wavenumber_inv_cm() const;
         double base_rate() const;
         double calc_A() const;
+        double calc_f() const;
     };
 
     /// <summary>

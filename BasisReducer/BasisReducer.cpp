@@ -157,6 +157,13 @@ void reduceAndOutputOperatorRe(aef::MolecularSystem& sys, Eigen::MatrixXcd& op, 
 
 using aef::quantum::transition_type;
 
+struct tsn_op_file {
+    std::string path_add;
+    std::ofstream stream;
+};
+
+
+
 void reduceAndOutputTransitionOperator(aef::MolecularSystem& sys,
     Eigen::MatrixXcd& op, transition_type typ, int order, 
     char* fnam, Eigen::MatrixXcd& work, int size, fs::path dir,
@@ -166,6 +173,8 @@ void reduceAndOutputTransitionOperator(aef::MolecularSystem& sys,
     reduceMatrix(opReduced, op, sys, size, &work);
 
     *prev_time = log_time_at_point("Reducing finished, now writing reduced operator and magsq", start_time, *prev_time);
+    
+
     std::string spath = fmt::format("{}.csv", fnam);
     std::ofstream out(dir / spath);
 
@@ -175,49 +184,75 @@ void reduceAndOutputTransitionOperator(aef::MolecularSystem& sys,
     std::string spathA = fmt::format("{}_A.csv", fnam); // einstein A coeff
     std::ofstream outA(dir / spathA);
 
-    out << fmt::format("{}, ", fnam);
-    out2 << fmt::format("{}, ", fnam);
-    outA << fmt::format("{}, ", fnam);
-    const char* sep = "";
-    for (int jdx = 0; jdx < size; jdx++) {
-        // write out column index
-        out << fmt::format("{}{}", sep, jdx);
-        out2 << fmt::format("{}{}", sep, jdx);
-        outA << fmt::format("{}{}", sep, jdx);
-        sep = ", ";
+    std::string spathMag = fmt::format("{}_mag.csv", fnam); // operator magnitude
+    std::ofstream outMag(dir / spathMag);
+
+    std::string spathf = fmt::format("{}_f.csv", fnam); // einstein A coeff
+    std::ofstream outf(dir / spathf);
+
+    std::vector<std::ofstream*> files = {
+        &out, &out2, &outA, &outMag, &outf
+    };
+
+    for (int idx = 0; idx < files.size(); idx++) {
+        std::ofstream& of = *files[idx];
+        of << fmt::format("{}", fnam);
+        for (int jdx = 0; jdx < size; jdx++) {
+            of << fmt::format(", {}", jdx);
+        }
+        of << std::endl;
     }
     out << std::endl; out2 << std::endl; outA << std::endl;
     // 
     for (int idx = 0; idx < size; idx++) {
         // write out row index
-        out << fmt::format("{}", idx);
-        out2 << fmt::format("{}", idx);
-        outA << fmt::format("{}", idx);
+        for (int jdx = 0; jdx < files.size(); jdx++) {
+            std::ofstream& of = *files[jdx];
+            of << fmt::format("{}", idx);
+        }
         for (int jdx = 0; jdx < size; jdx++) {
             // write out element -- remember that Eigen is column major
             auto elt = opReduced(jdx, idx);
             out << fmt::format(", ({}+i*{})", std::real(elt), std::imag(elt));
             out2 << fmt::format(", {}", std::norm(elt));
+            outMag << fmt::format(", {}", std::abs(elt));
 
             const double S = std::norm(elt);
             const double E_i = std::real(sys.Es(idx));
             const double E_j = std::real(sys.Es(jdx));
-            const double dE = std::real(E_i - E_j);
+            const double dE = std::abs(std::real(E_i - E_j));
             assert(!isnan(dE));
             aef::quantum::transition_information tsn(typ, order, dE,elt);
             double A = tsn.calc_A(); //aef::quantum::calculate_transition_rate(typ, order, dE, elt);
+            double f = tsn.calc_f();
             const char* tsn_type = (typ == transition_type::E) ? "E" : "M";
             constexpr double thresh = 1E-4;
             if (std::abs(elt) > thresh){
+                std::string strI = "";
+                std::string strJ = "";
+
+                if (!sys.enableDev) {
+                    strI = fmt::format("{}", expectation_values_jsq(sys, idx));
+                    strJ = fmt::format("{}", expectation_values_jsq(sys, jdx));
+                }
+
                 std::cout << fmt::format("{8} - {0}{1} transition {2} {3}\n"
-                    "\t{2}: E{2} = {4}\n"
-                    "\t{3}: E{3} = {5}\n"
-                    "\tdE = {6},\tS={9}\n"
-                    "\tA = {7}\n", tsn_type, order, idx, jdx, E_i, E_j, dE, A, fnam, S);
+                    "\t{2}{10}: E{2} = {4} MHz\n"
+                    "\t{3}{11}: E{3} = {5} MHz\n"
+                    "\tdE = {6} MHz,\tS={9} D^2\n"
+                    "\tA = {7} Hz, f = {12}\n", tsn_type, order, idx, jdx, E_i, E_j, dE, A, fnam, S, strI, strJ, f);
             }
             outA << fmt::format(", {}", A);
+            outf << fmt::format(", {}", f);
         }
-        out << std::endl; out2 << std::endl; outA << std::endl;
+        for (int jdx = 0; jdx < files.size(); jdx++) {
+            std::ofstream& of = *files[jdx];
+            of << std::endl;
+        }
+    }
+    for (int jdx = 0; jdx < files.size(); jdx++) {
+        std::ofstream& of = *files[jdx];
+        of.close();
     }
     out.close();
     out2.close();
@@ -331,10 +366,15 @@ int main(int argc, char **argv) {
     aef::aef_run run(fs::absolute(loadname));
     fs::path runpath = run.get_run_path();
     dpath = (runpath / "reduced") / fmt::format("{}", rbasis_size);// / fmt::format("{}", );
-    if (E_z_specified) {
+
+    if (B_specified) {
+        E_z = E_z_V_cm * unit_conversion::MHz_D_per_V_cm;
+        dpath /= fmt::format("E_{}_B_{}_{}_{}", E_z_V_cm, B_x_Gauss, B_y_Gauss, B_z_Gauss);
+    } else if (E_z_specified) {
         E_z = E_z_V_cm * unit_conversion::MHz_D_per_V_cm;
         dpath /= fmt::format("{}", E_z_V_cm);
     }
+
     std::cout << fmt::format("[{}] Using output directory {}", progname, dpath.generic_string()) << std::endl;
     if (!fs::exists(dpath)) {
         fs::create_directories(dpath, ec);

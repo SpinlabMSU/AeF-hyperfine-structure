@@ -196,6 +196,28 @@ aef::quantum::transition_information::transition_information(transition_type typ
 
 aef::ResultCode aef::quantum::transition_information::calculate() {
     A = base_rate() * std::norm(this->mat_elt);
+    t = 1 / A;
+    using namespace std::numbers;
+    using namespace constants;
+    constexpr auto debye = unit_conversion::C_m_per_D;
+    double freq_Hz_cubed = freq_MHz * freq_MHz * freq_MHz * 1E18;
+    constexpr auto F_v_coeff = 2 * h / (c*c);
+    {
+        constexpr auto A_1GHz = 1E-10;
+        constexpr auto freq_1GHz = 1E9;
+        constexpr auto freq_1GHz_cubed = freq_1GHz * freq_1GHz * freq_1GHz;
+        constexpr auto F_v_1GHz = F_v_coeff * freq_1GHz_cubed;
+        constexpr auto B_1GHz = A_1GHz / F_v_1GHz;
+    }
+    double F_v = 2 * h * freq_Hz_cubed;
+    //B = A / F_v;
+    {
+        constexpr double B_coeff_si = 4 * pi * pi * pi / (3 * epsilon_naught * h * h);
+        constexpr double B_coeff_D2 = B_coeff_si * debye * debye;
+        B = B_coeff_D2 * std::norm(mat_elt);
+    }
+
+
     return aef::ResultCode::Unimplemented;
 }
 
@@ -281,6 +303,42 @@ double aef::quantum::transition_information::calc_A() const {
     }
 
     return base * std::norm(mat_elt);
+}
+
+double aef::quantum::transition_information::calc_f() const {
+    assert("Higher order transitions not implemented yet", order == 1);
+
+    using namespace std::numbers;
+    using aef::quantum::transition_type::E;
+    using aef::quantum::transition_type::M;
+    using namespace constants;
+
+    const double omega = 2 * pi * freq_MHz * 1E6; // rad/s
+    const double k_rad = omega / c; // units: rad / m
+    constexpr auto debye = unit_conversion::C_m_per_D;
+    constexpr auto mub = constants::e * hbar / (2 * m_e);
+
+    if (order == 1 && type == E) {
+        // mat elt units: D, for JTS needs to be m
+        constexpr double m_from_D_per_e = unit_conversion::C_m_per_D / constants::e;
+        const double S = std::norm(m_from_D_per_e * mat_elt); // units: m^2
+
+        constexpr double coeff = 2 * m_e / hbar; // units: kg / (J*s)
+        {
+            constexpr double omega_1GHz = 2 * pi * 1E9;
+            constexpr double melt_1GHz = 1; // Debye
+            constexpr double S_1GHz = std::norm(a0 * melt_1GHz);// / constants::e);
+            constexpr double f_1GHz = coeff * S_1GHz * omega_1GHz;
+        }
+
+        return coeff * omega * S;
+    }
+
+    if (order == 1 && type == M) {
+
+    }
+
+    return 0.0;
 }
 
 auto fmt::formatter<aef::quantum::transition_information>::format(tsn_ifo tsn, format_context& ctx) const {

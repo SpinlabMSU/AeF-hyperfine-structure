@@ -17,13 +17,15 @@ namespace constants {
     constexpr double h = 6.626'070'15E-34; // J*s, exact 
     constexpr double k_B = 1.380'649E-23; // J/K, exact
     constexpr double e = 1.602176634E-19;// C, exact
-    constexpr double mu_naught = 1.256'637'061'2E-6; // N/A^2, +- 20 ulp (0.16 ppb)
+    constexpr double mu_naught = 1.256'637'061'2E-6; // N/A^2, +- 20 ulp (0.16 ppb), derived from alpha
+    constexpr double epsilon_naught = 8.854'187'8188E-12; // F/m, +- 14 ulp (0.16 ppb), derived from alpha
 
     constexpr double hbar = h / (2 * std::numbers::pi); // J * s
 
     constexpr double m_e = 9.109'383'7139E-31; // kg, +- 28 ulp (0.31 ppb)
 
     constexpr double mu_bohr = 13'996.244'9171; // MHz/T, +- 44 ulp (0.31 ppb) 
+    constexpr double mu_bohr_J_T = 9.274'010'0657E-24; // J/T, +-29 ulp (0.31 ppb)
     constexpr double mu_nuclear = 7.622'593'2188; // MHz / T, +- 24 ulp (0.31 ppb)
 
     constexpr double alpha = 7.297'352'5643e-3; // 1, +- 11 ulp (0.16 ppb)
@@ -31,6 +33,7 @@ namespace constants {
     
     // non-si units
     constexpr double m_e_eV = 510'998.950'69; // eV, +- 16 ulp (0.31 ppb)
+    constexpr double a0 = 5.291'772'105'44E-11; // m +- 82 ulp (0.16 ppb)
 };
 
 namespace unit_conversion {
