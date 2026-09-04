@@ -227,24 +227,48 @@ double aef::quantum::transition_information::base_rate() const {
     using aef::quantum::transition_type::M;
     using namespace constants;
 
-    double omega = 2 * pi * freq_MHz * 1E6; // rad/s
+    const double omega = 2 * pi * freq_MHz * 1E6; // rad/s
+    const double k_rad = omega / c; // units: rad / m
+    constexpr auto debye = unit_conversion::C_m_per_D;
+    constexpr auto mub = constants::e * hbar / (2 * m_e);
+    constexpr auto mmm = mub / h;
 
     if (order == 1 && type == E) {
-        constexpr auto m_e_J = m_e * c * c;
-        constexpr auto coeff = 2 * alpha * hbar / m_e_J;
+        
+        constexpr auto coeff = debye*debye *  pi / (3 * hbar * epsilon_naught);
         {
             constexpr double omega_700THz = 7E14 * 2 * pi;
-            constexpr double est_A_700THz = coeff * omega_700THz * omega_700THz;
+            constexpr double k_rad_700THz = omega_700THz / c;
+            constexpr double k_700THz_cubed = k_rad_700THz * k_rad_700THz * k_rad_700THz;
+            constexpr double est_A_700THz = coeff * k_700THz_cubed;
         }
-        return coeff *  omega * omega;
+
+        {
+            constexpr double omega_7GHz = 7E9 * 2 * pi;
+            constexpr double k_rad_7GHz = omega_7GHz / c;
+            constexpr double k_7GHz_cubed = k_rad_7GHz * k_rad_7GHz * k_rad_7GHz;
+            constexpr double est_A_7GHz = coeff * k_7GHz_cubed;
+        }
+
+        return coeff *  k_rad * k_rad * k_rad;
     }
 
     if (order == 1 && type == M) {
-        double k_rad = omega / c; // units: rad / m
-        constexpr double coeff = mu_naught / (3 * pi * hbar);
+        constexpr double J_per_T_from_MHz_per_T = h * 1E6;
+        constexpr double coeff = J_per_T_from_MHz_per_T * J_per_T_from_MHz_per_T * mu_naught / (3 * pi * hbar);
+        {
+            constexpr double omega_700THz = 7E14 * 2 * pi;
+            constexpr double k_rad_700THz = omega_700THz / c;
+            constexpr double k_700THz_cubed = k_rad_700THz * k_rad_700THz * k_rad_700THz;
+            constexpr double est_A_700THz = coeff * k_700THz_cubed *mu_bohr* mu_bohr;
+        }
         return coeff * k_rad * k_rad * k_rad;
     }
 
+    {
+        constexpr double e1_m1_ratio = (debye* debye * pi / (3 * hbar * epsilon_naught)) / (mub * mub * mu_naught / (3 * pi * hbar));
+        constexpr double norm_e1_m1_ratio = e1_m1_ratio * (alpha * alpha);
+    }
 
     return 0.0;
 }

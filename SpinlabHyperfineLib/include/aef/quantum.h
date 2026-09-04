@@ -66,7 +66,11 @@ namespace aef::quantum {
         /// <param name="type_"></param>
         /// <param name="order_"></param>
         /// <param name="f_"></param>
-        /// <param name="mat_elt_"></param>
+        /// <param name="mat_elt_">The line matrix element with the following units:
+        /// * for E1 transitions: Debye
+        /// * for M1 transitions: MHz/T
+        /// * other tranisitions not yet supported
+        /// </param>
         transition_information(transition_type type_, unsigned order_, double f_, dcomplex mat_elt_);
 
         /// <summary>
