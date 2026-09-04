@@ -202,7 +202,6 @@ void reduceAndOutputTransitionOperator(aef::MolecularSystem& sys,
         }
         of << std::endl;
     }
-    out << std::endl; out2 << std::endl; outA << std::endl;
     // 
     for (int idx = 0; idx < size; idx++) {
         // write out row index
@@ -254,8 +253,6 @@ void reduceAndOutputTransitionOperator(aef::MolecularSystem& sys,
         std::ofstream& of = *files[jdx];
         of.close();
     }
-    out.close();
-    out2.close();
     *prev_time = log_time_at_point(fmt::format("Done with operator {}", fnam).c_str(), start_time, *prev_time);
 }
 
@@ -286,6 +283,7 @@ int main(int argc, char **argv) {
     double B_x_Gauss = 0;
     double B_y_Gauss = 0;
     bool B_specified = false;
+    int rbasis_size = 48;
 
     orient_choice o_choice = orient_choice::AUTO;
 
@@ -301,6 +299,7 @@ int main(int argc, char **argv) {
         ("Bx", "Magnetic field along the X-axis for PT calculations [G]", cxxopts::value<double>())
         ("By", "Magnetic field along the Y-axis for PT calculations [G]", cxxopts::value<double>())
         ("n,n_max", "Maximum n level to include", cxxopts::value<int>())
+        ("r,reduced_size", "Size of the reduced-basis system", cxxopts::value<int>())
         ("d,enable_debug", "Enable debug mode", cxxopts::value<bool>()->default_value("false"))
         ("print_extras", "Print extra information", cxxopts::value<bool>()->default_value("true"))
         ("l,load", "Load molecular system operators from file", cxxopts::value<std::string>())
@@ -355,12 +354,22 @@ int main(int argc, char **argv) {
         o_choice = result["orientation_diagonalizer"].as<orient_choice>();
     }
 
+    if (result.count("reduced_size")) {
+        rbasis_size = result["reduced_size"].as<int>();
+    }
+
     if (!load_from_file) {
         std::clog << "[" << progname <<"] Error: must load from file" << std::endl;
         exit(1);
     }
 
-    int rbasis_size = 48;
+    if (rbasis_size <= 0) {
+        std::clog << 
+            fmt::format("[{}] Error: reduced basis size {} is less than or equal to zero",
+                progname, rbasis_size) 
+            << std::endl;
+        exit(1);
+    }
 
     std::error_code ec;
     aef::aef_run run(fs::absolute(loadname));
