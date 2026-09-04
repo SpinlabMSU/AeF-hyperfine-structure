@@ -200,7 +200,7 @@ std::array<dcomplex, 3> aef::j_basis_vec::molec_mdm_sph(j_basis_vec other) const
         dcomplex parity_N = parity(1 + n - m_f);
         dcomplex prf_N = xi(j, jp) * xi(f, fp) * sqrt(n * (n + 1) * (2 * n + 1));
         dcomplex w6j_N = w6j(j, 1, jp, np, half, n) * w6j(f, 1, fp, jp, half, j);
-        rme_N = mu_rotational * parity_N * prf_N * w6j_N;
+        rme_N = g_N * constants::mu_nuclear * parity_N * prf_N * w6j_N;
     }
     // full reduced matrix element is the sum of the three contributions
     dcomplex reduced_mat_elt = rme_S + rme_I + rme_N;

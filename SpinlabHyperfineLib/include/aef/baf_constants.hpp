@@ -24,11 +24,11 @@ constexpr double c = 8.224;  // MHz
 // constants for stark shift
 constexpr double mu_e = 3.170; // D
 
-// constants for zeeman shift
-constexpr double mu_rotational = 0;
-constexpr double g_S = 0; // electron spin
-constexpr double g_I = 0; // nuclear
-constexpr double g_N = 0; // rotational
+// constants for zeeman shift: 
+// sourced from Phys. Rev. A 84, 012508 (2011) https://doi.org/10.1103/PhysRevA.84.012508
+constexpr double g_S = 2.002; // electron spin g-Factor, from PRA 84, 012508 (2011)
+constexpr double g_I = +2.628321; // nuclear magnetic moment of 19F, taken from IAEA's NDS nuclear electromagnetic moment database
+constexpr double g_N = 0; // rotational g factor, multiplies mu_nuclear -- see pg 20 of Carrington&Brown, approximated as zero
 
 // explicit rotational symmetry breaking term to break m_f degeneracy
 // no longer needed
