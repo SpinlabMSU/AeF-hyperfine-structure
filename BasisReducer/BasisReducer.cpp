@@ -510,6 +510,27 @@ int main(int argc, char **argv) {
         prev_time = log_time_at_point("Diagonalization complete", start_time, prev_time);
     }
 
+    {
+        // output unit file
+        std::ofstream out(dpath / "units.txt", std::ios::trunc | std::ios::out);
+        out << "UNIT LIST\n-----------------" << std::endl;
+        out << "Hamiltonians and Energies: MHz (i.e actually the _linear_ frequency)" << std::endl;
+        out << "Molecular Dipolar Axis d1p: dimensionless" << std::endl;
+        out << "E1 transition dipoles E1_d1p: Debye" << std::endl;
+        out << "M1 transition dipoles M1_d1p: (MHz/T)" << std::endl;
+        out << "E1 transition dipole Magnitude: Debye" << std::endl;
+        out << "M1 transition dipole Magnitude: (MHz/T)" << std::endl;
+        out << "E1 transition dipole Squared Magnitude: Debye ^ 2" << std::endl;
+        out << "M1 transition dipole Squared Magnitude: (MHz/T) ^ 2" << std::endl;
+        out << "E1 transition Einstein A: Hz" << std::endl;
+        out << "M1 transition Einstein A: Hz" << std::endl;
+        out << "E1 transition Einstein B: Hz" << std::endl;
+        out << "M1 transition Einstein B: Hz" << std::endl;
+        out << "E1 transition f/Oscillator Strength: Dimensionless" << std::endl;
+        out << "M1 transition f/Oscillator Strength: Dimensionless" << std::endl;
+        out.close();
+    }
+
     rc = aef::ResultCode::Success;
 
     

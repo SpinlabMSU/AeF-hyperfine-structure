@@ -133,7 +133,7 @@ namespace aef {
             // randomization portion because it shouldn't be necessary (if there's some
             // small mixing of the m_f it doesn't really matter, and in practice they
             // don't mix.
-            constexpr dcomplex t = 100.0; // +15i;
+            constexpr dcomplex t = 1000.0; // +15i;
             // naughty hack: H_dev doesn't actually contain anything when enableDev == false, so we can use it
             // as our temporary here instead of making a new temporary matrix
             H_dev = H_tot + t * F_z;

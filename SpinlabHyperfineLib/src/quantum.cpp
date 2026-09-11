@@ -298,9 +298,7 @@ double aef::quantum::transition_information::base_rate() const {
 double aef::quantum::transition_information::calc_A() const {
     const double base = base_rate();
 
-    if (isnan(base)) {
-        MessageBoxA(NULL, "FUK", "FUK base null", 0);
-    }
+    assert("Base rate should not be NaN", !isnan(base));
 
     return base * std::norm(mat_elt);
 }

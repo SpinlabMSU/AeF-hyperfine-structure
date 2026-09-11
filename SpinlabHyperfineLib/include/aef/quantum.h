@@ -56,7 +56,7 @@ namespace aef::quantum {
         
         // transition rates
         double A; // Einstein A coeff / decay rate, Hz
-        double B; // Einstein B coeff, ??
+        double B; // Einstein B coeff, units are Hz / (mW/mm^2/Hz)
         double f; // oscillator strength, dimensionless
         double t; // lifetime, = 1 / A
 
